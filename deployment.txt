@@ -1,4 +1,7 @@
-notes for deployment
 
 
 should push the new changes
+
+
+deployment folder, add this to the latest,
+git remote add then push to main force
