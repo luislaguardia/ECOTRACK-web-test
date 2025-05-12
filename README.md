@@ -6,3 +6,9 @@
   ecotrack.online
 
   vercel - render
+
+push new commits
+
+domain ecotrack.online
+
+admin@ecotrack.online
