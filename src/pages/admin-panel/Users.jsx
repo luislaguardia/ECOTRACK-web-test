@@ -303,7 +303,9 @@ const Users = () => {
   </div>
 ) : (
 
-<div className="overflow-x-auto bg-white rounded-lg shadow border border-gray-200 text-xs sm:text-sm">
+<div
+  className="overflow-x-auto bg-white rounded-lg shadow border border-gray-200 max-h-[350px] overflow-y-auto text-xs sm:text-sm"
+>
   <table className="min-w-full table-auto">
     <thead className="bg-[#F5F5F5] border-b border-gray-200">
       <tr className="text-left">
