@@ -5,6 +5,12 @@ import { BASE_URL } from "../../config";
 import { FaChevronDown } from 'react-icons/fa';
 
 const News = () => {
+  const [deletingNewsId, setDeletingNewsId] = useState(null);
+
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+
   const [newsList, setNewsList] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingNewsId, setEditingNewsId] = useState(null);
@@ -15,7 +21,9 @@ const News = () => {
     category: "general",
     isDraft: false
   });
+
   const [isLoading, setIsLoading] = useState(true);
+
   const [error, setError] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [newsIdToDelete, setNewsIdToDelete] = useState(null);
@@ -56,10 +64,14 @@ const News = () => {
     fetchNews();
   }, [filterCategory]);
 
-  const handleSubmit = async (overrideData = {}) => {
+  const handleSubmit = async (status) => {
     try {
-      setIsLoading(true);
-      const data = { ...formData, ...overrideData };
+      if (status === "draft") setIsSavingDraft(true);
+      else if (status === "published" && editingNewsId) setIsPublishing(true);
+      else if (editingNewsId) setIsUpdating(true); // regular update
+  
+      const data = { ...formData, status };
+  
       if (editingNewsId) {
         await axios.put(`${BASE_URL}/api/news/${editingNewsId}`, data, {
           headers: { Authorization: `Bearer ${token}` },
@@ -69,6 +81,7 @@ const News = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
+  
       await fetchNews();
       setFormData({
         title: "",
@@ -83,7 +96,9 @@ const News = () => {
       console.error("Failed to submit news:", err);
       setError("Failed to submit news. Please try again.");
     } finally {
-      setIsLoading(false);
+      setIsPublishing(false);
+      setIsUpdating(false);
+      setIsSavingDraft(false);
     }
   };
 
@@ -99,7 +114,7 @@ const News = () => {
 
   const handleDelete = async () => {
     try {
-      setIsLoading(true);
+      setDeletingNewsId(newsIdToDelete); // start loading spinner
       await axios.delete(`${BASE_URL}/api/news/${newsIdToDelete}`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -111,7 +126,7 @@ const News = () => {
       console.error("Delete failed:", err);
       setError("Failed to delete news. Please try again.");
     } finally {
-      setIsLoading(false);
+      setDeletingNewsId(null); // stop loading spinner
     }
   };
 
@@ -473,27 +488,27 @@ const News = () => {
   >
     Cancel
   </button>
-  
-  {editingNewsId && formData.isDraft && (
+   
+{editingNewsId && formData.isDraft && (
   <button
-    onClick={() => handleSubmit({ status: "published" })}
+    onClick={() => handleSubmit("published")}
     className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-    disabled={isLoading}
+    disabled={isPublishing}
   >
-    {isLoading ? "Publishing..." : "Publish"}
+    {isPublishing ? "Publishing..." : "Publish"}
   </button>
 )}
 
   {/* Show update for any edit */}
   {editingNewsId && (
-    <button
-      onClick={() => handleSubmit()}
-      className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-      disabled={isLoading}
-    >
-      {isLoading ? "Updating..." : "Update"}
-    </button>
-  )}
+  <button
+    onClick={() => handleSubmit(formData.status)}
+    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+    disabled={isUpdating}
+  >
+    {isUpdating ? "Updating..." : "Update"}
+  </button>
+)}
 
 
 
@@ -508,19 +523,19 @@ const News = () => {
     <>
 {/* Save as Draft */}
 <button
-  onClick={() => handleSubmit({ status: "draft" })}
+  onClick={() => handleSubmit("draft")}
   className="px-6 py-2 bg-yellow-400 text-yellow-800 rounded-lg hover:bg-yellow-500 transition"
-  disabled={isLoading}
+  disabled={isSavingDraft}
 >
-  {isLoading ? "Saving..." : "Save as Draft"}
+  {isSavingDraft ? "Saving..." : "Save as Draft"}
 </button>
 
 <button
-  onClick={() => handleSubmit({ status: "published" })}
+  onClick={() => handleSubmit("published")}
   className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-  disabled={isLoading}
+  disabled={isPublishing}
 >
-  {isLoading ? "Publishing..." : "Publish"}
+  {isPublishing ? "Publishing..." : "Publish"}
 </button>
     </>
   )}
@@ -554,11 +569,20 @@ const News = () => {
                 Cancel
               </button>
               <button
-                onClick={handleDelete}
-                className="px-6 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
-              >
-                Delete
-              </button>
+  onClick={handleDelete}
+  disabled={deletingNewsId === newsIdToDelete}
+  className={`px-6 py-2 rounded-md text-white transition-colors flex items-center justify-center ${
+    deletingNewsId === newsIdToDelete
+      ? "bg-red-400 cursor-not-allowed"
+      : "bg-red-500 hover:bg-red-600"
+  }`}
+>
+  {deletingNewsId === newsIdToDelete ? (
+    <div className="h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin" />
+  ) : (
+    "Delete"
+  )}
+</button>
             </div>
           </div>
         </div>
