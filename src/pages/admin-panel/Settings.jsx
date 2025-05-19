@@ -134,7 +134,7 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] px-4 py-6">
-      <h2 className="text-3xl font-bold font-inter text-gray-800 mb-8">System Settings</h2>
+      <h2 className="text-3xl font-bold font-inter text-gray-800 mb-8">Account Settings</h2>
 
       <div className="flex border mb-6 w-full max-w-3xl">
         {["profile", "security"].map((t) => (
