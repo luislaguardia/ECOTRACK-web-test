@@ -28,7 +28,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, setShowLogoutModa
     ...(role === "superadmin"
       ? [{ name: "Admin Management", path: "/admin-management", icon: admin, size: 'w-6 h-7' }]
       : []),
-    { name: "System Settings", path: "/settings", icon: setting, size: 'w-6 h-6.4' },
+    { name: "Account Settings", path: "/settings", icon: setting, size: 'w-6 h-6.4' },
   ];
 
   return (
