@@ -32,23 +32,23 @@ const HowItWorks = () => {
   }, []);
 
   return (
-    <div>
+    <div className="min-h-screen flex flex-col">
       <HomePageNavBar />
-
-      <div className="flex flex-col-reverse lg:flex-row items-center justify-center gap-y-20 lg:gap-x-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto pb-24">
+  
+      <div className="flex-1 flex flex-col-reverse lg:flex-row items-center justify-center gap-y-20 lg:gap-x-35 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto py-20">
         {/* Left side - Steps */}
-        <div className="w-full lg:w-[460px] space-y-16">
+        <div className="w-full lg:w-[460px] space-y-20 pb-8">          
           <h1 className="text-3xl sm:text-4xl font-bold text-center text-[#109717] mt-12 mb-8 font-proxima animate-on-scroll opacity-0">
             How It Works
           </h1>
-
+  
           {/* Step 1 */}
           <div className="flex items-start space-x-4 sm:space-x-6 animate-on-scroll opacity-0" style={{ animationDelay: "100ms" }}>
             <div className="relative">
               <div className="flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#109717] text-white hover:scale-110 transition-transform duration-300">
                 <span className="text-3xl sm:text-4xl font-proxima font-bold">1</span>
               </div>
-
+  
               <div className="absolute left-1/2 top-20 sm:top-24 flex flex-col items-center transform -translate-x-1/2">
                 <div className="h-10 sm:h-15 w-0.5 border-l-2 border-dashed border-[#109717]"></div>
                 <div
@@ -62,7 +62,7 @@ const HowItWorks = () => {
                 />
               </div>
             </div>
-
+  
             <div className="pt-2 transform transition-all duration-300 hover:translate-x-2">
               <h3 className="text-xl sm:text-2xl font-bold font-proxima text-black mb-2">
                 Connect Smart Plugs
@@ -72,14 +72,14 @@ const HowItWorks = () => {
               </p>
             </div>
           </div>
-
+  
           {/* Step 2 */}
           <div className="flex items-start space-x-4 sm:space-x-6 animate-on-scroll opacity-0" style={{ animationDelay: "300ms" }}>
             <div className="relative">
               <div className="flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#109717] text-white hover:scale-110 transition-transform duration-300">
                 <span className="text-3xl sm:text-4xl font-proxima font-bold">2</span>
               </div>
-
+  
               <div className="absolute left-1/2 top-20 sm:top-24 flex flex-col items-center transform -translate-x-1/2">
                 <div className="h-10 sm:h-15 w-0.5 border-l-2 border-dashed border-[#109717]"></div>
                 <div
@@ -93,7 +93,7 @@ const HowItWorks = () => {
                 />
               </div>
             </div>
-
+  
             <div className="pt-2 transform transition-all duration-300 hover:translate-x-2">
               <h3 className="text-xl sm:text-2xl font-bold text-black font-proxima mb-2">
                 Monitor in Real-Time
@@ -103,7 +103,7 @@ const HowItWorks = () => {
               </p>
             </div>
           </div>
-
+  
           {/* Step 3 */}
           <div className="flex items-start space-x-4 sm:space-x-6 animate-on-scroll opacity-0" style={{ animationDelay: "500ms" }}>
             <div>
@@ -121,7 +121,7 @@ const HowItWorks = () => {
             </div>
           </div>
         </div>
-
+  
         {/* Right side - Phone Mockup */}
         <div className="relative flex items-center justify-center animate-on-scroll opacity-0 w-full lg:w-auto" style={{ animationDelay: "700ms" }}>
           <div className="relative flex items-center justify-center w-full max-w-xs sm:max-w-sm">
@@ -130,7 +130,6 @@ const HowItWorks = () => {
               alt="Candlestick Design"
               className="absolute z-0 opacity-100 scale-150 sm:scale-[2.3] translate-y-12"
             />
-
             <div
               className="relative z-10 mt-12 sm:mt-20 phone-mockup"
               style={{
@@ -152,7 +151,7 @@ const HowItWorks = () => {
           </div>
         </div>
       </div>
-
+  
       <Footer />
     </div>
   );
