@@ -96,7 +96,11 @@ const HomePage = () => {
                 Make brighter decisions that are good for you, your wallet, and
                 the environment.
               </p>
-              <button className="bg-green-600 hover:bg-green-700 mb-12 md:mb-20 text-white font-bold py-2 sm:py-3 px-6 sm:px-8 rounded-full text-base sm:text-lg transition-all duration-300 transform hover:scale-105 animate-on-load animate-bounce-in w-full sm:w-auto text-center" style={{ animationDelay: '0.8s' }}>
+              <button
+                className="bg-green-600 hover:bg-green-700 mb-12 md:mb-20 text-white font-bold py-2 sm:py-3 px-6 sm:px-8 rounded-full text-base sm:text-lg transition-all duration-300 transform hover:scale-105 animate-on-load animate-bounce-in w-full sm:w-auto text-center"
+                style={{ animationDelay: '0.8s' }}
+                onClick={() => window.location.href = '/download-app'}
+              >
                 Get Ecotrack
               </button>
             </div>
