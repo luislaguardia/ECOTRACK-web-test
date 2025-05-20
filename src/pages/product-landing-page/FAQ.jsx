@@ -24,7 +24,7 @@ const FAQ = () => {
     {
       question: "Do I need special hardware?",
       answer:
-        "Yes. EcoTrack uses encryption protocols to ensure your data is private and secure. You also control what data is shared via the mobile app settings.",
+        "Yes. You'll need Tasmota-flashed smart plugs to connect your appliances to the app. These are affordable and user-installed devices available online.",
     },
     {
       question: "Is it safe to use?",
