@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { FiSearch, FiTrash2, FiEdit, FiEye } from 'react-icons/fi';
+import { FiSearch, FiTrash2, FiEdit, FiEye, FiArchive } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import barangaysInNasugbu from "../../data/barangays";
 import { FaChevronDown } from 'react-icons/fa';
@@ -321,64 +321,69 @@ const Users = () => {
 
       {/* Scrollable Table Container */}
       
-{/* Scrollable Table Container */}
-{isLoading ? (
-  <div className="flex justify-center items-center h-[300px]">
-    <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-green-600"></div>
-  </div>
-) : (
+        {/* Scrollable Table Container */}
+        {isLoading ? (
+          <div className="flex justify-center items-center h-[300px]">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-green-600"></div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto bg-white rounded-lg shadow border border-gray-200 max-h-[370px] overflow-y-auto text-xs sm:text-sm">
+            <table className="min-w-full table-auto">
+              <thead className="bg-[#F5F5F5] border-b border-gray-200">
+                <tr className="text-left align-middle">
+                  <th className="px-4 py-3 font-bold text-gray-500">#</th>
+                  <th className="px-4 py-3 font-bold text-gray-500">User Name</th>
+                  <th className="px-4 py-3 font-bold text-gray-500">Email</th>
+                  <th className="px-4 py-3 font-bold text-gray-500">Location</th>
+                  <th className="px-4 py-3 font-bold text-gray-500">Status</th>
+                  <th className="px-4 py-3 font-bold text-gray-500 text-center align-middle">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredUsers.map((user, index) => (
+                  <tr key={user._id} className="hover:bg-gray-50 align-middle">
+                    <td className="px-4 py-4">{index + 1}</td>
+                    <td className="px-4 py-4 break-words max-w-[150px]">{user.name}</td>
+                    <td className="px-4 py-4 break-words max-w-[150px]">{user.email}</td>
+                    <td className="px-4 py-4 break-words max-w-[100px]">{user.location || "N/A"}</td>
+                    <td className="px-4 py-4">
+                      <span className={`font-medium ${getStatusColor(user.status)}`}>
+                        {user.status || "Active"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-center align-middle">
+                      <div className="flex items-center justify-center gap-2">
+                        <Link
+                          to={`/users/${user._id}`}
+                          className="text-blue-800 hover:text-[#0A7F24] p-2 rounded-full flex items-center justify-center"
+                          title="View"
+                        >
+                          <FiEye className="w-4 h-4" />
+                        </Link>
 
-<div
-  className="overflow-x-auto bg-white rounded-lg shadow border border-gray-200 max-h-[370px] overflow-y-auto text-xs sm:text-sm"
->
-  <table className="min-w-full table-auto">
-    <thead className="bg-[#F5F5F5] border-b border-gray-200">
-      <tr className="text-left">
-        <th className="px-4 py-3 font-bold text-gray-500">#</th>
-        <th className="px-4 py-3 font-bold text-gray-500">User Name</th>
-        <th className="px-4 py-3 font-bold text-gray-500">Email</th>
-        <th className="px-4 py-3 font-bold text-gray-500">Location</th>
-        <th className="px-4 py-3 font-bold text-gray-500">Status</th>
-        <th className="px-4 py-3 font-bold text-gray-500">Actions</th>
-      </tr>
-    </thead>
-    <tbody className="divide-y divide-gray-200">
-      {filteredUsers.map((user, index) => (
-        <tr key={user._id} className="hover:bg-gray-50">
-          <td className="px-4 py-4">{index + 1}</td>
-          <td className="px-4 py-4 break-words max-w-[150px]">{user.name}</td>
-          <td className="px-4 py-4 break-words max-w-[150px]">{user.email}</td>
-          <td className="px-4 py-4 break-words max-w-[100px]">{user.location || "N/A"}</td>
-          <td className="px-4 py-4">
-            <span className={`font-medium ${getStatusColor(user.status)}`}>
-              {user.status || "Active"}
-            </span>
-          </td>
-          <td className="px-4 py-4">
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Link to={`/users/${user._id}`} className="text-blue-800 hover:text-[#0A7F24]">
-                <FiEye />
-              </Link>
-              <button
-                onClick={() => handleEdit(user)}
-                className="bg-yellow-100 text-yellow-800 rounded-md hover:bg-yellow-200 px-2 py-1"
-              >
-                <FiEdit />
-              </button>
-              <button
-                onClick={() => openDeleteModal(user._id)}
-                className="text-red-500 hover:text-red-700 px-2 py-1"
-              >
-                <FiTrash2 />
-              </button>
-            </div>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</div>
-)}
+                        <button
+                          onClick={() => handleEdit(user)}
+                          className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200 p-2 rounded-full flex items-center justify-center"
+                          title="Edit"
+                        >
+                          <FiEdit className="w-4 h-4" />
+                        </button>
+
+                        <button
+                          onClick={() => openDeleteModal(user._id)}
+                          className="text-red-500 hover:text-red-700 p-2 rounded-full flex items-center justify-center"
+                          title="Archive"
+                        >
+                          <FiArchive className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
       {/* <div className="flex justify-end mt-4 gap-2"> */}
       <div className="flex flex-col sm:flex-row justify-end mt-4 gap-2">
@@ -427,36 +432,36 @@ const Users = () => {
                   Cancel
                 </button>
                 <button
-  onClick={() => {
-    if (exportType === "csv") exportToCSV();
-    else if (exportType === "pdf") exportToPDF();
-  }}
-  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition flex items-center justify-center gap-2"
-  disabled={exportingType !== null}
->
-  {exportingType ? (
-    <>
-      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle
-          className="opacity-25"
-          cx="12"
-          cy="12"
-          r="10"
-          stroke="currentColor"
-          strokeWidth="4"
-        ></circle>
-        <path
-          className="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 018-8v8z"
-        ></path>
-      </svg>
-      Exporting...
-    </>
-  ) : (
-    "Confirm"
-  )}
-</button>
+                  onClick={() => {
+                    if (exportType === "csv") exportToCSV();
+                    else if (exportType === "pdf") exportToPDF();
+                  }}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition flex items-center justify-center gap-2"
+                  disabled={exportingType !== null}
+                >
+                  {exportingType ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v8z"
+                        ></path>
+                      </svg>
+                      Exporting...
+                    </>
+                  ) : (
+                    "Confirm"
+                  )}
+                </button>
               </div>
             </div>
           </div>
