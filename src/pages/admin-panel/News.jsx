@@ -151,7 +151,7 @@ const News = () => {
       image: news.image,
       category: news.category,
       isDraft: news.status === "draft",
-      isArchived: news.isArchived, // <-- add this line
+      isArchived: news.isArchived, // loooooool i forgot
     });
     setEditingNewsId(news._id);
     setShowModal(true);
