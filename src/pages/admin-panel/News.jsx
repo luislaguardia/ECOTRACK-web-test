@@ -31,10 +31,10 @@ const News = () => {
   const [filterCategory, setFilterCategory] = useState("all");
 
   const categoryLabels = {
-    all: "All News",
+    all: "All News", //
     general: "General News",
     maintenance: "Maintenance Schedule",
-    brownout: "Brownout Schedule"
+    brownout: "Brownout Schedule",
   };
 
   const token = localStorage.getItem("token");
@@ -418,14 +418,16 @@ const News = () => {
     Category
   </label>
   <select
-    value={formData.category}
-    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-    className="shadow-sm border border-gray-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#0A8F28] font-inter py-2 px-4 cursor-pointer appearance-none pr-8 w-full"
-  >
-    {Object.entries(categoryLabels).map(([value, label]) => (
+  value={formData.category}
+  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+  className="shadow-sm border border-gray-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#0A8F28] font-inter py-2 px-4 cursor-pointer appearance-none pr-8 w-full"
+>
+  {Object.entries(categoryLabels)
+    .filter(([key]) => key !== "all") // ⛔ Exclude "all"
+    .map(([value, label]) => (
       <option key={value} value={value}>{label}</option>
-    ))}
-  </select>
+  ))}
+</select>
 
   {/* Fix arrow */}
   <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
