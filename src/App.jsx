@@ -8,7 +8,7 @@ import {
   Settings,
   Login,
   AdminManagement,
-  Forbidden,
+  // Forbidden,
   UserDetails,
 } from "./pages/admin-panel/Export";
 
@@ -126,12 +126,12 @@ function App() {
       <Route path="/faq" element={<FAQ />} />
       <Route path="/features" element={<Features />} />
       <Route path="/how-it-works" element={<HowItWorks />} />
-      <Route path="/forbidden" element={<Forbidden />} />
+  
       <Route
         path="/login"
         element={<Login setIsAuthenticated={setIsAuthenticated} />}
       />
-
+  
       {isAuthenticated ? (
         <>
           <Route path="/dashboard" element={<AdminLayout><Dashboard /></AdminLayout>} />
@@ -141,17 +141,9 @@ function App() {
           <Route path="/settings" element={<AdminLayout><Settings /></AdminLayout>} />
           <Route path="/admin-management" element={<AdminLayout><AdminManagement /></AdminLayout>} />
         </>
-      ) : (
-        <>
-          <Route path="/dashboard" element={<Navigate to="/forbidden" />} />
-          <Route path="/news" element={<Navigate to="/forbidden" />} />
-          <Route path="/users" element={<Navigate to="/forbidden" />} />
-          <Route path="/users/:id" element={<Navigate to="/forbidden" />} />
-          <Route path="/settings" element={<Navigate to="/forbidden" />} />
-          <Route path="/admin-management" element={<Navigate to="/forbidden" />} />
-        </>
-      )}
-
+      ) : null}
+  
+      {/* 404 fallback for all undefined or unauthorized routes */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
