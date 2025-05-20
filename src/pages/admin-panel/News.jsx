@@ -71,10 +71,10 @@ const News = () => {
     try {
       if (status === "draft") {
         setIsSavingDraft(true);
-      } else if (status === "published" && !editingNewsId) {
-        setIsPublishing(true); // New publish
-      } else if (editingNewsId) {
-        setIsUpdating(true); // Edit + update (whether draft or published)
+      } else if (status === "published") {
+        setIsPublishing(true); 
+      } else {
+        setIsUpdating(true);
       }
 
       const token = localStorage.getItem("token");
@@ -151,6 +151,7 @@ const News = () => {
       image: news.image,
       category: news.category,
       isDraft: news.status === "draft",
+      isArchived: news.isArchived, // <-- add this line
     });
     setEditingNewsId(news._id);
     setShowModal(true);
@@ -359,19 +360,25 @@ const News = () => {
                   )}
 
                   <div className="flex justify-start gap-2 mt-auto">
-                    {news.status === "published" && (
-                      <button
-                        onClick={() => handleArchiveToggle(news._id, !news.isArchived)}
-                        className={`${
-                          news.isArchived
-                            ? "bg-blue-500 hover:bg-blue-600"
-                            : "bg-red-500 hover:bg-red-600"
-                        } text-white transition text-sm px-5 py-3 rounded-md`}
-                        disabled={isLoading}
-                      >
-                        {news.isArchived ? "Unarchive" : "Archive"}
-                      </button>
-                    )}
+                  {news.isArchived ? (
+  <button
+    onClick={() => handleArchiveToggle(news._id, false)}
+    className="bg-blue-600 hover:bg-blue-700 text-white transition text-sm px-5 py-3 rounded-md"
+    disabled={isLoading}
+  >
+    Unarchive
+  </button>
+) : (
+  news.status === "published" && (
+    <button
+      onClick={() => handleArchiveToggle(news._id, true)}
+      className="bg-red-500 hover:bg-red-600 text-white transition text-sm px-5 py-3 rounded-md"
+      disabled={isLoading}
+    >
+      Archive
+    </button>
+  )
+)}
 
                     <button
                       onClick={() => openEdit(news)}
@@ -543,15 +550,15 @@ const News = () => {
                   Cancel
                 </button>
 
-                {editingNewsId && formData.isDraft && (
-                  <button
-                    onClick={() => handleSubmit("published")}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                    disabled={isPublishing}
-                  >
-                    {isPublishing ? "Publishing..." : "Publish"}
-                  </button>
-                )}
+                {editingNewsId && formData.isDraft && !formData.isArchived && (
+  <button
+    onClick={() => handleSubmit("published")}
+    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+    disabled={isPublishing}
+  >
+    {isPublishing ? "Publishing..." : "Publish"}
+  </button>
+)}
 
                 {/* Show update for any edit */}
                 {editingNewsId && (
