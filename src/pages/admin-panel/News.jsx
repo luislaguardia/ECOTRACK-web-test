@@ -185,6 +185,22 @@ const News = () => {
   };
 
 
+  const handleArchiveToggle = async (newsId, shouldArchive) => {
+    try {
+      setIsLoading(true);
+      await axios.put(
+        `${BASE_URL}/api/news/archive/${newsId}`,
+        { isArchived: shouldArchive },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      fetchNews();
+    } catch (err) {
+      console.error("Archive toggle failed:", err);
+      setError("Failed to archive/unarchive news.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // --------------------------------------M---------------------------------------
 
@@ -277,8 +293,6 @@ const News = () => {
   className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition duration-300 flex flex-col-reverse md:flex-row min-h-[300px]"
 >
 
-
-
                       {/* Text Content - Left Side */}
 
                 <div className="p-6 flex flex-col ml-15 flex-grow md:w-2/3 overflow-y-auto">
@@ -300,12 +314,19 @@ const News = () => {
                     </h3>
 
                     {/* Status Pill */}
-                    <span className={`text-sm font-medium px-2 py-1 rounded ${news.status === "draft"
-                        ? 'bg-yellow-400 text-white'
-                        : 'bg-green-600 text-white'
-                      }`}>
-                      {news.status === "draft" ? 'Draft' : 'Published'}
-                    </span>
+                    <span className={`text-sm font-medium px-2 py-1 rounded ${
+  news.isArchived
+    ? 'bg-gray-500 text-white'
+    : news.status === "draft"
+    ? 'bg-yellow-400 text-white'
+    : 'bg-green-600 text-white'
+}`}>
+  {news.isArchived
+    ? 'Archived'
+    : news.status === "draft"
+    ? 'Draft'
+    : 'Published'}
+</span>
                   </div>
 
   
@@ -325,18 +346,30 @@ const News = () => {
                       {isLoading ? "Publishing..." : "Publish"}
                     </button>
                   )}
-                  <button
-                    onClick={() => openEdit(news)}
-                    className="bg-yellow-400 text-yellow-800 hover:bg-yellow-300 transition text-sm px-5 py-3 rounded-md"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => openDeleteModal(news._id)}
-                    className="bg-red-500 text-white hover:bg-red-400 transition text-sm px-5 py-3 rounded-md"
-                  >
-                    Delete
-                  </button>
+                  
+<div className="flex justify-start gap-2 mt-auto">
+{news.isDraft ? null : (
+  <button
+    onClick={() => handleArchiveToggle(news._id, !news.isArchived)}
+    className={`${
+      news.isArchived
+        ? "bg-blue-500 hover:bg-blue-600"
+        : "bg-red-500 hover:bg-red-600"
+    } text-white transition text-sm px-5 py-3 rounded-md`}
+    disabled={isLoading}
+  >
+    {news.isArchived ? "Unarchive" : "Archive"}
+  </button>
+)}
+
+  <button
+    onClick={() => openEdit(news)}
+    className="bg-yellow-400 text-yellow-800 hover:bg-yellow-300 transition text-sm px-5 py-3 rounded-md"
+  >
+    Edit
+  </button>
+</div>
+
                 </div>
               </div>
 
