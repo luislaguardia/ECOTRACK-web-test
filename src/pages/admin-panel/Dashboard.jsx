@@ -28,6 +28,7 @@ const Dashboard = () => {
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportType, setExportType] = useState(null);
   const [usageData, setUsageData] = useState([]);
+  const [deviceData, setDeviceData] = useState([]);
 
   const [prevTotalUsers, setPrevTotalUsers] = useState(1);
   const [prevVerifiedUsers, setPrevVerifiedUsers] = useState(1);
@@ -44,6 +45,7 @@ const Dashboard = () => {
         fetchUserCount(),
         fetchNewsCount(),
         fetchUsageData(),
+        fetchDeviceData(),
       ]);
       setIsLoading(false);
     };
@@ -97,6 +99,19 @@ const Dashboard = () => {
     }
   };
 
+  const fetchDeviceData = async () => {
+    try {
+      const res = await axios.get(`${BASE_URL}/api/plugs/appliance-stats`);
+      const formatted = Object.entries(res.data).map(([name, value]) => ({
+        name,
+        value,
+      }));
+      setDeviceData(formatted);
+    } catch (err) {
+      console.error("Error fetching device data:", err);
+    }
+  };
+
   const handleExportClick = (type) => {
     setExportType(type);
     setShowExportModal(true);
@@ -104,7 +119,7 @@ const Dashboard = () => {
 
   const performExport = async () => {
     if (exportType === "csv") exportCSV();
-    else if (exportType === "pdf") await exportPDF(); // ✅ await this
+    else if (exportType === "pdf") await exportPDF();
     setShowExportModal(false);
   };
 
@@ -127,31 +142,20 @@ const Dashboard = () => {
 
   const exportPDF = () => {
     const doc = new jsPDF();
-  
     doc.setFontSize(18);
     doc.text("EcoTrack Dashboard Report", 14, 20);
-  
     doc.setFontSize(12);
     doc.text(`Total Users: ${totalUsers}`, 14, 40);
     doc.text(`Verified Users: ${verifiedUsers}`, 14, 50);
     doc.text(`Total News Posted: ${totalNews}`, 14, 60);
     doc.text(`New Users Today: ${newUsersToday}`, 14, 70);
     doc.text(`New Users This Week: ${newUsersThisWeek}`, 14, 80);
-  
     doc.text("Energy Usage (kWh):", 14, 100);
     usageData.forEach((item, index) => {
       doc.text(`${item.month}: ${item.kWh} kWh`, 20, 110 + index * 10);
     });
-  
     doc.save("dashboard_metrics.pdf");
   };
-
-  const deviceData = [
-    { name: "Air Conditioners", value: 35 },
-    { name: "Refrigerators", value: 25 },
-    { name: "Water Heaters", value: 20 },
-    { name: "Other", value: 20 },
-  ];
 
   return (
     <div ref={dashboardRef} className="min-h-screen bg-[#F5F5F5]">
@@ -180,7 +184,7 @@ const Dashboard = () => {
               </button>
             </div>
           </div>
-  
+
           {/* Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white p-6 rounded-lg border border-gray-200">
@@ -192,7 +196,6 @@ const Dashboard = () => {
                 </span>
               </div>
             </div>
-  
             <div className="bg-white p-6 rounded-lg border border-gray-200">
               <h4 className="text-lg text-gray-500 font-inter">Total News Posted</h4>
               <div className="flex items-center justify-between">
@@ -202,7 +205,6 @@ const Dashboard = () => {
                 </span>
               </div>
             </div>
-  
             <div className="bg-white p-6 rounded-lg border border-gray-200">
               <h4 className="text-lg text-gray-500 font-inter">Verified Users</h4>
               <div className="flex items-center justify-between">
@@ -213,7 +215,7 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
-  
+
           {/* Charts */}
           <div className="flex flex-col md:flex-row gap-6">
             <div className="bg-white p-6 rounded-lg border flex-1 border-gray-200">
@@ -232,7 +234,6 @@ const Dashboard = () => {
                 </ResponsiveContainer>
               </div>
             </div>
-  
             <div className="bg-white p-6 rounded-lg border w-full md:w-[35%] border-gray-200">
               <h4 className="text-xl font-semibold text-gray-700 mb-4 font-inter">Device Distribution</h4>
               <div className="w-full h-[300px] flex items-center justify-center mt-12">
@@ -258,7 +259,7 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
-  
+
           {/* Export Modal */}
           {showExportModal && (
             <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm flex items-center justify-center z-50">
@@ -268,7 +269,7 @@ const Dashboard = () => {
                 </div>
                 <div className="p-6">
                   <p className="text-gray-700 mb-4">
-                    Are you sure you want to export the dashboard data as{" "}
+                    Are you sure you want to export the dashboard data as {" "}
                     <strong>{exportType?.toUpperCase()}</strong>?
                   </p>
                   <div className="flex justify-end gap-4">
@@ -292,6 +293,7 @@ const Dashboard = () => {
         </>
       )}
     </div>
-  )};
+  );
+};
 
 export default Dashboard;
