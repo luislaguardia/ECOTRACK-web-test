@@ -13,6 +13,10 @@ import { FaChevronDown } from 'react-icons/fa';
 import { BASE_URL } from "../../config";
 
 const Users = () => {
+  const [isUpdating, setIsUpdating] = useState(false);
+  // const [exportingType, setExportingType] = useState(null); // "csv", "pdf", or null
+  const [exportingType, setExportingType] = useState(null); // used to show Confirm button loading // here
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState([]);
   const [metrics, setMetrics] = useState({
@@ -37,7 +41,7 @@ const Users = () => {
   const [barangays, setBarangays] = useState([]);
   const [selectedBarangay, setSelectedBarangay] = useState('');
   const [showExportModal, setShowExportModal] = useState(false);
-  const [exportType, setExportType] = useState(null);
+  const [exportType, setExportType] = useState(null); // here
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
 
@@ -127,6 +131,7 @@ const Users = () => {
   };
 
   const handleUpdate = async () => {
+    setIsUpdating(true); // Start spinner
     try {
       const token = localStorage.getItem("token");
       const updateData = {
@@ -135,11 +140,11 @@ const Users = () => {
         barangay: formData.location,
         isVerified: formData.status === "Active",
       };
-
+  
       await axios.put(`${BASE_URL}/api/users/${editingUser}`, updateData, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
+  
       setEditingUser(null);
       setFormData({
         name: "",
@@ -148,11 +153,13 @@ const Users = () => {
         devices: "",
         status: "Active",
       });
-
+  
       fetchUsers();
     } catch (err) {
       console.error(err.response?.data || err.message);
       alert("Update failed");
+    } finally {
+      setIsUpdating(false); // End spinner
     }
   };
 
@@ -168,20 +175,19 @@ const Users = () => {
 
   const confirmDeleteUser = async () => {
     if (!userToDelete) return;
+    setIsDeleting(true); // Start spinner
     try {
       const token = localStorage.getItem("token");
-      // await axios.delete(`${BASE_URL}/api/users/${userToDelete}`, {
-      //   headers: { Authorization: `Bearer ${token}` },
-      // });
       await axios.put(`${BASE_URL}/api/users/${userToDelete}`, { isArchived: true }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      // alert("User deleted!");
       fetchUsers();
       closeDeleteModal();
     } catch (err) {
       console.error("Error deleting user:", err.response?.data || err.message);
       alert("Delete failed");
+    } finally {
+      setIsDeleting(false); // Stop spinner
     }
   };
 
@@ -190,38 +196,54 @@ const Users = () => {
     return normalizedStatus === "active" ? "text-green-600" : "text-red-600";
   };
 
-  const exportToCSV = () => {
-    const csvRows = [
-      ["UserID", "Name", "Email", "Location", "Status"],
-      ...filteredUsers.map((u) => [
-        u._id,
-        u.name,
-        u.email,
-        u.location,
-        u.status,
-      ]),
-    ];
-    const csvContent = csvRows.map((row) => row.join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "users.csv";
-    link.click();
+  const exportToCSV = async () => {
+    setExportingType("csv");
+    try {
+      const csvRows = [
+        ["UserID", "Name", "Email", "Location", "Status"],
+        ...filteredUsers.map((u) => [
+          u._id,
+          u.name,
+          u.email,
+          u.location,
+          u.status,
+        ]),
+      ];
+      const csvContent = csvRows.map((row) => row.join(",")).join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "users.csv";
+      link.click();
+    } catch (err) {
+      console.error("CSV export failed:", err);
+    } finally {
+      setExportingType(null);
+      setShowExportModal(false);
+    }
   };
-
-  const exportToPDF = () => {
-    const doc = new jsPDF();
-    autoTable(doc, {
-      head: [["UserID", "Name", "Email", "Location", "Status"]],
-      body: filteredUsers.map((u) => [
-        u._id,
-        u.name,
-        u.email,
-        u.location,
-        u.status,
-      ]),
-    });
-    doc.save("users.pdf");
+  
+  const exportToPDF = async () => {
+    setExportingType("pdf");
+    try {
+      const doc = new jsPDF();
+      autoTable(doc, {
+        head: [["UserID", "Name", "Email", "Location", "Status"]],
+        body: filteredUsers.map((u) => [
+          u._id,
+          u.name,
+          u.email,
+          u.location,
+          u.status,
+        ]),
+      });
+      doc.save("users.pdf");
+    } catch (err) {
+      console.error("PDF export failed:", err);
+    } finally {
+      setExportingType(null);
+      setShowExportModal(false);
+    }
   };
 
   return (
@@ -405,15 +427,36 @@ const Users = () => {
                   Cancel
                 </button>
                 <button
-                  onClick={() => {
-                    if (exportType === "csv") exportToCSV();
-                    else if (exportType === "pdf") exportToPDF();
-                    setShowExportModal(false);
-                  }}
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition"
-                >
-                  Confirm
-                </button>
+  onClick={() => {
+    if (exportType === "csv") exportToCSV();
+    else if (exportType === "pdf") exportToPDF();
+  }}
+  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition flex items-center justify-center gap-2"
+  disabled={exportingType !== null}
+>
+  {exportingType ? (
+    <>
+      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+        ></circle>
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8v8z"
+        ></path>
+      </svg>
+      Exporting...
+    </>
+  ) : (
+    "Confirm"
+  )}
+</button>
               </div>
             </div>
           </div>
@@ -442,12 +485,35 @@ const Users = () => {
                 >
                   Cancel
                 </button>
+                
                 <button
-                  onClick={confirmDeleteUser}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition"
-                >
-                  Delete
-                </button>
+  onClick={confirmDeleteUser}
+  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition flex items-center justify-center gap-2"
+  disabled={isDeleting}
+>
+  {isDeleting ? (
+    <>
+      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+        ></circle>
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8v8z"
+        ></path>
+      </svg>
+      Deleting...
+    </>
+  ) : (
+    "Delete"
+  )}
+</button>
               </div>
             </div>
           </div>
@@ -521,11 +587,33 @@ const Users = () => {
                 Cancel
               </button>
               <button
-                onClick={handleUpdate}
-                className="bg-green-600 text-white ml-2 px-6 py-2 rounded-md hover:bg-green-700 transition" 
-              >
-                Update
-              </button>
+  onClick={handleUpdate}
+  className="bg-green-600 text-white ml-2 px-6 py-2 rounded-md hover:bg-green-700 transition flex items-center justify-center gap-2"
+  disabled={isUpdating}
+>
+  {isUpdating ? (
+    <>
+      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+        />
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8v8z"
+        />
+      </svg>
+      Updating...
+    </>
+  ) : (
+    "Update"
+  )}
+</button>
             </div>
           </div>
         </div>
