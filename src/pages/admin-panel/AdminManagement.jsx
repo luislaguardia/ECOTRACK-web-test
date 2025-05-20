@@ -28,17 +28,25 @@ export default function AdminManagement() {
   }, []);
 
   const fetchAdmins = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setMessage("No token found.");
+      return;
+    }
+  
     setIsLoading(true);
     try {
       const res = await axios.get(`${BASE_URL}/api/auth/admin/all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setAdmins(res.data);
-      setFiltered(res.data);
+  
+      const data = res.data || [];
+      setAdmins(data);
+      setFiltered(data);
     } catch (err) {
       console.error("Fetch error:", err);
       setMessage("Failed to fetch admins.");
-    }finally {
+    } finally {
       setIsLoading(false);
     }
   };
@@ -54,21 +62,26 @@ export default function AdminManagement() {
     setFiltered(results);
   };
 
+
+
   const deleteAdmin = async () => {
     try {
       await axios.delete(`${BASE_URL}/api/auth/admin/${adminIdToDelete}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setMessage("Admin deleted.");
-      fetchAdmins();
+  
+      setAdmins((prev) => prev.filter((a) => a._id !== adminIdToDelete));
+      setFiltered((prev) => prev.filter((a) => a._id !== adminIdToDelete));
+      setMessage("Admin archived.");
     } catch (err) {
-      console.error("Delete error:", err);
-      setMessage("Delete failed.");
+      console.error("Archive error:", err);
+      setMessage("Failed to archive admin.");
     } finally {
       setShowDeleteModal(false);
       setAdminIdToDelete(null);
     }
   };
+
 
   const startEdit = (admin) => {
     setEditingId(admin._id);
@@ -288,14 +301,15 @@ const exportAdminsToCSV = () => {
                     <FiEdit className="w-4 h-4" />
                   </button>
                   <button
-                    className="text-red-500 hover:text-red-700"
-                    onClick={() => {
-                      setAdminIdToDelete(admin._id);
-                      setShowDeleteModal(true);
-                    }}
-                  >
-                    <FiTrash2 className="w-4 h-4" />
-                  </button>
+  title="Archive Admin"
+  className="text-red-500 hover:text-red-700"
+  onClick={() => {
+    setAdminIdToDelete(admin._id);
+    setShowDeleteModal(true);
+  }}
+>
+  <FiTrash2 className="w-4 h-4" />
+</button>
                 </div>
               )}
             </td>
@@ -331,12 +345,12 @@ const exportAdminsToCSV = () => {
         <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm flex items-center justify-center z-50 transition duration-300 ease-in-out">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
             <div className="bg-[#0A8F28] rounded-t-lg py-3 px-6">
-              <h3 className="text-lg font-semibold text-white">Confirm Delete</h3>
+            <h3 className="text-lg font-semibold text-white">Confirm Archive</h3>              
             </div>
             <div className="p-6">
-              <p className="text-gray-700 mb-4">
-                Are you sure you want to delete this admin?
-              </p>
+            <p className="text-gray-700 mb-4">
+  Are you sure you want to archive this admin? They will no longer appear in the list.
+</p>
             </div>
             <div className="flex justify-end gap-4 mb-6 mr-5">
               <button
@@ -349,11 +363,11 @@ const exportAdminsToCSV = () => {
                 Cancel
               </button>
               <button
-                onClick={deleteAdmin}
-                className="px-6 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
-              >
-                Delete
-              </button>
+  onClick={deleteAdmin}
+  className="px-6 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+>
+  Archive
+</button>
             </div>
           </div>
         </div>

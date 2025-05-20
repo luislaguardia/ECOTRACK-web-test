@@ -46,6 +46,7 @@ const HomePageNavBar = () => {
       src="/images/ecotracklogofinal.png"
       alt="EcoTrack Logo"
       className="h-8 w-auto lg:h-10"
+      onClick={() => navigate("/")}
     />
   </Link>
   </div>
