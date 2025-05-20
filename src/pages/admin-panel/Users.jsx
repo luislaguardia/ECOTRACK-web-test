@@ -170,10 +170,13 @@ const Users = () => {
     if (!userToDelete) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`${BASE_URL}/api/users/${userToDelete}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      // await axios.delete(`${BASE_URL}/api/users/${userToDelete}`, {
+      //   headers: { Authorization: `Bearer ${token}` },
+      // });
+      await axios.put(`${BASE_URL}/api/users/${userToDelete}`, { isArchived: true }, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-      alert("User deleted!");
+      // alert("User deleted!");
       fetchUsers();
       closeDeleteModal();
     } catch (err) {
@@ -304,7 +307,7 @@ const Users = () => {
 ) : (
 
 <div
-  className="overflow-x-auto bg-white rounded-lg shadow border border-gray-200 max-h-[350px] overflow-y-auto text-xs sm:text-sm"
+  className="overflow-x-auto bg-white rounded-lg shadow border border-gray-200 max-h-[370px] overflow-y-auto text-xs sm:text-sm"
 >
   <table className="min-w-full table-auto">
     <thead className="bg-[#F5F5F5] border-b border-gray-200">
