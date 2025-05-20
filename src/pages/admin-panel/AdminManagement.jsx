@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { FiSearch, FiEdit, FiTrash2 } from "react-icons/fi";
+import { FiSearch, FiEdit, FiTrash2, FiArchive } from "react-icons/fi";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { BASE_URL } from "../../config";
@@ -8,6 +8,13 @@ import { BASE_URL } from "../../config";
 export default function AdminManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
+  
+  const [savingEditId, setSavingEditId] = useState(null);
+  const [archivingId, setArchivingId] = useState(null);
+  
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportType, setExportType] = useState(null); // "csv" or "pdf"
+  const [isExporting, setIsExporting] = useState(false);
 
   const [admins, setAdmins] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -45,7 +52,7 @@ export default function AdminManagement() {
       setFiltered(data);
     } catch (err) {
       console.error("Fetch error:", err);
-      setMessage("Failed to fetch admins.");
+      setMessage("Failed to fetch admins");
     } finally {
       setIsLoading(false);
     }
@@ -65,6 +72,8 @@ export default function AdminManagement() {
 
 
   const deleteAdmin = async () => {
+    if (!adminIdToDelete) return;
+    setArchivingId(adminIdToDelete);
     try {
       await axios.delete(`${BASE_URL}/api/auth/admin/${adminIdToDelete}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -72,13 +81,14 @@ export default function AdminManagement() {
   
       setAdmins((prev) => prev.filter((a) => a._id !== adminIdToDelete));
       setFiltered((prev) => prev.filter((a) => a._id !== adminIdToDelete));
-      setMessage("Admin archived.");
+      setMessage("Admin archived");
     } catch (err) {
       console.error("Archive error:", err);
-      setMessage("Failed to archive admin.");
+      setMessage("Failed to archive admin");
     } finally {
       setShowDeleteModal(false);
       setAdminIdToDelete(null);
+      setArchivingId(null);
     }
   };
 
@@ -94,16 +104,20 @@ export default function AdminManagement() {
   };
 
   const saveEdit = async (id) => {
+    setSavingEditId(id); // start spinner
     try {
       await axios.put(`${BASE_URL}/api/auth/admin/${id}`, editValues, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setMessage("Updated successfully.");
+      setMessage("Updated successfully");
       cancelEdit();
       fetchAdmins();
     } catch (err) {
       console.error("Edit error:", err);
-      setMessage("Failed to update.");
+      setMessage("Failed to update");
+    } finally {
+      setSavingEditId(null); // stop spinner
+      cancelEdit();
     }
   };
 
@@ -126,58 +140,44 @@ export default function AdminManagement() {
     }
   };
 
-const exportAdminsToCSV = () => {
-  if (!filtered.length) {
-    alert("No admin data to export.");
-    return;
-  }
-
-  const headers = ["#", "Username", "Email", "Role"];
-  const rows = filtered.map((admin, index) => [
-    index + 1,
-    admin.name || "",
-    admin.email || "",
-    admin.role || "admin",
-  ]);
-
-  const csvContent =
-    "data:text/csv;charset=utf-8," +
-    [headers, ...rows]
-      .map((row) =>
-        row
-          .map((field) => `"${field.toString().replace(/"/g, '""')}"`)
-          .join(",")
-      )
-      .join("\n");
-
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", "admins.csv");
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
-
-  const exportAdminsToPDF = () => {
-    const doc = new jsPDF();
+  const exportToCSV = async () => {
+    setIsExporting(true);
+    try {
+      const csvRows = [
+        ["Name", "Email", "Role"],
+        ...admins.map((a) => [a.name, a.email, a.role]),
+      ];
+      const csvContent = csvRows.map((row) => row.join(",")).join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "admins.csv";
+      link.click();
+    } catch (err) {
+      console.error("CSV export failed:", err);
+      alert("CSV export failed");
+    } finally {
+      setIsExporting(false);
+      setShowExportModal(false);
+    }
+  };
   
-    doc.setFontSize(16);
-    doc.text("Admin List", 14, 20);
-  
-    autoTable(doc, {
-      startY: 30,
-      head: [["#", "Username", "Email", "Role"]],
-      body: filtered.map((admin, index) => [
-        index + 1,
-        admin.name,
-        admin.email,
-        admin.role || "admin",
-      ]),
-    });
-  
-    doc.save("admins.pdf");
+  const exportToPDF = async () => {
+    setIsExporting(true);
+    try {
+      const doc = new jsPDF();
+      autoTable(doc, {
+        head: [["Name", "Email", "Role"]],
+        body: admins.map((a) => [a.name, a.email, a.role]),
+      });
+      doc.save("admins.pdf");
+    } catch (err) {
+      console.error("PDF export failed:", err);
+      alert("PDF export failed");
+    } finally {
+      setIsExporting(false);
+      setShowExportModal(false);
+    }
   };
 
   return (
@@ -278,12 +278,23 @@ const exportAdminsToCSV = () => {
                 <div className="text-gray-400 italic">Protected</div>
               ) : editingId === admin._id ? (
                 <div className="flex justify-center gap-2">
-                  <button
-                    onClick={() => saveEdit(admin._id)}
-                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md"
-                  >
-                    Save
-                  </button>
+<button
+  onClick={() => saveEdit(admin._id)}
+  disabled={savingEditId === admin._id}
+  className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 flex items-center justify-center gap-2"
+>
+  {savingEditId === admin._id ? (
+    <>
+      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+      </svg>
+      Saving...
+    </>
+  ) : (
+    "Save"
+  )}
+</button>
                   <button
                     onClick={cancelEdit}
                     className="px-4 py-2 border border-gray-400 text-gray-700 rounded-md hover:bg-gray-100 transition"
@@ -308,7 +319,7 @@ const exportAdminsToCSV = () => {
     setShowDeleteModal(true);
   }}
 >
-  <FiTrash2 className="w-4 h-4" />
+  <FiArchive className="w-4 h-4" />
 </button>
                 </div>
               )}
@@ -325,20 +336,69 @@ const exportAdminsToCSV = () => {
 
 
 <div className="flex justify-end mt-4 gap-2">
-  <button
-    onClick={exportAdminsToCSV}
-    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all font-inter"
-  >
-    Export CSV
-  </button>
-  <button
-    onClick={exportAdminsToPDF}
-    className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all font-inter"
-  >
-    Export PDF
-  </button>
+<button
+  onClick={() => {
+    setExportType("csv");
+    setShowExportModal(true);
+  }}
+  className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
+>
+  Export CSV
+</button>
+
+<button
+  onClick={() => {
+    setExportType("pdf");
+    setShowExportModal(true);
+  }}
+  className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition"
+>
+  Export PDF
+</button>
 </div>
 
+{showExportModal && (
+  <div className="fixed inset-0 bg-blur backdrop-blur-sm flex items-center justify-center z-50">
+    <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
+      <div className="bg-green-600 text-white px-6 py-4 rounded-t-lg">
+        <h2 className="text-lg font-semibold">Confirm Export</h2>
+      </div>
+      <div className="px-6 py-6">
+        <p className="mb-6 text-gray-700">
+          Are you sure you want to export the admin data as{" "}
+          <strong>{exportType?.toUpperCase()}</strong>?
+        </p>
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={() => setShowExportModal(false)}
+            className="px-4 py-2 border border-gray-400 rounded-md text-gray-700 hover:bg-gray-100 transition"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() =>
+              exportType === "csv" ? exportToCSV() : exportToPDF()
+            }
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition flex items-center justify-center gap-2"
+            disabled={isExporting}
+          >
+            {isExporting ? (
+              <>
+                <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                </svg>
+                Exporting...
+              </>
+            ) : (
+              "Confirm"
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 {/* mew */}
       {/* Delete Modal */}
       {showDeleteModal && (
@@ -364,9 +424,18 @@ const exportAdminsToCSV = () => {
               </button>
               <button
   onClick={deleteAdmin}
-  className="px-6 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+  disabled={archivingId === adminIdToDelete}
+  className={`px-6 py-2 rounded-md text-white transition-colors flex items-center justify-center ${
+    archivingId === adminIdToDelete
+      ? "bg-red-400 cursor-not-allowed"
+      : "bg-red-500 hover:bg-red-600"
+  }`}
 >
-  Archive
+  {archivingId === adminIdToDelete ? (
+    <div className="h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin" />
+  ) : (
+    "Archive"
+  )}
 </button>
             </div>
           </div>
@@ -428,6 +497,9 @@ const exportAdminsToCSV = () => {
     </div>
   </div>
 )}
+
     </div>
   );
+
+  
 }
