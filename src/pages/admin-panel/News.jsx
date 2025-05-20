@@ -390,18 +390,18 @@ const News = () => {
                 </div>
               </div>
 
-              <div className="md:w-[300px] h-[220px] mr-5">
-                <div className="h-full w-full bg-gray-100 border-l border-gray-300 rounded-r-lg overflow-hidden shadow-md">
-                  <img
-                    src={news.image}
-                    alt={news.title}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                    onError={(e) => {
-                      e.target.src = "https://via.placeholder.com/300x220?text=No+Image";
-                    }}
-                  />
-                </div>
-            </div>
+              <div className="flex justify-center items-center md:w-[300px] h-auto p-4">
+  <div className="w-full h-[220px] bg-gray-100 border-l border-gray-300 rounded-r-lg overflow-hidden shadow-md">
+    <img
+      src={news.image}
+      alt={news.title}
+      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+      onError={(e) => {
+        e.target.src = "https://via.placeholder.com/300x220?text=No+Image";
+      }}
+    />
+  </div>
+</div>
             </div>
           ))}
         </div>
