@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { FiSearch } from 'react-icons/fi';
+import { FiSearch } from "react-icons/fi";
 import { BASE_URL } from "../../config";
-import { FaChevronDown } from 'react-icons/fa';
+import { FaChevronDown } from "react-icons/fa";
+
+// deletes are not used
+// but to be used hahaha, for soft delete
 
 const News = () => {
   const [deletingNewsId, setDeletingNewsId] = useState(null);
@@ -19,7 +22,7 @@ const News = () => {
     content: "",
     image: "",
     category: "general",
-    isDraft: false
+    isDraft: false,
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -73,10 +76,10 @@ const News = () => {
       } else if (editingNewsId) {
         setIsUpdating(true); // Edit + update (whether draft or published)
       }
-  
+
       const token = localStorage.getItem("token");
       const data = { ...formData, status };
-  
+
       if (editingNewsId) {
         await axios.put(`${BASE_URL}/api/news/${editingNewsId}`, data, {
           headers: { Authorization: `Bearer ${token}` },
@@ -86,9 +89,9 @@ const News = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
-  
+
       await fetchNews();
-  
+
       // Reset form + modal
       setFormData({
         title: "",
@@ -101,7 +104,10 @@ const News = () => {
       setShowModal(false);
       setError("");
     } catch (err) {
-      console.error("Failed to submit news:", err.response?.data || err.message);
+      console.error(
+        "Failed to submit news:",
+        err.response?.data || err.message
+      );
       setError("Failed to submit news. Please try again.");
     } finally {
       setIsPublishing(false);
@@ -163,18 +169,23 @@ const News = () => {
 
   const filteredNews = newsList.filter((news) => {
     const searchMatch = news.title.toLowerCase().includes(search.toLowerCase());
-    const categoryMatch = filterCategory === "all" || news.category === filterCategory;
+    const categoryMatch =
+      filterCategory === "all" || news.category === filterCategory;
     return searchMatch && categoryMatch;
   });
 
   const handlePublish = async (newsId) => {
     try {
       setIsLoading(true);
-      await axios.put(`${BASE_URL}/api/news/${newsId}`, { isDraft: false }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await axios.put(
+        `${BASE_URL}/api/news/${newsId}`,
+        { isDraft: false },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       fetchNews();
     } catch (err) {
       console.error("Publish failed:", err);
@@ -183,7 +194,6 @@ const News = () => {
       setIsLoading(false);
     }
   };
-
 
   const handleArchiveToggle = async (newsId, shouldArchive) => {
     try {
@@ -226,20 +236,19 @@ const News = () => {
             onChange={(e) => setFilterCategory(e.target.value)}
             className="shadow-sm border border-gray-500 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#0A8F28] font-inter py-2 px-4 cursor-pointer appearance-none pr-8 w-full md:w-[250px]"
           >
-{Object.entries(categoryLabels).map(([value, label]) => (
-  <option key={value} value={value}>{label}</option>
-))}
+            {Object.entries(categoryLabels).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
           </select>
 
-
-{/* asis */}
+          {/* asis */}
           <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
             <FaChevronDown className="text-gray-500" />
           </div>
         </div>
-{/* asis */}
-
-
+        {/* asis */}
 
         <button
           onClick={() => {
@@ -249,7 +258,7 @@ const News = () => {
               content: "",
               image: "",
               category: "general",
-              isDraft: false
+              isDraft: false,
             });
             setEditingNewsId(null);
           }}
@@ -270,66 +279,68 @@ const News = () => {
           <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-green-600"></div>
         </div>
       ) : filteredNews.length === 0 ? (
-
-<div className="bg-gray-50 p-8 rounded-lg">
-  <h3 className="mt-4 text-lg font-medium text-gray-900 mb-6">
-    No news items found
-  </h3>
-  <div className="text-left">
-    <button
-      onClick={() => setShowModal(true)}
-      className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-all font-inter"
-    >
-      + Add News
-    </button>
-  </div>
-</div>
-
+        <div className="bg-gray-50 p-8 rounded-lg">
+          <h3 className="mt-4 text-lg font-medium text-gray-900 mb-6">
+            No news items found
+          </h3>
+          <div className="text-left">
+            <button
+              onClick={() => setShowModal(true)}
+              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-all font-inter"
+            >
+              + Add News
+            </button>
+          </div>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-6">
           {filteredNews.map((news) => (
             <div
-  key={news._id}
-  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition duration-300 flex flex-col-reverse md:flex-row min-h-[300px]"
->
+              key={news._id}
+              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition duration-300 flex flex-col-reverse md:flex-row min-h-[300px]"
+            >
+              {/* Text Content - Left Side */}
 
-                      {/* Text Content - Left Side */}
-
-                <div className="p-6 flex flex-col ml-15 flex-grow md:w-2/3 overflow-y-auto">
-                  {/* Category Tag */}
-                  <span className={`
+              <div className="p-6 flex flex-col ml-15 flex-grow md:w-2/3 overflow-y-auto">
+                {/* Category Tag */}
+                <span
+                  className={`
                     inline-block text-base font-semibold px-4 py-1 rounded mb-3 w-fit
-                    ${news.category === "brownout"
-                      ? "bg-red-100 text-red-600"
-                      : news.category === "maintenance"
-                      ? "bg-yellow-100 text-yellow-700"
-                      : "bg-green-100 text-green-700"}
-                  `}>
-                    {categoryLabels[news.category] || news.category}
+                    ${
+                      news.category === "brownout"
+                        ? "bg-red-100 text-red-600"
+                        : news.category === "maintenance"
+                        ? "bg-yellow-100 text-yellow-700"
+                        : "bg-green-100 text-green-700"
+                    }
+                  `}
+                >
+                  {categoryLabels[news.category] || news.category}
+                </span>
+
+                <div className="flex items-center gap-3">
+                  <h3 className="text-2xl font-bold text-gray-700 line-clamp-2 mb-1">
+                    {news.title}
+                  </h3>
+
+                  {/* Status Pill */}
+                  <span
+                    className={`text-sm font-medium px-2 py-1 rounded ${
+                      news.isArchived
+                        ? "bg-gray-500 text-white"
+                        : news.status === "draft"
+                        ? "bg-yellow-400 text-white"
+                        : "bg-green-600 text-white"
+                    }`}
+                  >
+                    {news.isArchived
+                      ? "Archived"
+                      : news.status === "draft"
+                      ? "Draft"
+                      : "Published"}
                   </span>
+                </div>
 
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-2xl font-bold text-gray-700 line-clamp-2 mb-1">
-                      {news.title}
-                    </h3>
-
-                    {/* Status Pill */}
-                    <span className={`text-sm font-medium px-2 py-1 rounded ${
-  news.isArchived
-    ? 'bg-gray-500 text-white'
-    : news.status === "draft"
-    ? 'bg-yellow-400 text-white'
-    : 'bg-green-600 text-white'
-}`}>
-  {news.isArchived
-    ? 'Archived'
-    : news.status === "draft"
-    ? 'Draft'
-    : 'Published'}
-</span>
-                  </div>
-
-  
                 <span className="text-sm font-normal text-gray-400 whitespace-nowrap block mb-5">
                   {formatDate(news.createdAt)}
                 </span>
@@ -346,55 +357,44 @@ const News = () => {
                       {isLoading ? "Publishing..." : "Publish"}
                     </button>
                   )}
-                  
-<div className="flex justify-start gap-2 mt-auto">
-{news.isDraft ? null : (
-  <button
-    onClick={() => handleArchiveToggle(news._id, !news.isArchived)}
-    className={`${
-      news.isArchived
-        ? "bg-blue-500 hover:bg-blue-600"
-        : "bg-red-500 hover:bg-red-600"
-    } text-white transition text-sm px-5 py-3 rounded-md`}
-    disabled={isLoading}
-  >
-    {news.isArchived ? "Unarchive" : "Archive"}
-  </button>
-)}
 
-  <button
-    onClick={() => openEdit(news)}
-    className="bg-yellow-400 text-yellow-800 hover:bg-yellow-300 transition text-sm px-5 py-3 rounded-md"
-  >
-    Edit
-  </button>
-</div>
+                  <div className="flex justify-start gap-2 mt-auto">
+                    {news.status === "published" && (
+                      <button
+                        onClick={() => handleArchiveToggle(news._id, !news.isArchived)}
+                        className={`${
+                          news.isArchived
+                            ? "bg-blue-500 hover:bg-blue-600"
+                            : "bg-red-500 hover:bg-red-600"
+                        } text-white transition text-sm px-5 py-3 rounded-md`}
+                        disabled={isLoading}
+                      >
+                        {news.isArchived ? "Unarchive" : "Archive"}
+                      </button>
+                    )}
 
+                    <button
+                      onClick={() => openEdit(news)}
+                      className="bg-yellow-400 text-yellow-800 hover:bg-yellow-300 transition text-sm px-5 py-3 rounded-md"
+                    >
+                      Edit
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              {/* Image Container - Right Side */}
-              {/* {news.image && (
-                <div className="md:w-1/3 h-full flex flex-col mr-5">
-                  <div className="flex-1 relative overflow-hidden bg-gray-100 mt-4 mb-4 rounded-r-lg shadow-md hover:shadow-lg transition-shadow duration-300 border-2 border-gray-500">
-                    <img
-                      src={news.image}
-                      alt={news.title}
-                      className="absolute inset-0 w-full h-full object-cover transition duration-300 hover:scale-105"
-                    />
-                  </div>
+              <div className="md:w-[300px] h-[220px] mr-5">
+                <div className="h-full w-full bg-gray-100 border-l border-gray-300 rounded-r-lg overflow-hidden shadow-md">
+                  <img
+                    src={news.image}
+                    alt={news.title}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    onError={(e) => {
+                      e.target.src = "https://via.placeholder.com/300x220?text=No+Image";
+                    }}
+                  />
                 </div>
-              )} */}
-<div className="md:w-1/3 h-[220px] flex flex-col mr-5">
-  <div className="flex-1 relative overflow-hidden bg-gray-100 rounded-r-lg shadow-md transition-shadow duration-300 border-l border-gray-300">
-    <img
-      src={news.image}
-      alt={news.title}
-      className="w-full h-full object-cover rounded-r-lg"
-    />
-  </div>
-</div>
-
+            </div>
             </div>
           ))}
         </div>
@@ -446,27 +446,31 @@ const News = () => {
                 />
               </div>
 
-<div className="relative">
-  <label className="block text-sm font-medium text-gray-700 mb-1">
-    Category
-  </label>
-  <select
-  value={formData.category}
-  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-  className="shadow-sm border border-gray-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#0A8F28] font-inter py-2 px-4 cursor-pointer appearance-none pr-8 w-full"
->
-  {Object.entries(categoryLabels)
-    .filter(([key]) => key !== "all") // ⛔ Exclude "all"
-    .map(([value, label]) => (
-      <option key={value} value={value}>{label}</option>
-  ))}
-</select>
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Category
+                </label>
+                <select
+                  value={formData.category}
+                  onChange={(e) =>
+                    setFormData({ ...formData, category: e.target.value })
+                  }
+                  className="shadow-sm border border-gray-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#0A8F28] font-inter py-2 px-4 cursor-pointer appearance-none pr-8 w-full"
+                >
+                  {Object.entries(categoryLabels)
+                    .filter(([key]) => key !== "all") // ⛔ Exclude "all"
+                    .map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                </select>
 
-  {/* Fix arrow */}
-  <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-    <FaChevronDown className="text-gray-500 text-sm" />
-  </div>
-</div>
+                {/* Fix arrow */}
+                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                  <FaChevronDown className="text-gray-500 text-sm" />
+                </div>
+              </div>
 
               {/* Image Upload or URL */}
               <div>
@@ -477,7 +481,9 @@ const News = () => {
                   <input
                     type="text"
                     placeholder="Or paste image URL"
-                    value={formData.image.startsWith("data:") ? "" : formData.image}
+                    value={
+                      formData.image.startsWith("data:") ? "" : formData.image
+                    }
                     onChange={(e) =>
                       setFormData({ ...formData, image: e.target.value })
                     }
@@ -500,7 +506,9 @@ const News = () => {
                     }}
                   />
                   <button
-                    onClick={() => document.getElementById('image-upload').click()}
+                    onClick={() =>
+                      document.getElementById("image-upload").click()
+                    }
                     className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     Upload
@@ -525,69 +533,61 @@ const News = () => {
                   />
                 </div>
               )}
-{/*  */}
-<div className="flex flex-wrap justify-end gap-3 pt-4">
-  <button
-    onClick={() => setShowModal(false)}
-    className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
-    disabled={isLoading}
-  >
-    Cancel
-  </button>
-   
-{editingNewsId && formData.isDraft && (
-  <button
-    onClick={() => handleSubmit("published")}
-    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-    disabled={isPublishing}
-  >
-    {isPublishing ? "Publishing..." : "Publish"}
-  </button>
-)}
+              {/*  */}
+              <div className="flex flex-wrap justify-end gap-3 pt-4">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+                  disabled={isLoading}
+                >
+                  Cancel
+                </button>
 
-  {/* Show update for any edit */}
-  {editingNewsId && (
-  <button
-    onClick={() => handleSubmit(formData.status)}
-    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-    disabled={isUpdating}
-  >
-    {isUpdating ? "Updating..." : "Update"}
-  </button>
-)}
+                {editingNewsId && formData.isDraft && (
+                  <button
+                    onClick={() => handleSubmit("published")}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                    disabled={isPublishing}
+                  >
+                    {isPublishing ? "Publishing..." : "Publish"}
+                  </button>
+                )}
 
+                {/* Show update for any edit */}
+                {editingNewsId && (
+                  <button
+                    onClick={() => handleSubmit(formData.status)}
+                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                    disabled={isUpdating}
+                  >
+                    {isUpdating ? "Updating..." : "Update"}
+                  </button>
+                )}
 
+                {/*  */}
 
+                {!editingNewsId && (
+                  <>
+                    {/* Save as Draft */}
+                    <button
+                      onClick={() => handleSubmit("draft")}
+                      className="px-6 py-2 bg-yellow-400 text-yellow-800 rounded-lg hover:bg-yellow-500 transition"
+                      disabled={isSavingDraft}
+                    >
+                      {isSavingDraft ? "Saving..." : "Save as Draft"}
+                    </button>
 
-
-
-{/*  */}
-
-
-  {!editingNewsId && (
-    <>
-{/* Save as Draft */}
-<button
-  onClick={() => handleSubmit("draft")}
-  className="px-6 py-2 bg-yellow-400 text-yellow-800 rounded-lg hover:bg-yellow-500 transition"
-  disabled={isSavingDraft}
->
-  {isSavingDraft ? "Saving..." : "Save as Draft"}
-</button>
-
-<button
-  onClick={() => handleSubmit("published")}
-  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-  disabled={isPublishing}
->
-  {isPublishing ? "Publishing..." : "Publish"}
-</button>
-    </>
-  )}
-</div>
-{/*  */}
-
-
+                    <button
+                      onClick={() => handleSubmit("published")}
+                      className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                      disabled={isPublishing}
+                    >
+                      {isPublishing ? "Publishing..." : "Publish"}
+                    </button>
+                  </>
+                )}
+              </div>
+              {/*  */}
             </div>
           </div>
         </div>
@@ -598,7 +598,9 @@ const News = () => {
         <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm flex items-center justify-center z-50 transition duration-300 ease-in-out">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
             <div className="bg-[#0A8F28] rounded-t-lg py-3 px-6">
-              <h3 className="text-lg font-semibold text-white">Confirm Delete</h3>
+              <h3 className="text-lg font-semibold text-white">
+                Confirm Delete
+              </h3>
             </div>
 
             <div className="p-6">
@@ -614,20 +616,20 @@ const News = () => {
                 Cancel
               </button>
               <button
-  onClick={handleDelete}
-  disabled={deletingNewsId === newsIdToDelete}
-  className={`px-6 py-2 rounded-md text-white transition-colors flex items-center justify-center ${
-    deletingNewsId === newsIdToDelete
-      ? "bg-red-400 cursor-not-allowed"
-      : "bg-red-500 hover:bg-red-600"
-  }`}
->
-  {deletingNewsId === newsIdToDelete ? (
-    <div className="h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin" />
-  ) : (
-    "Delete"
-  )}
-</button>
+                onClick={handleDelete}
+                disabled={deletingNewsId === newsIdToDelete}
+                className={`px-6 py-2 rounded-md text-white transition-colors flex items-center justify-center ${
+                  deletingNewsId === newsIdToDelete
+                    ? "bg-red-400 cursor-not-allowed"
+                    : "bg-red-500 hover:bg-red-600"
+                }`}
+              >
+                {deletingNewsId === newsIdToDelete ? (
+                  <div className="h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin" />
+                ) : (
+                  "Delete"
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -637,4 +639,3 @@ const News = () => {
 };
 
 export default News;
-
