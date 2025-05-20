@@ -66,10 +66,15 @@ const News = () => {
 
   const handleSubmit = async (status) => {
     try {
-      if (status === "draft") setIsSavingDraft(true);
-      else if (status === "published" && editingNewsId) setIsPublishing(true);
-      else if (editingNewsId) setIsUpdating(true); // regular update
+      if (status === "draft") {
+        setIsSavingDraft(true);
+      } else if (status === "published" && !editingNewsId) {
+        setIsPublishing(true); // New publish
+      } else if (editingNewsId) {
+        setIsUpdating(true); // Edit + update (whether draft or published)
+      }
   
+      const token = localStorage.getItem("token");
       const data = { ...formData, status };
   
       if (editingNewsId) {
@@ -83,6 +88,8 @@ const News = () => {
       }
   
       await fetchNews();
+  
+      // Reset form + modal
       setFormData({
         title: "",
         content: "",
@@ -92,8 +99,9 @@ const News = () => {
       });
       setEditingNewsId(null);
       setShowModal(false);
+      setError("");
     } catch (err) {
-      console.error("Failed to submit news:", err);
+      console.error("Failed to submit news:", err.response?.data || err.message);
       setError("Failed to submit news. Please try again.");
     } finally {
       setIsPublishing(false);
@@ -179,6 +187,7 @@ const News = () => {
 
 
   // --------------------------------------M---------------------------------------
+
   return (
     <div className="min-h-screen bg-[#F5F5F5]">
       <h2 className="text-3xl font-semibold font-inter text-gray-800 mb-5">
@@ -404,23 +413,25 @@ const News = () => {
                 />
               </div>
 
-              <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
-                </label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="shadow-sm border border-gray-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#0A8F28] font-inter py-2 px-4 cursor-pointer appearance-none pr-8 w-full"
-                >
-                  {Object.entries(categoryLabels).map(([value, label]) => (
-                    <option key={value} value={value}>{label}</option>
-                  ))}
-                </select>
-                <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
-                  <FaChevronDown className="text-gray-500" />
-                </div>
-              </div>
+<div className="relative">
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Category
+  </label>
+  <select
+    value={formData.category}
+    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+    className="shadow-sm border border-gray-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#0A8F28] font-inter py-2 px-4 cursor-pointer appearance-none pr-8 w-full"
+  >
+    {Object.entries(categoryLabels).map(([value, label]) => (
+      <option key={value} value={value}>{label}</option>
+    ))}
+  </select>
+
+  {/* Fix arrow */}
+  <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+    <FaChevronDown className="text-gray-500 text-sm" />
+  </div>
+</div>
 
               {/* Image Upload or URL */}
               <div>
@@ -518,7 +529,6 @@ const News = () => {
 {/*  */}
 
 
-  {/* If creating new news */}
   {!editingNewsId && (
     <>
 {/* Save as Draft */}
