@@ -71,7 +71,7 @@ const AdminLogInPage = () => {
             {/* Left heading with animation */}
             <div className="text-white mb-4 sm:mb-6 md:mb-0 text-center md:text-left w-full md:w-auto">
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold font-proxima leading-tight">
-                <span className="block animate-on-load animate-slide-right">Existing Ecotrack</span>
+                <span className="block animate-on-load animate-slide-right">Existing EcoTrack</span>
                 <span className="block animate-on-load animate-slide-right" style={{ animationDelay: '0.2s' }}>Admins Only</span>
               </h1>
             </div>
