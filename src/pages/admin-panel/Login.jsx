@@ -120,14 +120,14 @@ const Login = ({ setIsAuthenticated }) => {
   {isLoading ? "Logging in..." : "Log In"}
 </button>
 
-          <div className="flex justify-center mt-3">
+          {/* <div className="flex justify-center mt-3">
             <a
               href="#"
               className="text-sm sm:text-lg font-proxima font-bold text-green-600 hover:underline transition"
             >
               Forgot your Password?
             </a>
-          </div>
+          </div> */}
         </form>
       </motion.div>
 
