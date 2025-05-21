@@ -25,7 +25,7 @@ export default function AdminManagement() {
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [adminIdToDelete, setAdminIdToDelete] = useState(null);
-  const [newAdmin, setNewAdmin] = useState({ name: "", email: "", password: "" });
+  const [newAdmin, setNewAdmin] = useState({ name: "", email: "" });
 
   const adminTableRef = useRef(null);
   const token = localStorage.getItem("token");
@@ -130,7 +130,7 @@ export default function AdminManagement() {
       });
       setMessage("Admin created.");
       setShowModal(false);
-      setNewAdmin({ name: "", email: "", password: "" });
+      setNewAdmin({ name: "", email: "" });
       fetchAdmins();
     } catch (err) {
       console.error("Create error:", err);
@@ -464,14 +464,7 @@ export default function AdminManagement() {
           onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
           required
         />
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full px-4 py-2 border border-gray-300 rounded-md"
-          value={newAdmin.password}
-          onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
-          required
-        />
+
         <div className="flex justify-end gap-2">
           <button
             type="button"
