@@ -41,19 +41,19 @@ const Login = ({ setIsAuthenticated }) => {
   };
 
   return (
-    <div
-      className="flex min-h-screen flex-col justify-center items-center bg-cover bg-center bg-no-repeat px-4 sm:px-0"
-      style={{
-        backgroundImage:
-          'linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05)), url("../images/LoginBG.png")',
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
-    >
+<div
+  className="flex min-h-screen flex-col justify-center items-center bg-cover bg-center bg-no-repeat px-4 sm:px-0"
+  style={{
+    backgroundImage:
+      'linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url("../images/LoginBG.png")',
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
+  }}
+>
       <div className="flex justify-center mb-6">
         <img
-          src="../images/ecotracklogo.png"
+          src="../images/ecotracklogo5.png"
           alt="Ecotrack Logo"
           className="h-16 sm:h-20 object-contain"
         />
@@ -117,7 +117,7 @@ const Login = ({ setIsAuthenticated }) => {
   {isLoading && (
     <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
   )}
-  {isLoading ? "Logging in..." : "Log In"}
+  {isLoading ? "Logging in..." : "Login"}
 </button>
 
           {/* <div className="flex justify-center mt-3">
@@ -131,17 +131,17 @@ const Login = ({ setIsAuthenticated }) => {
         </form>
       </motion.div>
 
-      <div className="w-full max-w-md text-center px-2 sm:px-0">
-        <span className="text-gray-900 font-proxima font-bold text-base sm:text-lg">
-          Not an Ecotrack Admin?
-        </span>{" "}
-        <a
-          href="/"
-          className="text-white font-proxima hover:underline text-sm sm:text-base"
-        >
-          Return to Customer Site
-        </a>
-      </div>
+      <div className="w-full max-w-md text-center px-2 sm:px-0 mt-6">
+  <span className="text-white font-medium text-sm sm:text-base">
+    Not an Ecotrack Admin?
+  </span>{" "}
+  <a
+    href="/"
+    className="text-green-300 hover:text-green-400 font-medium text-sm sm:text-base underline"
+  >
+    Return to Customer Site
+  </a>
+</div>
 
 {/* reserve design for NOT AN ECOTRACK ADMIN? RETURN TO CUSTOMER SITE */}
 

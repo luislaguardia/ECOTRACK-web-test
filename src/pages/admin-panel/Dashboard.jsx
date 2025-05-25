@@ -15,7 +15,7 @@ import {
   Cell,
   Legend,
 } from "recharts";
-
+import autoTable from "jspdf-autotable";
 import { BASE_URL } from "../../config";
 
 const Dashboard = () => {
@@ -33,6 +33,8 @@ const Dashboard = () => {
   const [prevTotalUsers, setPrevTotalUsers] = useState(1);
   const [prevVerifiedUsers, setPrevVerifiedUsers] = useState(1);
   const [prevTotalNews, setPrevTotalNews] = useState(1);
+  const [allUsers, setAllUsers] = useState([]);
+
 
   const dashboardRef = useRef(null);
 
@@ -46,6 +48,7 @@ const Dashboard = () => {
         fetchNewsCount(),
         fetchUsageData(),
         fetchDeviceData(),
+        fetchAllUsers(), // new
       ]);
       setIsLoading(false);
     };
@@ -124,7 +127,7 @@ const Dashboard = () => {
   };
 
   const exportCSV = () => {
-    const data = [
+    const generalData = [
       ["Metric", "Value"],
       ["Total Users", totalUsers],
       ["Verified Users", verifiedUsers],
@@ -132,29 +135,78 @@ const Dashboard = () => {
       ["New Users Today", newUsersToday],
       ["New Users This Week", newUsersThisWeek],
     ];
+  
+    const userData = [
+      [],
+      ["User List"],
+      ["UserID", "Name", "Email", "Location", "Status"],
+      ...allUsers.map((u) => [
+        u._id,
+        u.name,
+        u.email,
+        u.barangay || "N/A",
+        u.isVerified ? "Active" : "Inactive",
+      ]),
+    ];
+  
+    const data = [...generalData, ...userData];
     const csv = data.map((row) => row.join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = "dashboard_metrics.csv";
+    link.download = "dashboard_with_users.csv";
     link.click();
   };
 
   const exportPDF = () => {
     const doc = new jsPDF();
+  
     doc.setFontSize(18);
     doc.text("EcoTrack Dashboard Report", 14, 20);
+  
     doc.setFontSize(12);
     doc.text(`Total Users: ${totalUsers}`, 14, 40);
     doc.text(`Verified Users: ${verifiedUsers}`, 14, 50);
     doc.text(`Total News Posted: ${totalNews}`, 14, 60);
     doc.text(`New Users Today: ${newUsersToday}`, 14, 70);
     doc.text(`New Users This Week: ${newUsersThisWeek}`, 14, 80);
+  
     doc.text("Energy Usage (kWh):", 14, 100);
     usageData.forEach((item, index) => {
       doc.text(`${item.month}: ${item.kWh} kWh`, 20, 110 + index * 10);
     });
-    doc.save("dashboard_metrics.pdf");
+  
+    // New page for Users
+    doc.addPage();
+    doc.setFontSize(16);
+    doc.text("User List", 14, 20);
+  
+    autoTable(doc, {
+      head: [["UserID", "Name", "Email", "Location", "Status"]],
+      body: allUsers.map((u) => [
+        u._id,
+        u.name,
+        u.email,
+        u.barangay || "N/A",
+        u.isVerified ? "Active" : "Inactive",
+      ]),
+      startY: 30,
+    });
+  
+    doc.save("dashboard_with_users.pdf");
+  };
+
+  // asd
+  const fetchAllUsers = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${BASE_URL}/api/users`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAllUsers(res.data);
+    } catch (err) {
+      console.error("Error fetching users:", err);
+    }
   };
 
   return (

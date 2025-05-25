@@ -15,7 +15,7 @@ import { BASE_URL } from "../../config";
 const Users = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   // const [exportingType, setExportingType] = useState(null); // "csv", "pdf", or null
-  const [exportingType, setExportingType] = useState(null); // used to show Confirm button loading // here
+  // const [exportingType, setExportingType] = useState(null); // used to show Confirm button loading // here
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState([]);
@@ -196,55 +196,55 @@ const Users = () => {
     return normalizedStatus === "active" ? "text-green-600" : "text-red-600";
   };
 
-  const exportToCSV = async () => {
-    setExportingType("csv");
-    try {
-      const csvRows = [
-        ["UserID", "Name", "Email", "Location", "Status"],
-        ...filteredUsers.map((u) => [
-          u._id,
-          u.name,
-          u.email,
-          u.location,
-          u.status,
-        ]),
-      ];
-      const csvContent = csvRows.map((row) => row.join(",")).join("\n");
-      const blob = new Blob([csvContent], { type: "text/csv" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "users.csv";
-      link.click();
-    } catch (err) {
-      console.error("CSV export failed:", err);
-    } finally {
-      setExportingType(null);
-      setShowExportModal(false);
-    }
-  };
+  // const exportToCSV = async () => {
+  //   setExportingType("csv");
+  //   try {
+  //     const csvRows = [
+  //       ["UserID", "Name", "Email", "Location", "Status"],
+  //       ...filteredUsers.map((u) => [
+  //         u._id,
+  //         u.name,
+  //         u.email,
+  //         u.location,
+  //         u.status,
+  //       ]),
+  //     ];
+  //     const csvContent = csvRows.map((row) => row.join(",")).join("\n");
+  //     const blob = new Blob([csvContent], { type: "text/csv" });
+  //     const link = document.createElement("a");
+  //     link.href = URL.createObjectURL(blob);
+  //     link.download = "users.csv";
+  //     link.click();
+  //   } catch (err) {
+  //     console.error("CSV export failed:", err);
+  //   } finally {
+  //     setExportingType(null);
+  //     setShowExportModal(false);
+  //   }
+  // };
   
-  const exportToPDF = async () => {
-    setExportingType("pdf");
-    try {
-      const doc = new jsPDF();
-      autoTable(doc, {
-        head: [["UserID", "Name", "Email", "Location", "Status"]],
-        body: filteredUsers.map((u) => [
-          u._id,
-          u.name,
-          u.email,
-          u.location,
-          u.status,
-        ]),
-      });
-      doc.save("users.pdf");
-    } catch (err) {
-      console.error("PDF export failed:", err);
-    } finally {
-      setExportingType(null);
-      setShowExportModal(false);
-    }
-  };
+  // const exportToPDF = async () => {
+  //   setExportingType("pdf");
+  //   try {
+  //     const doc = new jsPDF();
+  //     autoTable(doc, {
+  //       head: [["UserID", "Name", "Email", "Location", "Status"]],
+  //       body: filteredUsers.map((u) => [
+  //         u._id,
+  //         u.name,
+  //         u.email,
+  //         u.location,
+  //         u.status,
+  //       ]),
+  //     });
+  //     doc.save("users.pdf");
+  //   } catch (err) {
+  //     console.error("PDF export failed:", err);
+  //   } finally {
+  //     setExportingType(null);
+  //     setShowExportModal(false);
+  //   }
+  // };
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] p-6">
@@ -327,7 +327,7 @@ const Users = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-green-600"></div>
           </div>
         ) : (
-          <div className="overflow-x-auto bg-white rounded-lg shadow border border-gray-200 max-h-[370px] overflow-y-auto text-xs sm:text-sm">
+          <div className="overflow-x-auto bg-white rounded-lg shadow border border-gray-200 max-h-[410px] overflow-y-auto text-xs sm:text-sm">
             <table className="min-w-full table-auto">
               <thead className="bg-[#F5F5F5] border-b border-gray-200">
                 <tr className="text-left align-middle">
@@ -386,7 +386,7 @@ const Users = () => {
         )}
 
       {/* <div className="flex justify-end mt-4 gap-2"> */}
-      <div className="flex flex-col sm:flex-row justify-end mt-4 gap-2">
+      {/* <div className="flex flex-col sm:flex-row justify-end mt-4 gap-2">
         <button
           onClick={() => {
             setExportType("csv");
@@ -407,7 +407,7 @@ const Users = () => {
         >
           Export PDF
         </button>
-      </div>
+      </div>  */}
 
       {showExportModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">

@@ -335,27 +335,27 @@ export default function AdminManagement() {
 {/* mew */}
 
 
-<div className="flex justify-end mt-4 gap-2">
-<button
-  onClick={() => {
-    setExportType("csv");
-    setShowExportModal(true);
-  }}
-  className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
->
-  Export CSV
-</button>
+{/* <div className="flex justify-end mt-4 gap-2">
+    <button
+      onClick={() => {
+        setExportType("csv");
+        setShowExportModal(true);
+      }}
+      className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
+    >
+      Export CSV
+    </button>
 
-<button
-  onClick={() => {
-    setExportType("pdf");
-    setShowExportModal(true);
-  }}
-  className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition"
->
-  Export PDF
-</button>
-</div>
+    <button
+      onClick={() => {
+        setExportType("pdf");
+        setShowExportModal(true);
+      }}
+      className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition"
+    >
+      Export PDF
+    </button>
+</div> */}
 
 {showExportModal && (
   <div className="fixed inset-0 bg-blur backdrop-blur-sm flex items-center justify-center z-50">
