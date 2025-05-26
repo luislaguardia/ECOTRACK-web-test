@@ -172,7 +172,7 @@ export default function AdminManagement() {
       ) : (
         
 <div
-  className={`overflow-x-auto bg-white rounded-lg shadow border ${
+  className={`overflow-x-auto bg-white rounded-lg shadow border border-gray-200 ${
     filtered.length > 10 ? "max-h-[600px] overflow-y-auto" : ""
   }`}
 >

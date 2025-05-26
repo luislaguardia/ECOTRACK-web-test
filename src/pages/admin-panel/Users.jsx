@@ -1,21 +1,15 @@
-import { useEffect, useState } from "react";
 import axios from "axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { FiSearch, FiTrash2, FiEdit, FiEye, FiArchive } from 'react-icons/fi';
+import { FiSearch, FiTrash2, FiEdit, FiEye, FiArchive, FiRotateCw } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import barangaysInNasugbu from "../../data/barangays";
 import { FaChevronDown } from 'react-icons/fa';
-
-
-// note: to remove user ID
-// may19
+import { useEffect, useState } from "react";
 import { BASE_URL } from "../../config";
 
 const Users = () => {
   const [isUpdating, setIsUpdating] = useState(false);
-  // const [exportingType, setExportingType] = useState(null); // "csv", "pdf", or null
-  // const [exportingType, setExportingType] = useState(null); // used to show Confirm button loading // here
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState([]);
@@ -23,9 +17,8 @@ const Users = () => {
     totalUsers: 0,
     activeUsers: 0,
     newThisMonth: 0,
-    inactiveUsers: 0, // renamed
+    inactiveUsers: 0,
   });
-
   const [search, setSearch] = useState("");
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({
@@ -33,17 +26,17 @@ const Users = () => {
     email: "",
     location: "",
     devices: "",
-    status: "Active",
+    status: "Verified",
   });
-
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 5;
   const [barangays, setBarangays] = useState([]);
   const [selectedBarangay, setSelectedBarangay] = useState('');
   const [showExportModal, setShowExportModal] = useState(false);
-  const [exportType, setExportType] = useState(null); // here
+  const [exportType, setExportType] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+  const [activeTab, setActiveTab] = useState("active");
 
   useEffect(() => {
     fetchUsers();
@@ -62,14 +55,15 @@ const Users = () => {
         name: user.name,
         email: user.email,
         location: user.barangay,
-        status: user.isVerified ? "Active" : "Inactive",
+        status: user.isVerified ? "Verified" : "Not Verified",
+        isArchived: user.isArchived || false
       }));
       setUsers(mappedUsers);
       calculateMetrics(mappedUsers);
     } catch (err) {
       console.error("Error fetching users:", err.response?.data || err.message);
     } finally {
-      setIsLoading(false); // Stop spinner
+      setIsLoading(false);
     }
   };
 
@@ -80,15 +74,16 @@ const Users = () => {
 
     setMetrics({
       totalUsers: usersData.length,
-      activeUsers: usersData.filter((user) => user.status === "Active").length,
+      activeUsers: usersData.filter((user) => user.status === "Verified" && !user.isArchived).length,
       newThisMonth: usersData.filter((user) => {
         const userDate = new Date(user.createdAt || user.dateAdded);
         return (
           userDate.getMonth() === currentMonth &&
-          userDate.getFullYear() === currentYear
+          userDate.getFullYear() === currentYear &&
+          !user.isArchived
         );
       }).length,
-      inactiveUsers: usersData.filter((user) => user.status === "Inactive").length,
+      inactiveUsers: usersData.filter((user) => user.status === "Not Verified" && !user.isArchived).length,
     });
   };
 
@@ -109,7 +104,11 @@ const Users = () => {
 
     const matchesBarangay = !selectedBarangay || locationLower === selectedBarangay.toLowerCase();
 
-    return matchesSearch && matchesBarangay;
+    const matchesTab =
+    (activeTab === "active" && !u.isArchived) ||
+    (activeTab === "inactive" && u.isArchived);
+
+    return matchesSearch && matchesBarangay && matchesTab;
   });
 
   const indexOfLastUser = currentPage * usersPerPage;
@@ -126,40 +125,40 @@ const Users = () => {
       email: user.email || "",
       location: user.location || "",
       devices: user.devices || "",
-      status: user.status || "Active",
+      status: user.status || "Verified",
     });
   };
 
   const handleUpdate = async () => {
-    setIsUpdating(true); // Start spinner
+    setIsUpdating(true);
     try {
       const token = localStorage.getItem("token");
       const updateData = {
         name: formData.name,
         email: formData.email,
         barangay: formData.location,
-        isVerified: formData.status === "Active",
+        isVerified: formData.status === "Verified",
       };
-  
+
       await axios.put(`${BASE_URL}/api/users/${editingUser}`, updateData, {
         headers: { Authorization: `Bearer ${token}` },
       });
-  
+
       setEditingUser(null);
       setFormData({
         name: "",
         email: "",
         location: "",
         devices: "",
-        status: "Active",
+        status: "Verified",
       });
-  
+
       fetchUsers();
     } catch (err) {
       console.error(err.response?.data || err.message);
       alert("Update failed");
     } finally {
-      setIsUpdating(false); // End spinner
+      setIsUpdating(false);
     }
   };
 
@@ -175,76 +174,47 @@ const Users = () => {
 
   const confirmDeleteUser = async () => {
     if (!userToDelete) return;
-    setIsDeleting(true); // Start spinner
+    setIsDeleting(true);
     try {
       const token = localStorage.getItem("token");
-      await axios.put(`${BASE_URL}/api/users/${userToDelete}`, { isArchived: true }, {
+      await axios.patch(`${BASE_URL}/api/users/toggle/${userToDelete}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchUsers();
       closeDeleteModal();
     } catch (err) {
-      console.error("Error deleting user:", err.response?.data || err.message);
-      alert("Delete failed");
+      console.error("Error archiving/restoring user:", err.response?.data || err.message);
+      alert("Operation failed");
     } finally {
-      setIsDeleting(false); // Stop spinner
+      setIsDeleting(false);
     }
   };
 
+  // kinda not used ========
+  // const confirmDeleteUserDirect = async (userId) => {
+  //   if (!userId) return;
+  //   setIsDeleting(true);
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     await axios.patch(`${BASE_URL}/api/users/toggle/${userId}`, {}, {
+  //       headers: { Authorization: `Bearer ${token}` }
+  //     });
+  //     fetchUsers();
+  //   } catch (err) {
+  //     console.error("Error restoring user:", err.response?.data || err.message);
+  //     alert("Restore failed");
+  //   } finally {
+  //     setIsDeleting(false);
+  //   }
+  // };
+  // ===============
+
   const getStatusColor = (status) => {
     const normalizedStatus = status?.trim().toLowerCase();
-    return normalizedStatus === "active" ? "text-green-600" : "text-red-600";
+    return normalizedStatus === "verified" ? "text-green-600" : "text-red-600";
   };
 
-  // const exportToCSV = async () => {
-  //   setExportingType("csv");
-  //   try {
-  //     const csvRows = [
-  //       ["UserID", "Name", "Email", "Location", "Status"],
-  //       ...filteredUsers.map((u) => [
-  //         u._id,
-  //         u.name,
-  //         u.email,
-  //         u.location,
-  //         u.status,
-  //       ]),
-  //     ];
-  //     const csvContent = csvRows.map((row) => row.join(",")).join("\n");
-  //     const blob = new Blob([csvContent], { type: "text/csv" });
-  //     const link = document.createElement("a");
-  //     link.href = URL.createObjectURL(blob);
-  //     link.download = "users.csv";
-  //     link.click();
-  //   } catch (err) {
-  //     console.error("CSV export failed:", err);
-  //   } finally {
-  //     setExportingType(null);
-  //     setShowExportModal(false);
-  //   }
-  // };
-  
-  // const exportToPDF = async () => {
-  //   setExportingType("pdf");
-  //   try {
-  //     const doc = new jsPDF();
-  //     autoTable(doc, {
-  //       head: [["UserID", "Name", "Email", "Location", "Status"]],
-  //       body: filteredUsers.map((u) => [
-  //         u._id,
-  //         u.name,
-  //         u.email,
-  //         u.location,
-  //         u.status,
-  //       ]),
-  //     });
-  //     doc.save("users.pdf");
-  //   } catch (err) {
-  //     console.error("PDF export failed:", err);
-  //   } finally {
-  //     setExportingType(null);
-  //     setShowExportModal(false);
-  //   }
-  // };
+
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] p-6">
@@ -253,7 +223,6 @@ const Users = () => {
       </h2>
 
       {/* Metrics Cards */}
-      {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6"> */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
   <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
     <h4 className="text-lg text-gray-500 font-inter mb-2">Total Users</h4>
@@ -284,8 +253,9 @@ const Users = () => {
   </div>
 </div>
 
-      <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
-      {/* <div className="flex flex-col sm:flex-col md:flex-row justify-between gap-4 mb-6"> */}
+
+
+<div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
         <div className="flex items-center relative">
           <FiSearch className="text-gray-500 absolute left-2 top-1/2 transform -translate-y-1/2" />
           <input
@@ -298,6 +268,27 @@ const Users = () => {
         </div>
 
         <div className="flex gap-2">
+          <button
+            onClick={() => setActiveTab("active")}
+            className={`px-4 py-2 rounded ${
+              activeTab === "active"
+                ? "bg-green-600 text-white"
+                : "bg-white border border-gray-300 text-gray-700"
+            }`}
+          >
+            Active
+          </button>
+          <button
+            onClick={() => setActiveTab("inactive")}
+            className={`px-4 py-2 rounded ${
+              activeTab === "inactive"
+                ? "bg-green-600 text-white"
+                : "bg-white border border-gray-300 text-gray-700"
+            }`}
+          >
+            Inactive
+          </button>
+
           <div className="relative">
             <select
               className="p-2 border bg-white border-gray-300 rounded-md font-inter shadow-sm appearance-none pr-8 focus:outline-none focus:ring-2 focus:ring-[#0A8F28]"
@@ -313,14 +304,9 @@ const Users = () => {
               <FaChevronDown className="text-gray-500 " />
             </div>
           </div>
-          {/* <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all font-inter">
-            + Add User
-          </button> */}
         </div>
       </div>
 
-      {/* Scrollable Table Container */}
-      
         {/* Scrollable Table Container */}
         {isLoading ? (
           <div className="flex justify-center items-center h-[300px]">
@@ -334,8 +320,8 @@ const Users = () => {
                   <th className="px-4 py-3 font-bold text-gray-500">#</th>
                   <th className="px-4 py-3 font-bold text-gray-500">User Name</th>
                   <th className="px-4 py-3 font-bold text-gray-500">Email</th>
-                  <th className="px-4 py-3 font-bold text-gray-500">Location</th>
-                  <th className="px-4 py-3 font-bold text-gray-500">Status</th>
+                  <th className="px-4 py-3 font-bold text-gray-500">Barangay</th>
+                  <th className="px-4 py-3 font-bold text-gray-500">Verification Status</th>
                   <th className="px-4 py-3 font-bold text-gray-500 text-center align-middle">Actions</th>
                 </tr>
               </thead>
@@ -351,63 +337,44 @@ const Users = () => {
                         {user.status || "Active"}
                       </span>
                     </td>
+
                     <td className="px-4 py-4 text-center align-middle">
-                      <div className="flex items-center justify-center gap-2">
-                        <Link
-                          to={`/users/${user._id}`}
-                          className="text-blue-800 hover:text-[#0A7F24] p-2 rounded-full flex items-center justify-center"
-                          title="View"
-                        >
-                          <FiEye className="w-4 h-4" />
-                        </Link>
+  <div className="flex items-center justify-center gap-2">
+    <Link
+      to={`/users/${user._id}`}
+      className="text-blue-800 hover:text-[#0A7F24] p-2 rounded-full flex items-center justify-center"
+      title="View"
+    >
+      <FiEye className="w-4 h-4" />
+    </Link>
 
-                        <button
-                          onClick={() => handleEdit(user)}
-                          className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200 p-2 rounded-full flex items-center justify-center"
-                          title="Edit"
-                        >
-                          <FiEdit className="w-4 h-4" />
-                        </button>
+    <button
+      onClick={() => handleEdit(user)}
+      className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200 p-2 rounded-full flex items-center justify-center"
+      title="Edit"
+    >
+      <FiEdit className="w-4 h-4" />
+    </button>
 
-                        <button
-                          onClick={() => openDeleteModal(user._id)}
-                          className="text-red-500 hover:text-red-700 p-2 rounded-full flex items-center justify-center"
-                          title="Archive"
-                        >
-                          <FiArchive className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
+    {/* Toggle Switch */}
+    <label className="relative inline-flex items-center cursor-pointer">
+      <input
+        type="checkbox"
+        checked={!user.isArchived}
+        onChange={() => openDeleteModal(user._id)}
+        className="sr-only peer"
+      />
+      <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-500 rounded-full peer dark:bg-gray-700 peer-checked:bg-green-600 transition-all"></div>
+      <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-all peer-checked:translate-x-5"></div>
+    </label>
+  </div>
+</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
-
-      {/* <div className="flex justify-end mt-4 gap-2"> */}
-      {/* <div className="flex flex-col sm:flex-row justify-end mt-4 gap-2">
-        <button
-          onClick={() => {
-            setExportType("csv");
-            setShowExportModal(true);
-          }}
-          className="w-full sm:w-auto bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all font-inter"
-          >
-          Export CSV
-        </button>
-        <button
-          onClick={() => {
-            setExportType("pdf");
-            setShowExportModal(true);
-          }}
-          // className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all font-inter"
-          className="w-full sm:w-auto bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all font-inter"
-
-        >
-          Export PDF
-        </button>
-      </div>  */}
 
       {showExportModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
@@ -468,63 +435,73 @@ const Users = () => {
         </div>
       )}
 
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
-            {/* Red header */}
-            <div className="bg-green-600 rounded-t-lg px-6 py-4">
-              <h2 className="text-white text-xl font-semibold">Confirm Delete</h2>
-            </div>
+{showDeleteModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+    <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
+      {/* Header */}
+      <div className="bg-green-600 rounded-t-lg px-6 py-4">
+        <h2 className="text-white text-xl font-semibold">
+          {activeTab === "active" ? "Confirm Archive" : "Confirm Restore"}
+        </h2>
+      </div>
 
-            {/* Body */}
-            <div className="px-6 py-6">
-              <p className="text-gray-800 text-base mb-6">
-                Are you sure you want to delete this user?
-              </p>
+      {/* Body */}
+      <div className="px-6 py-6">
+        <p className="text-gray-800 text-base mb-6">
+          Are you sure you want to {activeTab === "active" ? "archive" : "restore"} this user?
+        </p>
 
-              {/* Buttons */}
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={closeDeleteModal}
-                  className="px-4 py-2 border border-gray-400 text-gray-700 rounded-md hover:bg-gray-100 transition"
+        {/* Buttons */}
+        <div className="flex justify-end space-x-3">
+          <button
+            onClick={closeDeleteModal}
+            className="px-4 py-2 border border-gray-400 text-gray-700 rounded-md hover:bg-gray-100 transition"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={confirmDeleteUser}
+            className={`px-4 py-2 text-white rounded-md transition flex items-center justify-center gap-2 ${
+              activeTab === "active"
+                ? "bg-red-600 hover:bg-red-700"
+                : "bg-green-600 hover:bg-green-700"
+            }`}
+            disabled={isDeleting}
+          >
+            {isDeleting ? (
+              <>
+                <svg
+                  className="animate-spin h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
                 >
-                  Cancel
-                </button>
-                
-                <button
-  onClick={confirmDeleteUser}
-  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition flex items-center justify-center gap-2"
-  disabled={isDeleting}
->
-  {isDeleting ? (
-    <>
-      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle
-          className="opacity-25"
-          cx="12"
-          cy="12"
-          r="10"
-          stroke="currentColor"
-          strokeWidth="4"
-        ></circle>
-        <path
-          className="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 018-8v8z"
-        ></path>
-      </svg>
-      Deleting...
-    </>
-  ) : (
-    "Delete"
-  )}
-</button>
-              </div>
-            </div>
-          </div>
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8z"
+                  ></path>
+                </svg>
+                {activeTab === "active" ? "Archiving..." : "Restoring..."}
+              </>
+            ) : (
+              activeTab === "active" ? "Archive" : "Restore"
+            )}
+          </button>
         </div>
-      )}
-
+      </div>
+    </div>
+  </div>
+)}
       {editingUser && (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
 
@@ -565,18 +542,18 @@ const Users = () => {
                 />
               </div>
               <div>
-                <label className="block text-gray-700">Status</label>
+                <label className="block text-gray-700">Verification Status</label>
                 <div className="relative"> 
-                  <select
-                    className="w-full p-2 border border-gray-300 rounded-md appearance-none pr-8 focus:outline-none focus:ring-2 focus:ring-[#0A8F28]" 
-                    value={formData.status}
-                    onChange={(e) =>
-                      setFormData({ ...formData, status: e.target.value })
-                    }
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                  </select>
+                <select
+  className="w-full p-2 border border-gray-300 rounded-md appearance-none pr-8 focus:outline-none focus:ring-2 focus:ring-[#0A8F28]"
+  value={formData.status}
+  onChange={(e) =>
+    setFormData({ ...formData, status: e.target.value })
+  }
+>
+  <option value="Verified">Verified</option>
+  <option value="Not Verified">Not Verified</option>
+</select>
                   <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
                     <FaChevronDown className="text-gray-500" /> 
                   </div>
