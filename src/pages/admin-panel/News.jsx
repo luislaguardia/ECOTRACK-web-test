@@ -8,6 +8,8 @@ import { FaChevronDown } from "react-icons/fa";
 // but to be used hahaha, for soft delete
 
 const News = () => {
+  const [statusFilter, setStatusFilter] = useState("all"); // all | draft | published | archived
+
   const [deletingNewsId, setDeletingNewsId] = useState(null);
 
   const [isSavingDraft, setIsSavingDraft] = useState(false);
@@ -170,9 +172,14 @@ const News = () => {
 
   const filteredNews = newsList.filter((news) => {
     const searchMatch = news.title.toLowerCase().includes(search.toLowerCase());
-    const categoryMatch =
-      filterCategory === "all" || news.category === filterCategory;
-    return searchMatch && categoryMatch;
+    const categoryMatch = filterCategory === "all" || news.category === filterCategory;
+    
+    let statusMatch = true;
+    if (statusFilter === "published") statusMatch = news.status === "published" && !news.isArchived;
+    else if (statusFilter === "draft") statusMatch = news.status === "draft" && !news.isArchived;
+    else if (statusFilter === "archived") statusMatch = news.isArchived;
+  
+    return searchMatch && categoryMatch && statusMatch;
   });
 
   const handlePublish = async (newsId) => {
@@ -220,6 +227,8 @@ const News = () => {
       <h2 className="text-3xl font-semibold font-inter text-gray-800 mb-5">
         News and Updates
       </h2>
+
+      
       <div className="flex flex-col md:flex-row justify-start items-start md:items-center mt-6 mb-8 gap-4 md:gap-8">
         <div className="flex items-center relative">
           <FiSearch className="text-gray-500 absolute left-2 top-1/2 transform -translate-y-1/2" />
@@ -231,6 +240,8 @@ const News = () => {
             className="p-2 pl-8 border border-gray-500 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0A8F28] font-inter w-full md:w-[490px]"
           />
         </div>
+
+        
         <div className="relative">
           <select
             value={filterCategory}
@@ -250,6 +261,24 @@ const News = () => {
           </div>
         </div>
         {/* asis */}
+
+
+        <div className="flex gap-2 mt-2">
+  {["all", "published", "draft", "archived"].map((type) => (
+    <button
+      key={type}
+      onClick={() => setStatusFilter(type)}
+      className={`px-4 py-2 rounded ${
+        statusFilter === type
+          ? "bg-green-600 text-white"
+          : "bg-white border border-gray-300 text-gray-700"
+      }`}
+    >
+      {type.charAt(0).toUpperCase() + type.slice(1)}
+    </button>
+  ))}
+</div>
+
 
         <button
           onClick={() => {

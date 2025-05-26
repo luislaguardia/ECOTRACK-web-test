@@ -33,28 +33,27 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, setShowLogoutModa
 
   return (
     <div
-      className={`fixed top-0 left-0 h-full z-50 bg-[#0A8F28] text-white w-72 transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:static md:block`}
+      className={`fixed top-0 left-0 h-screen z-50 bg-[#0A8F28] text-white w-72 transition-transform duration-300 ease-in-out
+        flex flex-col ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:static md:block`}
     >
-      <div className="p-6 pb-8">
-        <div className="flex items-center">
-          <img
-            src={ecotrackLogo}
-            alt="EcoTrack Logo"
-            className="h-12 w-auto object-contain"
-          />
-        </div>
+      {/* Logo */}
+      <div className="p-6 pb-4">
+        <img
+          src={ecotrackLogo}
+          alt="EcoTrack Logo"
+          className="h-12 w-auto object-contain"
+        />
       </div>
 
-      {/* Navigation Menu */}
-      <div className="flex-1 mt-2">
+      {/* Menu Items */}
+      <div className="flex-1 overflow-y-auto">
         {menuItems.map((item) => (
           <Link
             key={item.path}
             to={item.path}
             onClick={() => {
               setActiveItem(item.path);
-              setSidebarOpen(false); // close on mobile
+              setSidebarOpen(false); // Close sidebar on mobile
             }}
             className={`flex items-center px-9 py-5 cursor-pointer ${
               activeItem === item.path ? "bg-[#0A7F24]" : "hover:bg-[#0A7F24]"
@@ -63,7 +62,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, setShowLogoutModa
             <img
               src={item.icon}
               alt={`${item.name} Icon`}
-              className={`${item.size} mr-4 align-middle transition-transform duration-200 ${
+              className={`${item.size} mr-4 transition-transform duration-200 ${
                 activeItem === item.path ? "scale-110" : "opacity-80"
               }`}
             />
@@ -72,17 +71,13 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, setShowLogoutModa
         ))}
       </div>
 
-      {/* Log Out */}
-      <div className="mt-auto mb-19">
+      {/* Logout Button */}
+      <div className="mt-auto mb-6">
         <div
-          className="flex items-center px-6 py-4 cursor-pointer hover:bg-[#0A7F24]"
           onClick={() => setShowLogoutModal(true)}
+          className="flex items-center px-9 py-4 cursor-pointer hover:bg-[#0A7F24]"
         >
-          <img
-            src={logout}
-            alt="Logout Icon"
-            className="w-6 h-6 mr-4 opacity-80"
-          />
+          <img src={logout} alt="Logout" className="w-6 h-6 mr-4 opacity-80" />
           <span className="text-lg font-inter">Log Out</span>
         </div>
       </div>

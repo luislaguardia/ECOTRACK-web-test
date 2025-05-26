@@ -33,12 +33,12 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
       {/* Sidebar backdrop on mobile */}
       {sidebarOpen && (
         <div
-        className="fixed inset-0 backdrop-blur-sm z-40 md:hidden"
-        onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
         ></div>
       )}
-  
-      {/* Burger button - visible only when sidebar is closed on mobile */}
+
+      {/* Burger menu on mobile */}
       {!sidebarOpen && (
         <button
           className="md:hidden fixed top-4 left-4 z-50 bg-white p-2 rounded shadow"
@@ -60,24 +60,24 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
           </svg>
         </button>
       )}
-  
-      {/* Header content */}
+
+      {/* Header */}
       <header
-        className={`bg-white shadow-md p-4 sticky top-0 z-30 transition-all duration-300 ${
-          sidebarOpen ? "md:ml-[250px]" : ""
-        }`}
-      >
-        <div className="max-w-screen-xl mx-auto flex justify-end items-center pr-6">
-          <div className="flex items-center gap-3">
-            <span className="text-gray-700 font-medium truncate max-w-[180px] text-right">
-              {adminName}
-            </span>
-            <div className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-semibold">
-              {adminName.charAt(0).toUpperCase()}
-            </div>
-          </div>
-        </div>
-      </header>
+  className={`bg-white shadow-md px-4 py-3 sticky top-0 z-30 transition-all duration-300 ${
+    sidebarOpen ? "md:ml-[250px]" : ""
+  }`}
+>
+  <div className="w-full flex justify-end items-center pr-6">
+    <div className="flex flex-col sm:flex-row items-center sm:gap-3 text-center">
+      <div className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-bold text-lg mb-1 sm:mb-0">
+        {adminName.charAt(0).toUpperCase()}
+      </div>
+      <span className="text-gray-800 font-medium text-sm sm:text-base leading-tight max-w-[200px] truncate">
+        {adminName}
+      </span>
+    </div>
+  </div>
+</header>
     </>
   );
 };
