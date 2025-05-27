@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+// import html2canvas from "html2canvas";
 import {
   LineChart,
   Line,
@@ -23,8 +23,8 @@ const Dashboard = () => {
   const [totalUsers, setTotalUsers] = useState(0);
   const [verifiedUsers, setVerifiedUsers] = useState(0);
   const [totalNews, setTotalNews] = useState(0);
-  const [newUsersToday, setNewUsersToday] = useState(12);
-  const [newUsersThisWeek, setNewUsersThisWeek] = useState(58);
+  // const [newUsersToday, setNewUsersToday] = useState(12);
+  // const [newUsersThisWeek, setNewUsersThisWeek] = useState(58);
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportType, setExportType] = useState(null);
   const [usageData, setUsageData] = useState([]);
@@ -38,7 +38,24 @@ const Dashboard = () => {
 
   const dashboardRef = useRef(null);
 
-  const COLORS = ["#16a34a", "#4ade80", "#86efac", "#bbf7d0"];
+// const COLORS = [
+//   "#66BB6A", // Medium green
+//   "#81C784", // Soft green
+//   "#A5D6A7", // Pale green
+//   "#C8E6C9", // Very light green
+//   "#E8F5E9", // Almost white green
+//   "#AED581", // Lime-tinted light green
+// ];
+const COLORS = [
+  "#0A8F28", // Primary system green
+  "#0F7E24", // Slightly darker
+  "#13A330", // Slightly brighter
+  "#33B64D", // Vibrant mid-green
+  "#64C980", // Light green tint
+  "#97DBA9", // Very light, desaturated green
+];
+
+
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -102,18 +119,37 @@ const Dashboard = () => {
     }
   };
 
-  const fetchDeviceData = async () => {
-    try {
-      const res = await axios.get(`${BASE_URL}/api/plugs/appliance-stats`);
-      const formatted = Object.entries(res.data).map(([name, value]) => ({
-        name,
-        value,
-      }));
-      setDeviceData(formatted);
-    } catch (err) {
-      console.error("Error fetching device data:", err);
+const fetchDeviceData = async () => {
+  try {
+    const res = await axios.get(`${BASE_URL}/api/plugs/appliance-stats`);
+    const rawData = Object.entries(res.data).map(([name, value]) => ({
+      name,
+      value,
+    }));
+
+    // Sort by highest value
+    const sorted = rawData.sort((a, b) => b.value - a.value);
+
+    // Take top 5, group the rest into "Others"
+    const topFive = sorted.slice(0, 5);
+    const othersTotal = sorted.slice(5).reduce((acc, item) => acc + item.value, 0);
+
+    // Rename "Unknown" in top 5 if present
+    const finalTopFive = topFive.map((item) =>
+      item.name.toLowerCase() === "unknown" ? { ...item, name: "Others" } : item
+    );
+
+    // Append "Others" if there is any overflow or "Unknown" renamed
+    if (othersTotal > 0 || rawData.some((item) => item.name.toLowerCase() === "unknown")) {
+      finalTopFive.push({ name: "Others", value: othersTotal });
     }
-  };
+
+    setDeviceData(finalTopFive);
+  } catch (err) {
+    console.error("Error fetching device data:", err);
+  }
+};
+
 
   const handleExportClick = (type) => {
     setExportType(type);
@@ -132,8 +168,8 @@ const Dashboard = () => {
       ["Total Users", totalUsers],
       ["Verified Users", verifiedUsers],
       ["Total News Posted", totalNews],
-      ["New Users Today", newUsersToday],
-      ["New Users This Week", newUsersThisWeek],
+      // ["New Users Today", newUsersToday],
+      // ["New Users This Week", newUsersThisWeek],
     ];
   
     const userData = [
@@ -168,8 +204,8 @@ const Dashboard = () => {
     doc.text(`Total Users: ${totalUsers}`, 14, 40);
     doc.text(`Verified Users: ${verifiedUsers}`, 14, 50);
     doc.text(`Total News Posted: ${totalNews}`, 14, 60);
-    doc.text(`New Users Today: ${newUsersToday}`, 14, 70);
-    doc.text(`New Users This Week: ${newUsersThisWeek}`, 14, 80);
+    // doc.text(`New Users Today: ${newUsersToday}`, 14, 70);
+    // doc.text(`New Users This Week: ${newUsersThisWeek}`, 14, 80);
   
     doc.text("Energy Usage (kWh):", 14, 100);
     usageData.forEach((item, index) => {
@@ -297,7 +333,7 @@ const Dashboard = () => {
                       nameKey="name"
                       cx="50%"
                       cy="50%"
-                      outerRadius={110}
+                      outerRadius={95}
                       label
                     >
                       {deviceData.map((entry, index) => (
