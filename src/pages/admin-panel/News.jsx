@@ -239,7 +239,7 @@ const News = () => {
         placeholder="Search news..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="p-2 pl-8 border border-gray-500 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0A8F28] font-inter w-full md:w-[370px]"
+        className="p-2 pl-8 border border-gray-500 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0A8F28] font-inter w-full md:w-[350px]"
       />
     </div>
 
