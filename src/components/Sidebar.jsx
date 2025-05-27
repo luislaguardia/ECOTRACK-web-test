@@ -23,8 +23,8 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, setShowLogoutModa
 
   const menuItems = [
     { name: "Dashboard", path: "/dashboard", icon: menu, size: 'w-6 h-6.5' },
-    { name: "User Management", path: "/users", icon: user, size: 'w-7 h-6.5' },
     { name: "News & Updates", path: "/news", icon: megaphone, size: 'w-7 h-7' },
+    { name: "User Management", path: "/users", icon: user, size: 'w-7 h-6.5' },
     ...(role === "superadmin"
       ? [{ name: "Admin Management", path: "/admin-management", icon: admin, size: 'w-6 h-7' }]
       : []),
