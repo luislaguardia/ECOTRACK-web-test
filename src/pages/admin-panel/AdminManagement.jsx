@@ -120,50 +120,58 @@ export default function AdminManagement() {
     <div className="min-h-screen bg-[#F5F5F5] p-6">
       <div className="flex justify-between items-center mb-5">
         <h2 className="text-3xl font-semibold text-gray-800">Admin Management</h2>
-        <button
-          onClick={() => setShowModal(true)}
-          className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700"
-        >
-          + Add Admin
-        </button>
+
       </div>
 
-      {/* Search and Tabs */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-        <div className="relative w-full md:w-[400px]">
-          <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-          <input
-            type="text"
-            placeholder="Search admins..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="p-2 pl-10 border border-gray-300 bg-white rounded-md shadow-sm w-full"
-          />
-        </div>
+      {/* Search and Tabs */}<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 flex-wrap mb-4">
+  {/* Left group: Search + Tabs */}
+  <div className="flex flex-col md:flex-row items-start md:items-center gap-4 flex-wrap">
+    {/* Search Input */}
+    <div className="relative w-full md:w-[400px]">
+      <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+      <input
+        type="text"
+        placeholder="Search admins..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="p-2 pl-10 border border-gray-300 bg-white rounded-md shadow-sm w-full"
+      />
+    </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={() => setActiveTab("active")}
-            className={`px-4 py-2 rounded ${
-              activeTab === "active"
-                ? "bg-green-600 text-white"
-                : "bg-white border border-gray-300 text-gray-700"
-            }`}
-          >
-            Active
-          </button>
-          <button
-            onClick={() => setActiveTab("inactive")}
-            className={`px-4 py-2 rounded ${
-              activeTab === "inactive"
-                ? "bg-green-600 text-white"
-                : "bg-white border border-gray-300 text-gray-700"
-            }`}
-          >
-            Inactive
-          </button>
-        </div>
-      </div>
+    {/* Tabs: Active / Inactive */}
+    <div className="flex gap-2">
+      <button
+        onClick={() => setActiveTab("active")}
+        className={`px-4 py-2 rounded ${
+          activeTab === "active"
+            ? "bg-green-600 text-white"
+            : "bg-white border border-gray-300 text-gray-700"
+        }`}
+      >
+        Active
+      </button>
+      <button
+        onClick={() => setActiveTab("inactive")}
+        className={`px-4 py-2 rounded ${
+          activeTab === "inactive"
+            ? "bg-green-600 text-white"
+            : "bg-white border border-gray-300 text-gray-700"
+        }`}
+      >
+        Inactive
+      </button>
+    </div>
+  </div>
+
+  {/* Right: Add Admin Button */}
+  <button
+    onClick={() => setShowModal(true)}
+    className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 self-start md:self-auto"
+  >
+    + Add Admin
+  </button>
+</div>
+
 
       {isLoading ? (
         <div className="flex justify-center items-center h-[300px]">
