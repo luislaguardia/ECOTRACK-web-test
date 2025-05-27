@@ -28,7 +28,7 @@ const AboutUs = () => {
       <HomePageNavBar />
 
       <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-16">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-12 mb-12">
+        <div className="flex flex-col md:flex-row justify-center items-center gap-12 mb-12">
           {/* Mission */}
           <div className="animate-on-scroll opacity-0 transition-opacity delay-[0ms] flex-1">
             <div className="flex flex-col items-center text-center">
@@ -84,7 +84,7 @@ const AboutUs = () => {
 
         {/* Our Story */}
         <div className="mt-16 animate-on-scroll opacity-0 transition-opacity delay-[600ms]">
-          <div className="bg-[#E6F7E9] p-8 sm:p-10 rounded-lg shadow-sm">
+          <div className="bg-[#E6F7E9] p-8 sm:p-10 rounded-lg w-full max-w-5xl shadow-sm mx-auto">
             <h2 className="text-[#28A12E] text-2xl sm:text-3xl font-proxima font-semibold text-center mb-4">
               Our Story
             </h2>
