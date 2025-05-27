@@ -228,75 +228,75 @@ const News = () => {
         News and Updates
       </h2>
 
-      
-      <div className="flex flex-col md:flex-row justify-start items-start md:items-center mt-6 mb-8 gap-4 md:gap-8">
-        <div className="flex items-center relative">
-          <FiSearch className="text-gray-500 absolute left-2 top-1/2 transform -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search news..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="p-2 pl-8 border border-gray-500 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0A8F28] font-inter w-full md:w-[490px]"
-          />
-        </div>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mt-6 mb-8 gap-4 flex-wrap">
+  {/* Left Side: Search, Category, Filters */}
+  <div className="flex flex-col md:flex-row items-start md:items-center gap-4 flex-wrap">
+    {/* Search Input */}
+    <div className="flex items-center relative">
+      <FiSearch className="text-gray-500 absolute left-2 top-1/2 transform -translate-y-1/2" />
+      <input
+        type="text"
+        placeholder="Search news..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="p-2 pl-8 border border-gray-500 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0A8F28] font-inter w-full md:w-[370px]"
+      />
+    </div>
 
-        
-        <div className="relative">
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="shadow-sm border border-gray-500 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#0A8F28] font-inter py-2 px-4 cursor-pointer appearance-none pr-8 w-full md:w-[250px]"
-          >
-            {Object.entries(categoryLabels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-
-          {/* asis */}
-          <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
-            <FaChevronDown className="text-gray-500" />
-          </div>
-        </div>
-        {/* asis */}
-
-
-        <div className="flex gap-2 mt-2">
-  {["all", "published", "draft", "archived"].map((type) => (
-    <button
-      key={type}
-      onClick={() => setStatusFilter(type)}
-      className={`px-4 py-2 rounded ${
-        statusFilter === type
-          ? "bg-green-600 text-white"
-          : "bg-white border border-gray-300 text-gray-700"
-      }`}
-    >
-      {type.charAt(0).toUpperCase() + type.slice(1)}
-    </button>
-  ))}
-</div>
-
-
-        <button
-          onClick={() => {
-            setShowModal(true);
-            setFormData({
-              title: "",
-              content: "",
-              image: "",
-              category: "general",
-              isDraft: false,
-            });
-            setEditingNewsId(null);
-          }}
-          className="bg-green-600 mt-6 md:mt-0 text-white px-5 py-3 rounded-md hover:bg-green-700 flex items-center"
-        >
-          <span>+ Add News</span>
-        </button>
+    {/* Category Select */}
+    <div className="relative">
+      <select
+        value={filterCategory}
+        onChange={(e) => setFilterCategory(e.target.value)}
+        className="shadow-sm border border-gray-500 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#0A8F28] font-inter py-2 px-4 cursor-pointer appearance-none pr-8 w-full md:w-[250px]"
+      >
+        {Object.entries(categoryLabels).map(([value, label]) => (
+          <option key={value} value={value}>
+            {label}
+          </option>
+        ))}
+      </select>
+      <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
+        <FaChevronDown className="text-gray-500" />
       </div>
+    </div>
+
+    {/* Status Filter Buttons */}
+    <div className="flex gap-2">
+      {["all", "published", "draft", "archived"].map((type) => (
+        <button
+          key={type}
+          onClick={() => setStatusFilter(type)}
+          className={`px-4 py-2 rounded ${
+            statusFilter === type
+              ? "bg-green-600 text-white"
+              : "bg-white border border-gray-300 text-gray-700"
+          }`}
+        >
+          {type.charAt(0).toUpperCase() + type.slice(1)}
+        </button>
+      ))}
+    </div>
+  </div>
+
+  {/* Right Side: Add News Button */}
+  <button
+    onClick={() => {
+      setShowModal(true);
+      setFormData({
+        title: "",
+        content: "",
+        image: "",
+        category: "general",
+        isDraft: false,
+      });
+      setEditingNewsId(null);
+    }}
+    className="bg-green-600 text-white px-5 py-3 rounded-md hover:bg-green-700 flex items-center self-start md:self-auto"
+  >
+    <span>+ Add News</span>
+  </button>
+</div>
 
       {error && (
         <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded">
