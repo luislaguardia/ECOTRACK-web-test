@@ -91,10 +91,14 @@ const HomePage = () => {
             {/* Right side - Description and CTA button with animations */}
             <div className="w-full md:w-1/2 flex flex-col items-center md:items-start">
               <p className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl mb-6 md:mb-10 font-bold text-center md:text-left animate-on-load animate-fade-in" style={{ animationDelay: '0.6s' }}>
-                Take control of your home energy use right from your phone. See
+                {/* Take control of your home energy use right from your phone. See
                 what's on in real time, keep track of where your bill is going.
                 Make brighter decisions that are good for you, your wallet, and
-                the environment.
+                the environment. */}
+
+                Take control of your home energy use right from your phone. Keep 
+                track of your energy usage in real-time. Make brighter decisions 
+                that are good for you, your family and the environment.
               </p>
               <button
                 className="bg-green-600 hover:bg-green-700 mb-12 md:mb-20 text-white font-bold py-2 sm:py-3 px-6 sm:px-8 rounded-full text-base sm:text-lg transition-all duration-300 transform hover:scale-105 animate-on-load animate-bounce-in w-full sm:w-auto text-center"
