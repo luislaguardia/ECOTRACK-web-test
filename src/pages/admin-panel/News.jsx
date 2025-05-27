@@ -118,10 +118,10 @@ const News = () => {
     }
   };
 
-  const openDeleteModal = (id) => {
-    setNewsIdToDelete(id);
-    setShowDeleteModal(true);
-  };
+  // const openDeleteModal = (id) => {
+  //   setNewsIdToDelete(id);
+  //   setShowDeleteModal(true);
+  // };
 
   const closeDeleteModal = () => {
     setNewsIdToDelete(null);
@@ -420,7 +420,7 @@ const News = () => {
               </div>
 
               <div className="flex justify-center items-center md:w-[300px] h-auto p-4">
-  <div className="w-full h-[220px] bg-gray-100 border-l border-gray-300 rounded-r-lg overflow-hidden shadow-md">
+  <div className="w-full h-[220px] bg-gray-100 border-l border-gray-300 rounded-lg overflow-hidden shadow-md">
     <img
       src={news.image}
       alt={news.title}
