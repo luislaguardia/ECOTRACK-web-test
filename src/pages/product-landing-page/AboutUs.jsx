@@ -37,10 +37,10 @@ const AboutUs = () => {
                   Mission
                 </h2>
               </div>
-              <div className="mt-6 bg-[#F3EBFF] px-4 py-6 rounded-lg w-full max-w-xs">
+              <div className="mt-6 bg-[#F3EBFF] px-4 py-6 rounded-lg w-[350px] h-[178px]">
                 <p className="text-gray-700 font-proxima text-sm sm:text-base leading-relaxed">
-                  Empowering BATELEC I consumers with real-time energy insights
-                  for smarter conservation.
+                  Delivering reliable, safe,and quality electric service to the member-consumer-owners 
+                  of Batangas through responsible, community-centered operations.
                 </p>
               </div>
             </div>
@@ -54,10 +54,11 @@ const AboutUs = () => {
                   Who We Are
                 </h2>
               </div>
-              <div className="mt-6 bg-[#F3EBFF] px-4 py-6 rounded-lg w-full max-w-xs">
+              <div className="mt-6 bg-[#F3EBFF] px-4 py-6 rounded-lg w-[350px] h-[300x]">
                 <p className="text-gray-700 font-proxima text-sm sm:text-base leading-relaxed">
-                  A team of innovative developers solving energy challenges in
-                  Nasugbu, Batangas.
+                  Batangas I Electric Cooperative, Inc. (BATELEC I) is a member-owned electric cooperative 
+                  established in 1977, serving 12 municipalities across Batangas with dedication and transparency.
+                  
                 </p>
               </div>
             </div>
@@ -71,10 +72,10 @@ const AboutUs = () => {
                   Vision
                 </h2>
               </div>
-              <div className="mt-6 bg-[#F3EBFF] px-4 py-6 rounded-lg w-full max-w-xs">
+              <div className="mt-6 bg-[#F3EBFF] px-4 py-6 rounded-lg w-[350px] h-[178px]">
                 <p className="text-gray-700 font-proxima text-sm sm:text-base leading-relaxed">
-                  Creating a future where energy conservation is accessible for
-                  all households.
+                  To be a premier electric cooperative empowering every Batangueño household
+                   with sustainable, accessible, and efficient electricity.
                 </p>
               </div>
             </div>
@@ -88,11 +89,7 @@ const AboutUs = () => {
               Our Story
             </h2>
             <p className="text-gray-700 font-proxima text-center text-sm sm:text-base max-w-4xl mx-auto leading-relaxed">
-              EcoTrack was developed in partnership with BATELEC I Nasugbu
-              branch to address the critical gap between energy awareness and
-              conservation behavior. Our IoT-based system empowers consumers to
-              monitor their energy usage and make informed decisions for a more
-              sustainable future.
+              Since its registration with the National Electrification Administration in 1977, BATELEC I has been a cornerstone of development in Batangas. Governed by a board representing each municipality, the cooperative exists to serve its member-consumer-owners. With a commitment to energy reliability and innovation, BATELEC I continues to bridge the gap between communities and progress through improved electrification and modern services.
             </p>
           </div>
         </div>
