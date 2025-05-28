@@ -34,7 +34,7 @@ It allows administrators to manage users, monitor energy data, publish news, man
 1. Clone the repository:
    ```bash
    git clone https://github.com/your-username/your-repo-name.git](https://github.com/EcoTrack-projectSMISKIs/ADMIN-WEBSIDE.git)
-   cd ADMIN-WEBSIDE
+   cd <this-file-hehe>
    ```
 
 2. Install dependencies:
@@ -49,4 +49,4 @@ It allows administrators to manage users, monitor energy data, publish news, man
 
 ---
 
-Developed by Ecotrack Backend Team
+Developed by EcoTrack Team
