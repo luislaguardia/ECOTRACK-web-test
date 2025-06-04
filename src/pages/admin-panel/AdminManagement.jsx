@@ -278,11 +278,11 @@ export default function AdminManagement() {
         <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
             <div className="bg-green-600 py-3 px-6 text-white font-semibold rounded-t-lg">
-              Confirm {adminToToggle?.isArchived ? "Restore" : "Archive"}
+              Confirm {adminToToggle?.isArchived ? "Activation" : "Deactivation"}
             </div>
             <div className="p-6">
               <p className="text-gray-700 mb-4">
-                Are you sure you want to {adminToToggle?.isArchived ? "restore" : "archive"} this admin?
+                Are you sure you want to deactivate this admin account?
               </p>
               <div className="flex justify-end gap-4">
                 <button

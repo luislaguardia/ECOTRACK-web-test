@@ -322,7 +322,7 @@ const Users = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-green-600"></div>
           </div>
         ) : (
-          <div className="overflow-x-auto bg-white rounded-lg shadow border border-gray-200 max-h-[410px] overflow-y-auto text-xs sm:text-sm">
+          <div className="overflow-x-auto bg-white rounded-lg shadow border border-gray-200 max-h-[450px] overflow-y-auto text-xs sm:text-sm">
             <table className="min-w-full table-auto">
               <thead className="bg-[#F5F5F5] border-b border-gray-200">
                 <tr className="text-left align-middle">
@@ -511,104 +511,135 @@ const Users = () => {
     </div>
   </div>
 )}
-      {editingUser && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
 
-          <div className="bg-white rounded-lg p-6 w-full max-w-md" style={{ boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.25)' }}>
-            <h3 className="text-lg font-semibold mb-4">Edit User</h3>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-gray-700">Name</label>
-                <input
-                  type="text"
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2  focus:ring-green-500"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <label className="block text-gray-700">Email</label>
-                <input
-                  type="email"
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2  focus:ring-green-500"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <label className="block text-gray-700">Location</label>
-                <input
-                  type="text"
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2  focus:ring-green-500"
-                  value={formData.location}
-                  onChange={(e) =>
-                    setFormData({ ...formData, location: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <label className="block text-gray-700">Verification Status</label>
-                <div className="relative"> 
-                <select
-  className="w-full p-2 border border-gray-300 rounded-md appearance-none pr-8 focus:outline-none focus:ring-2  focus:ring-green-500"
-  value={formData.status}
-  onChange={(e) =>
-    setFormData({ ...formData, status: e.target.value })
-  }
->
-  <option value="Verified">Verified</option>
-  <option value="Not Verified">Not Verified</option>
-</select>
-                  <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
-                    <FaChevronDown className="text-gray-500" /> 
-                  </div>
-                </div>
-              </div>
+{editingUser && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
+    <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
+      <h3 className="text-lg font-semibold mb-4">Edit User</h3>
+      <div className="space-y-3">
+        <div>
+          <label className="block text-gray-700">Name</label>
+          <input
+            type="text"
+            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            value={formData.name}
+            onChange={(e) =>
+              setFormData({ ...formData, name: e.target.value })
+            }
+            required
+          />
+          {!formData.name && (
+            <p className="text-red-600 text-sm mt-1">Name is required.</p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-gray-700">Email</label>
+          <input
+            type="email"
+            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            value={formData.email}
+            onChange={(e) =>
+              setFormData({ ...formData, email: e.target.value })
+            }
+            required
+          />
+          {!formData.email && (
+            <p className="text-red-600 text-sm mt-1">Email is required.</p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-gray-700">Barangay</label>
+          <div className="relative">
+            <select
+              className="w-full p-2 border border-gray-300 rounded-md appearance-none pr-8 focus:outline-none focus:ring-2 focus:ring-green-500"
+              value={formData.location}
+              onChange={(e) =>
+                setFormData({ ...formData, location: e.target.value })
+              }
+              required
+            >
+              <option value="">Select Barangay</option>
+              {barangays.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+            </select>
+            <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
+              <FaChevronDown className="text-gray-500" />
             </div>
-            <div className="flex justify-end mt-4">
-              
-              <button
-                onClick={() => setEditingUser(null)}
-                className="px-4 py-2 border border-gray-400 text-gray-700 rounded-md hover:bg-gray-100 transition"
-              >
-                Cancel
-              </button>
-              <button
-  onClick={handleUpdate}
-  className="bg-green-600 text-white ml-2 px-6 py-2 rounded-md hover:bg-green-700 transition flex items-center justify-center gap-2"
-  disabled={isUpdating}
->
-  {isUpdating ? (
-    <>
-      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle
-          className="opacity-25"
-          cx="12"
-          cy="12"
-          r="10"
-          stroke="currentColor"
-          strokeWidth="4"
-        />
-        <path
-          className="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 018-8v8z"
-        />
-      </svg>
-      Updating...
-    </>
-  ) : (
-    "Update"
-  )}
-</button>
+          </div>
+          {!formData.location && (
+            <p className="text-red-600 text-sm mt-1">Barangay is required.</p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-gray-700">Verification Status</label>
+          <div className="relative">
+            <select
+              className="w-full p-2 border border-gray-300 rounded-md appearance-none pr-8 focus:outline-none focus:ring-2 focus:ring-green-500"
+              value={formData.status}
+              onChange={(e) =>
+                setFormData({ ...formData, status: e.target.value })
+              }
+            >
+              <option value="Verified">Verified</option>
+              <option value="Not Verified">Not Verified</option>
+            </select>
+            <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
+              <FaChevronDown className="text-gray-500" />
             </div>
           </div>
         </div>
-      )}
+      </div>
+
+      <div className="flex justify-end mt-4">
+        <button
+          onClick={() => setEditingUser(null)}
+          className="px-4 py-2 border border-gray-400 text-gray-700 rounded-md hover:bg-gray-100 transition"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleUpdate}
+          className="bg-green-600 text-white ml-2 px-6 py-2 rounded-md hover:bg-green-700 transition flex items-center justify-center gap-2"
+          disabled={isUpdating || !formData.name || !formData.email || !formData.location}
+        >
+          {isUpdating ? (
+            <>
+              <svg
+                className="animate-spin h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8z"
+                />
+              </svg>
+              Updating...
+            </>
+          ) : (
+            "Update"
+          )}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 };

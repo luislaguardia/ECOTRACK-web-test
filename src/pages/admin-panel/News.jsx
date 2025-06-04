@@ -9,7 +9,11 @@ import { FaChevronDown } from "react-icons/fa";
 
 const News = () => {
   const [statusFilter, setStatusFilter] = useState("all"); // all | draft | published | archived
-
+  const [formErrors, setFormErrors] = useState({
+    title: "",
+    content: "",
+    image: "",
+  });
   const [deletingNewsId, setDeletingNewsId] = useState(null);
 
   const [isSavingDraft, setIsSavingDraft] = useState(false);
@@ -77,18 +81,25 @@ const News = () => {
   }, [filterCategory]);
 
   const handleSubmit = async (status) => {
+    // Validate input
+    const errors = {
+      title: !formData.title.trim() ? "Title is required." : "",
+      content: !formData.content.trim() ? "Content is required." : "",
+      image: !formData.image.trim() ? "Image URL or upload is required." : "",
+    };
+  
+    setFormErrors(errors);
+  
+    const hasError = Object.values(errors).some((msg) => msg !== "");
+    if (hasError) return;
+  
     try {
-      if (status === "draft") {
-        setIsSavingDraft(true);
-      } else if (status === "published") {
-        setIsPublishing(true); 
-      } else {
-        setIsUpdating(true);
-      }
-
-      const token = localStorage.getItem("token");
+      if (status === "draft") setIsSavingDraft(true);
+      else if (status === "published") setIsPublishing(true);
+      else setIsUpdating(true);
+  
       const data = { ...formData, status };
-
+  
       if (editingNewsId) {
         await axios.put(`${BASE_URL}/api/news/${editingNewsId}`, data, {
           headers: { Authorization: `Bearer ${token}` },
@@ -98,10 +109,8 @@ const News = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
-
+  
       await fetchNews();
-
-      // Reset form + modal
       setFormData({
         title: "",
         content: "",
@@ -112,11 +121,9 @@ const News = () => {
       setEditingNewsId(null);
       setShowModal(false);
       setError("");
+      setFormErrors({ title: "", content: "", image: "" });
     } catch (err) {
-      console.error(
-        "Failed to submit news:",
-        err.response?.data || err.message
-      );
+      console.error("Failed to submit news:", err.response?.data || err.message);
       setError("Failed to submit news. Please try again.");
     } finally {
       setIsPublishing(false);
@@ -466,14 +473,19 @@ const News = () => {
                   Title
                 </label>
                 <input
-                  type="text"
-                  placeholder="Enter news title"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 outline-none transition"
-                />
+  type="text"
+  placeholder="Enter news title"
+  value={formData.title}
+  onChange={(e) =>
+    setFormData({ ...formData, title: e.target.value })
+  }
+  className={`w-full border ${
+    formErrors.title ? "border-red-500" : "border-gray-300"
+  } rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 outline-none transition`}
+/>
+{formErrors.title && (
+  <p className="text-sm text-red-500 mt-1">{formErrors.title}</p>
+)}
               </div>
 
               <div>
@@ -481,13 +493,18 @@ const News = () => {
                   Content
                 </label>
                 <textarea
-                  placeholder="Enter news content"
-                  value={formData.content}
-                  onChange={(e) =>
-                    setFormData({ ...formData, content: e.target.value })
-                  }
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 h-32 focus:ring-2 focus:ring-green-500 outline-none transition resize-none"
-                />
+  placeholder="Enter news content"
+  value={formData.content}
+  onChange={(e) =>
+    setFormData({ ...formData, content: e.target.value })
+  }
+  className={`w-full border ${
+    formErrors.content ? "border-red-500" : "border-gray-300"
+  } rounded-lg px-4 py-2 h-32 focus:ring-2 focus:ring-green-500 outline-none transition resize-none`}
+/>
+{formErrors.content && (
+  <p className="text-sm text-red-500 mt-1">{formErrors.content}</p>
+)}
               </div>
 
               <div className="relative">
@@ -520,17 +537,22 @@ const News = () => {
                   Image Upload or URL
                 </label>
                 <div className="flex items-center space-x-2">
-                  <input
-                    type="text"
-                    placeholder="Or paste image URL"
-                    value={
-                      formData.image.startsWith("data:") ? "" : formData.image
-                    }
-                    onChange={(e) =>
-                      setFormData({ ...formData, image: e.target.value })
-                    }
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 outline-none transition"
-                  />
+                <input
+  type="text"
+  placeholder="Or paste image URL"
+  value={
+    formData.image.startsWith("data:") ? "" : formData.image
+  }
+  onChange={(e) =>
+    setFormData({ ...formData, image: e.target.value })
+  }
+  className={`w-full border ${
+    formErrors.image ? "border-red-500" : "border-gray-300"
+  } rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 outline-none transition`}
+/>
+{formErrors.image && (
+  <p className="text-sm text-red-500 mt-1">{formErrors.image}</p>
+)}
                   <input
                     type="file"
                     accept="image/*"
