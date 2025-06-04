@@ -24,6 +24,12 @@ import {
 
 import NotFound from "./pages/admin-panel/404NotFound";
 
+
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
+// import ContactPage from './pages/ContactPage'; // optional
+
+
 const AdminLayout = ({ children }) => {
   const [logoutLoading, setLogoutLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -127,6 +133,11 @@ function App() {
       <Route path="/features" element={<Features />} />
       <Route path="/how-it-works" element={<HowItWorks />} />
   
+
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+  <Route path="/terms" element={<TermsOfService />} />
+  {/* <Route path="/contact" element={<ContactPage />} /> optional */}
+
       <Route
         path="/login"
         element={<Login setIsAuthenticated={setIsAuthenticated} />}
