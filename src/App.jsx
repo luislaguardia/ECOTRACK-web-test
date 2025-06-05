@@ -25,8 +25,8 @@ import {
 import NotFound from "./pages/admin-panel/404NotFound";
 
 
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import TermsOfService from './pages/TermsOfService';
+// import PrivacyPolicy from './pages/PrivacyPolicy';
+// import TermsOfService from './pages/TermsOfService';
 // import ContactPage from './pages/ContactPage'; // optional
 
 
@@ -134,8 +134,8 @@ function App() {
       <Route path="/how-it-works" element={<HowItWorks />} />
   
 
-      <Route path="/privacy" element={<PrivacyPolicy />} />
-  <Route path="/terms" element={<TermsOfService />} />
+      {/* <Route path="/privacy" element={<PrivacyPolicy />} /> */}
+  {/* <Route path="/terms" element={<TermsOfService />} /> */}
   {/* <Route path="/contact" element={<ContactPage />} /> optional */}
 
       <Route
