@@ -450,14 +450,14 @@ const Users = () => {
       {/* Header */}
       <div className="bg-green-600 rounded-t-lg px-6 py-4">
         <h2 className="text-white text-xl font-semibold">
-          {activeTab === "active" ? "Confirm Archive" : "Confirm Restore"}
+          {activeTab === "active" ? "Confirm Deactivate" : "Confirm Reactivate"}
         </h2>
       </div>
 
       {/* Body */}
       <div className="px-6 py-6">
         <p className="text-gray-800 text-base mb-6">
-          Are you sure you want to {activeTab === "active" ? "archive" : "restore"} this user?
+          Are you sure you want to {activeTab === "active" ? "deactivate" : "activate"} this user?
         </p>
 
         {/* Buttons */}
@@ -500,10 +500,10 @@ const Users = () => {
                     d="M4 12a8 8 0 018-8v8z"
                   ></path>
                 </svg>
-                {activeTab === "active" ? "Archiving..." : "Restoring..."}
+                {activeTab === "active" ? "Deactivating..." : "Activating..."}
               </>
             ) : (
-              activeTab === "active" ? "Archive" : "Restore"
+              activeTab === "active" ? "Deactivate" : "Activate"
             )}
           </button>
         </div>
