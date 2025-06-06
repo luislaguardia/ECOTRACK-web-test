@@ -333,7 +333,9 @@ const saveEdit = async (id) => {
                         >
                           <FiEdit className="w-4 h-4" />
                         </button>
-                        <label className="inline-flex items-center cursor-pointer">
+
+                        {/* Toggle Switch */}
+                        <label className="relative inline-flex items-center cursor-pointer">
                           <input
                             type="checkbox"
                             checked={!admin.isArchived}
@@ -343,9 +345,8 @@ const saveEdit = async (id) => {
                             }}
                             className="sr-only peer"
                           />
-                          <div className="w-10 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 rounded-full peer peer-checked:bg-green-500 relative transition-all duration-300">
-                            <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-md transition-all duration-300 peer-checked:translate-x-5" />
-                          </div>
+                          <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 rounded-full peer peer-checked:ring-green-500  dark:bg-gray-700 peer-checked:bg-green-600 relative transition-all duration-300"></div>
+                          <div className="absolute top-2 left-1 w-4 h-4 bg-white rounded-full shadow-md transition-all peer-checked:translate-x-5" ></div>
                         </label>
                       </div>
                     )}
