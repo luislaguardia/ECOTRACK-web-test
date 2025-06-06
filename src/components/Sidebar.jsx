@@ -72,7 +72,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, setShowLogoutModa
       </div>
 
       {/* Logout Button */}
-      <div className="mt-auto mb-6">
+      <div className="mt-60 mb-6">
         <div
           onClick={() => setShowLogoutModal(true)}
           className="flex items-center px-9 py-4 cursor-pointer hover:bg-[#0A7F24]"
