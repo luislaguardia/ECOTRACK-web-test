@@ -8,6 +8,8 @@ import megaphone from '../assets/SidebarLogo/megaphone.png';
 import menu from '../assets/SidebarLogo/menu.png';
 import setting from '../assets/SidebarLogo/setting.png';
 
+// replace the audit log icon
+
 export default function Sidebar({ sidebarOpen, setSidebarOpen, setShowLogoutModal }) {
   const location = useLocation();
   const [activeItem, setActiveItem] = useState(location.pathname);
@@ -26,7 +28,10 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, setShowLogoutModa
     { name: "News & Updates", path: "/news", icon: megaphone, size: 'w-7 h-7' },
     { name: "User Management", path: "/users", icon: user, size: 'w-7 h-6.5' },
     ...(role === "superadmin"
-      ? [{ name: "Admin Management", path: "/admin-management", icon: admin, size: 'w-6 h-7' }]
+      ? [
+          { name: "Admin Management", path: "/admin-management", icon: admin, size: 'w-6 h-7' },
+          { name: "Audit Logs", path: "/audit-logs", icon: setting, size: 'w-6 h-6.4' }, // You can use a different icon here
+        ]
       : []),
     { name: "Account Settings", path: "/settings", icon: setting, size: 'w-6 h-6.4' },
   ];

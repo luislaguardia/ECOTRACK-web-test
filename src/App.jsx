@@ -23,7 +23,7 @@ import {
 } from "./pages/product-landing-page/Export";
 
 import NotFound from "./pages/admin-panel/404NotFound";
-
+import AuditLogs from "./pages/admin-panel/AuditLogs";
 
 // import PrivacyPolicy from './pages/PrivacyPolicy';
 // import TermsOfService from './pages/TermsOfService';
@@ -116,6 +116,9 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
   const location = useLocation();
 
+  const adminInfo = JSON.parse(localStorage.getItem("adminInfo"));
+  const role = adminInfo?.role || "";
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsAuthenticated(!!token);
@@ -132,17 +135,11 @@ function App() {
       <Route path="/faq" element={<FAQ />} />
       <Route path="/features" element={<Features />} />
       <Route path="/how-it-works" element={<HowItWorks />} />
-  
-
-      {/* <Route path="/privacy" element={<PrivacyPolicy />} /> */}
-  {/* <Route path="/terms" element={<TermsOfService />} /> */}
-  {/* <Route path="/contact" element={<ContactPage />} /> optional */}
-
       <Route
         path="/login"
         element={<Login setIsAuthenticated={setIsAuthenticated} />}
       />
-  
+
       {isAuthenticated ? (
         <>
           <Route path="/dashboard" element={<AdminLayout><Dashboard /></AdminLayout>} />
@@ -150,11 +147,15 @@ function App() {
           <Route path="/users" element={<AdminLayout><Users /></AdminLayout>} />
           <Route path="/users/:id" element={<AdminLayout><UserDetails /></AdminLayout>} />
           <Route path="/settings" element={<AdminLayout><Settings /></AdminLayout>} />
-          <Route path="/admin-management" element={<AdminLayout><AdminManagement /></AdminLayout>} />
+          {role === "superadmin" && (
+            <>
+              <Route path="/admin-management" element={<AdminLayout><AdminManagement /></AdminLayout>} />
+              <Route path="/audit-logs" element={<AdminLayout><AuditLogs /></AdminLayout>} />
+            </>
+          )}
         </>
       ) : null}
-  
-      {/* 404 fallback for all undefined or unauthorized routes */}
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
