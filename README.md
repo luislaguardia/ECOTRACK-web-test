@@ -42,7 +42,11 @@ It allows administrators to manage users, monitor energy data, publish news, man
    npm install
    ```
 
-3. Start the development server:
+3. Get the .env file:
+   To run the project properly, you'll need the .env file.
+   You can get it from our Telegram — check the "Repositories" channel for the latest version.
+
+4. Start the development server:
    ```bash
    npm run dev
    ```
