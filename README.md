@@ -43,8 +43,10 @@ It allows administrators to manage users, monitor energy data, publish news, man
    ```
 
 3. Get the .env file:
+   ```bash
    To run the project properly, you'll need the .env file.
    You can get it from our Telegram — check the "Repositories" channel for the latest version.
+   ```
 
 4. Start the development server:
    ```bash
