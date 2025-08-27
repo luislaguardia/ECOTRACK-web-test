@@ -1,0 +1,38 @@
+@import "tailwindcss";
+@import './styles/fonts.css';
+
+@theme {
+  /* Fonts */
+  --font-proxima: "Proxima Nova", sans-serif;
+  --font-gotham: "Gotham", sans-serif;
+  --font-inter: "Inter", sans-serif;
+
+  /* Colors */
+  /* - Greens */
+  --color-green-def: #119718;
+  --color-green-dark: #0D8013;
+  --color-green-soft: #66BB6A;
+  --color-green-vivid: #1EBE26;
+  --color-green-lime: #1FC428;
+
+  /* - Dark Greens */
+  --color-darkgreen: #1B5E20;
+  --color-darkgreen-darker: #0D5C13;
+  --color-darkgreen-deep: #09570D;
+
+  /* - Light Greens */
+  --color-lightgreen: #E8F5E9;
+  --color-lightgreen-pale: #C3EDC5;
+
+  /* - Grays */
+  --color-darkgrey: #4F4D4D;
+
+
+  /* - Navy */
+  --color-navy: #001A40;
+
+    /* - White BG */
+  --color-bgwhite: #F5F5F5;
+
+  --color-grayshade: #DFDFDF;
+}
