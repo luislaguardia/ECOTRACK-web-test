@@ -1,551 +1,1256 @@
 import axios from "axios";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import { FiSearch, FiTrash2, FiEdit, FiEye, FiArchive, FiRotateCw, FiCheck, FiX, FiClock } from 'react-icons/fi';
-import barangaysInNasugbu from "../../data/barangays";
+import { FiSearch, FiEye, FiCheck, FiX, FiLink, FiMail, FiSmartphone, FiAlertTriangle } from 'react-icons/fi';
 import { FaChevronDown } from 'react-icons/fa';
 import { useEffect, useState } from "react";
 import { BASE_URL } from "../../config";
-// line 708, {showViewModal && (
+import barangaysInNasugbu from "../../data/barangays";
+
 const Users = () => {
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [users, setUsers] = useState([]);
-  const [statistics, setStatistics] = useState({
-    totalUsers: 0,
-    autoVerified: 0,
-    manuallyVerified: 0,
-    pendingManual: 0,
-    unverified: 0,
-    rejected: 0,
-    verifiedUsers: 0,
-    basicUsers: 0
+  // State management
+  const [state, setState] = useState({
+    isLoading: true,
+    users: [],
+    statistics: { totalUsers: 0, autoVerified: 0, manuallyVerified: 0, pendingManual: 0, unverified: 0, rejected: 0, verifiedUsers: 0, basicUsers: 0 },
+    search: "",
+    currentPage: 1,
+    totalPages: 1,
+    activeTab: "active",
+    showRejectionModal: false,
+    showConfirmRejectionModal: false,
+    selectedRejectionReason: '',
+    rejectionNotes: '',
+    showPendingOnly: false,
+    verificationFilter: "",
+    userRoleFilter: "",
+    selectedBarangay: "",
+    
+    // Modal states
+    showViewModal: false,
+    viewingUser: null,
+    batelecAccount: null,
+    isLoadingUserDetails: false,
+    
+    showDeleteModal: false,
+    userToDelete: null,
+    isDeleting: false,
+    
+    showVerificationModal: false,
+    verificationAction: null,
+    adminNotes: "",
+    isUpdating: false,
+    
+    // New states for account linking
+    showAccountLinkModal: false,
+    batelecAccounts: [],
+    isLoadingAccounts: false
   });
-  const [search, setSearch] = useState("");
-  const [editingUser, setEditingUser] = useState(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    location: "",
-    verificationStatus: "unverified",
-  });
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+
   const usersPerPage = 20;
-  const [barangays, setBarangays] = useState([]);
-  const [selectedBarangay, setSelectedBarangay] = useState('');
-  const [showExportModal, setShowExportModal] = useState(false);
-  const [exportType, setExportType] = useState(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [userToDelete, setUserToDelete] = useState(null);
-  const [activeTab, setActiveTab] = useState("active");
-  const [verificationFilter, setVerificationFilter] = useState("");
-  const [userRoleFilter, setUserRoleFilter] = useState("");
-  const [showVerificationModal, setShowVerificationModal] = useState(false);
-  const [verificationAction, setVerificationAction] = useState(null);
-  const [adminNotes, setAdminNotes] = useState("");
-  const [exportingType, setExportingType] = useState(null);
-  
-  // New states for view modal
-  const [showViewModal, setShowViewModal] = useState(false);
-  const [viewingUser, setViewingUser] = useState(null);
-  const [batelecAccount, setBatelecAccount] = useState(null);
-  const [isLoadingUserDetails, setIsLoadingUserDetails] = useState(false);
 
-  useEffect(() => {
-    fetchUsers();
-    fetchUserStatistics();
-    setBarangays(barangaysInNasugbu);
-  }, [currentPage, search, verificationFilter, userRoleFilter, activeTab]);
-
+  // API calls
   const fetchUsers = async () => {
-    try {
-      setIsLoading(true);
-      const token = localStorage.getItem("token");
-      const params = new URLSearchParams({
-        page: currentPage,
-        limit: usersPerPage,
-      });
+  try {
+    setState(prev => ({ ...prev, isLoading: true }));
+    const token = localStorage.getItem("token");
+    const params = new URLSearchParams({
+      page: state.currentPage,
+      limit: usersPerPage,
+      ...(state.search && { search: state.search }),
+      ...(state.verificationFilter && { verificationStatus: state.verificationFilter }),
+      ...(state.userRoleFilter && { userRole: state.userRoleFilter }),
+    });
 
-      if (search) params.append('search', search);
-      if (verificationFilter) params.append('verificationStatus', verificationFilter);
-      if (userRoleFilter) params.append('userRole', userRoleFilter);
-      
-      // Add includeArchived parameter based on active tab
-      if (activeTab === "inactive") {
-        params.append('includeArchived', 'true');
-      }
-
-      const res = await axios.get(`${BASE_URL}/api/users?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      let fetchedUsers = res.data.users || [];
-      
-      // If we need archived users but the backend doesn't support includeArchived param,
-      // we need to fetch all users and filter client-side
-      if (activeTab === "inactive" && fetchedUsers.length === 0) {
-        // Try fetching all users including archived ones
-        const allUsersRes = await axios.get(`${BASE_URL}/api/users?page=1&limit=1000`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        fetchedUsers = allUsersRes.data.users || [];
-      }
-
-      setUsers(fetchedUsers);
-      setTotalPages(res.data.totalPages || 1);
-    } catch (err) {
-      console.error("Error fetching users:", err.response?.data || err.message);
-      setUsers([]);
-    } finally {
-      setIsLoading(false);
+    if (state.activeTab === "inactive") {
+      params.append('includeArchived', 'true');
+    } else if (state.activeTab === "pending") {
+      params.append('verificationStatus', 'pending_manual');
     }
-  };
+
+    const res = await axios.get(`${BASE_URL}/api/users?${params}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    setState(prev => ({
+      ...prev,
+      users: res.data.users || [],
+      totalPages: res.data.totalPages || 1,
+      isLoading: false
+    }));
+  } catch (err) {
+    console.error("Error fetching users:", err);
+    setState(prev => ({ ...prev, users: [], isLoading: false }));
+  }
+};
 
   const fetchUserStatistics = async () => {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(`${BASE_URL}/api/users/statistics`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` }
       });
-      setStatistics(res.data);
+      setState(prev => ({ ...prev, statistics: res.data }));
     } catch (err) {
-      console.error("Error fetching statistics:", err.response?.data || err.message);
+      console.error("Error fetching statistics:", err);
     }
   };
 
   const fetchUserDetails = async (userId) => {
     try {
-      setIsLoadingUserDetails(true);
+      setState(prev => ({ ...prev, isLoadingUserDetails: true }));
       const token = localStorage.getItem("token");
       const res = await axios.get(`${BASE_URL}/api/users/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` }
       });
-      setViewingUser(res.data.user);
-      setBatelecAccount(res.data.batelecAccount);
+      setState(prev => ({
+        ...prev,
+        viewingUser: res.data.user,
+        batelecAccount: res.data.batelecAccount,
+        isLoadingUserDetails: false
+      }));
     } catch (err) {
-      console.error("Error fetching user details:", err.response?.data || err.message);
-    } finally {
-      setIsLoadingUserDetails(false);
+      console.error("Error fetching user details:", err);
+      setState(prev => ({ ...prev, isLoadingUserDetails: false }));
     }
   };
 
-  const filteredUsers = users.filter((u) => {
-    const matchesBarangay = !selectedBarangay || 
-      (u.barangay && u.barangay.toLowerCase() === selectedBarangay.toLowerCase());
+  const fetchBatelecAccounts = async () => {
+    try {
+      setState(prev => ({ ...prev, isLoadingAccounts: true }));
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${BASE_URL}/api/batelec/accounts`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setState(prev => ({
+        ...prev,
+        batelecAccounts: res.data || [],
+        isLoadingAccounts: false
+      }));
+    } catch (err) {
+      console.error("Error fetching BATELEC accounts:", err);
+      setState(prev => ({ ...prev, batelecAccounts: [], isLoadingAccounts: false }));
+    }
+  };
 
-    const matchesTab = 
-      (activeTab === "active" && !u.isArchived) ||
-      (activeTab === "inactive" && u.isArchived);
-
-    return matchesBarangay && matchesTab;
-  });
-
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
+  // Event handlers
   const handleView = async (user) => {
-    setShowViewModal(true);
+    setState(prev => ({ ...prev, showViewModal: true }));
     await fetchUserDetails(user._id);
   };
 
-  const closeViewModal = () => {
-    setShowViewModal(false);
-    setViewingUser(null);
-    setBatelecAccount(null);
-  };
-
-  const handleEdit = (user) => {
-    setEditingUser(user._id);
-    setFormData({
-      name: user.name || "",
-      email: user.email || "",
-      location: user.barangay || "",
-      verificationStatus: user.verificationStatus || "unverified",
-    });
-  };
-
-  const handleUpdateVerificationStatus = async (userId, newStatus, notes = "") => {
-    try {
-      const token = localStorage.getItem("token");
-      await axios.put(`${BASE_URL}/api/users/${userId}/verification-status`, {
-        verificationStatus: newStatus,
-        adminNotes: notes
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      
-      fetchUsers();
-      fetchUserStatistics();
-    } catch (err) {
-      console.error("Error updating verification status:", err.response?.data || err.message);
-      alert("Update failed");
+  const handleApproveUser = async (user) => {
+    const isNewConsumer = !user.accountNumber;
+    
+    if (isNewConsumer) {
+      // Show account linking modal for new consumers
+      setState(prev => ({ 
+        ...prev, 
+        showAccountLinkModal: true,
+        verificationAction: { user, action: 'approve' }
+      }));
+      await fetchBatelecAccounts();
+    } else {
+      // Direct approval for existing consumers
+      setState(prev => ({ 
+        ...prev, 
+        showVerificationModal: true, 
+        verificationAction: { user, action: 'approve' } 
+      }));
     }
   };
 
-  const handleManualVerification = async (userId, action, notes = "") => {
+  const handleAccountLinkApproval = async (accountNumber, accountData, adminNotes) => {
     try {
+      setState(prev => ({ ...prev, isUpdating: true }));
+      const { user } = state.verificationAction;
       const token = localStorage.getItem("token");
-      await axios.post(`${BASE_URL}/api/users/verify-user/${userId}`, {
-        action,
-        adminNotes: notes
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      
+      // Call new API endpoint that handles account linking + approval
+      await axios.post(`${BASE_URL}/api/users/link-account-and-approve/${user._id}`, {
+        accountNumber,
+        adminNotes
+      }, { headers: { Authorization: `Bearer ${token}` } });
       
       fetchUsers();
       fetchUserStatistics();
-    } catch (err) {
-      console.error("Error with manual verification:", err.response?.data || err.message);
-      alert("Verification action failed");
-    }
-  };
-
-  const handleResetVerification = async (userId) => {
-    try {
-      const token = localStorage.getItem("token");
-      await axios.post(`${BASE_URL}/api/users/${userId}/reset-verification`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
       
-      fetchUsers();
-      fetchUserStatistics();
+      setState(prev => ({
+        ...prev,
+        showAccountLinkModal: false,
+        verificationAction: null,
+        adminNotes: "",
+        isUpdating: false
+      }));
     } catch (err) {
-      console.error("Error resetting verification:", err.response?.data || err.message);
-      alert("Reset failed");
+      console.error("Account linking failed:", err);
+      alert("Account linking failed: " + (err.response?.data?.message || err.message));
+      setState(prev => ({ ...prev, isUpdating: false }));
     }
   };
 
-  const openDeleteModal = (userId) => {
-    setUserToDelete(userId);
-    setShowDeleteModal(true);
-  };
-
-  const closeDeleteModal = () => {
-    setUserToDelete(null);
-    setShowDeleteModal(false);
-  };
-
-  const confirmDeleteUser = async () => {
-    if (!userToDelete) return;
-    setIsDeleting(true);
+  const handleArchiveToggle = async (userId) => {
     try {
+      setState(prev => ({ ...prev, isDeleting: true }));
       const token = localStorage.getItem("token");
-      await axios.patch(`${BASE_URL}/api/users/${userToDelete}/toggle-archive`, {}, {
+      await axios.patch(`${BASE_URL}/api/users/${userId}/toggle-archive`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchUsers();
       fetchUserStatistics();
-      closeDeleteModal();
     } catch (err) {
-      console.error("Error archiving/restoring user:", err.response?.data || err.message);
+      console.error("Error toggling archive:", err);
       alert("Operation failed");
     } finally {
-      setIsDeleting(false);
+      setState(prev => ({ ...prev, isDeleting: false, showDeleteModal: false, userToDelete: null }));
     }
   };
 
-  const openVerificationModal = (user, action) => {
-    setVerificationAction({ user, action });
-    setAdminNotes("");
-    setShowVerificationModal(true);
-  };
-
-  const closeVerificationModal = () => {
-    setVerificationAction(null);
-    setAdminNotes("");
-    setShowVerificationModal(false);
-  };
-
-  const confirmVerificationAction = async () => {
-    if (!verificationAction) return;
+  const handleRejectUser = async () => {
+  try {
+    setState(prev => ({ ...prev, isUpdating: true }));
+    const token = localStorage.getItem("token");
+    const { selectedRejectionReason, rejectionNotes } = state;
+    const reasonData = rejectionReasons.find(r => r.value === selectedRejectionReason);
     
-    const { user, action } = verificationAction;
+    await axios.post(`${BASE_URL}/api/users/verify-user/${state.verificationAction.user._id}`, {
+      action: 'reject',
+      adminNotes: rejectionNotes,
+      rejectionReason: selectedRejectionReason,
+      rejectionMessage: reasonData?.defaultMessage || ''
+    }, { headers: { Authorization: `Bearer ${token}` } });
     
-    if (action === 'approve' || action === 'reject') {
-      await handleManualVerification(user._id, action, adminNotes);
-    } else if (action === 'reset') {
-      await handleResetVerification(user._id);
-    }
+    fetchUsers();
+    fetchUserStatistics();
     
-    closeVerificationModal();
+    setState(prev => ({
+      ...prev,
+      isUpdating: false,
+      showConfirmRejectionModal: false,
+      verificationAction: null,
+      selectedRejectionReason: '',
+      rejectionNotes: ''
+    }));
+  } catch (err) {
+    console.error("Rejection failed:", err);
+    alert("Rejection failed: " + (err.response?.data?.message || err.message));
+    setState(prev => ({ ...prev, isUpdating: false }));
+  }
+};
+
+  // Reusable Components
+const StatCard = ({ title, value, color = "text-gray-800" }) => (
+  <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
+    <h4 className="text-sm text-gray-500 font-inter mb-2">{title}</h4>
+    <span className={`text-2xl font-semibold ${color} font-inter`}>{value}</span>
+  </div>
+);
+
+const StatusBadge = ({ status }) => {
+  const configs = {
+    auto_verified: { color: "text-green-600 bg-green-100", text: "Auto Verified" },
+    manually_verified: { color: "text-green-600 bg-green-100", text: "Manually Verified" },
+    pending_manual: { color: "text-yellow-600 bg-yellow-100", text: "Pending Review" },
+    rejected: { color: "text-red-600 bg-red-100", text: "Rejected" },
+    unverified: { color: "text-gray-600 bg-gray-100", text: "Unverified" }
+  };
+  
+  const config = configs[status] || configs.unverified;
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
+      {config.text}
+    </span>
+  );
+};
+
+const FilterSelect = ({ value, onChange, options, placeholder, className = "" }) => (
+  <div className={`relative ${className}`}>
+    <select
+      className="p-2 border bg-white border-gray-300 rounded-md font-inter shadow-sm appearance-none pr-8 focus:outline-none focus:ring-2 focus:ring-green-500 w-full"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    >
+      <option value="">{placeholder}</option>
+      {options.map(opt => (
+        <option key={opt.value} value={opt.value}>{opt.label}</option>
+      ))}
+    </select>
+    <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
+      <FaChevronDown className="text-gray-500" />
+    </div>
+  </div>
+);
+
+const Modal = ({ show, onClose, title, children, actions, loading = false }) => {
+  if (!show) return null;
+  
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[95vh] overflow-hidden">
+        <div className="bg-blue-600 px-6 py-4 flex items-center justify-between">
+          <h2 className="text-white text-xl font-bold">{title}</h2>
+          <button onClick={onClose} className="text-white hover:bg-white/20 p-2 rounded-lg">
+            <FiX className="w-5 h-5" />
+          </button>
+        </div>
+        
+        {loading ? (
+          <div className="flex justify-center items-center h-[400px]">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-600"></div>
+          </div>
+        ) : (
+          <>
+            <div className="max-h-[calc(95vh-200px)] overflow-y-auto p-6">
+              {children}
+            </div>
+            {actions && (
+              <div className="bg-gray-50 px-6 py-4 border-t flex justify-end gap-3">
+                {actions}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Rejection reasons with default messages
+const rejectionReasons = [
+  {
+    value: 'invalid_receipt',
+    label: 'Invalid Receipt Number',
+    defaultMessage: `Your Ecotrack account creation request has been rejected because the receipt number you provided is not valid or cannot be found in our system.
+
+          To resolve this issue:
+          1. Double-check your receipt number for any typing errors
+          2. Ensure you are using the receipt number from your electrical installation payment receipt.
+          3. Contact BATELEC customer service if you believe this is an error
+          4. Once you have the correct receipt number, you may submit a new account creation request`
+  },
+  {
+    value: 'receipt_used',
+    label: 'Receipt Already Used',
+    defaultMessage: `Your BATELEC account creation request has been rejected because the receipt number you provided is already associated with another account.
+
+          To resolve this issue:
+          1. Check if you already have an existing BATELEC app account
+          2. If you forgot your account details, use the "Forgot Password" option instead
+          3. If someone else may have used your receipt, contact BATELEC customer service immediately
+          4. Do not create multiple accounts with the same installation receipt`
+  },
+  {
+    value: 'incomplete_details',
+    label: 'Incomplete Personal Details',
+    defaultMessage: `Your BATELEC account creation request has been rejected because some required personal information is missing or incomplete.
+
+          To resolve this issue:
+          1. Review all required fields in the registration form
+          2. Ensure your full legal name, barangay, and valid contact information are provided
+          3. Double-check that no fields are left blank
+          4. Submit a new account creation request with all required information completed`
+  },
+  {
+    value: 'installation_not_confirmed',
+    label: 'Installation Not Confirmed in System',
+    defaultMessage: `Your BATELEC account creation request has been rejected because your electrical installation cannot be confirmed in our system.
+
+          To resolve this issue:
+          1. Contact BATELEC customer service to verify your installation status
+          2. Provide your receipt number and installation address for verification
+          3. Wait for confirmation that your installation is properly recorded in our system
+          4. Once confirmed, submit a new account creation request`
+  },
+  {
+    value: 'unreadable_receipt',
+    label: 'Unreadable Receipt Image',
+    defaultMessage: `Your BATELEC account creation request has been rejected because the receipt image you uploaded is unclear, blurry, or damaged.
+
+          To resolve this issue:
+          1. Take a new, clear photo of your receipt in good lighting
+          2. Ensure all text and numbers are clearly visible
+          3. Use a clean background when photographing the receipt
+          4. Submit a new account creation request with the clearer image`
+  },
+  {
+    value: 'information_mismatch',
+    label: 'Information Mismatch with Installation Records',
+    defaultMessage: `Your BATELEC account creation request has been rejected because the personal information you provided does not match our installation records.
+
+          To resolve this issue:
+          1. Verify that your name, address, and contact details exactly match your installation records
+          2. Check for spelling errors or outdated information
+          3. If your information has changed since installation, contact BATELEC customer service first to update your records
+          4. Submit a new account creation request with the correct information`
+  },
+  {
+    value: 'service_not_activated',
+    label: 'Electrical Service Not Yet Activated',
+    defaultMessage: `Your BATELEC account creation request has been rejected because your electrical service installation is not yet fully activated in our system.
+
+          To resolve this issue:
+          1. Wait for your electrical service to be completely activated (this may take a few business days after installation)
+          2. Contact BATELEC customer service to confirm your service activation status
+          3. Once your service is fully active, submit a new account creation request
+          4. You will receive a confirmation when your service is ready for app registration`
+  },
+  {
+    value: 'duplicate_application',
+    label: 'Duplicate Application Found',
+    defaultMessage: `Your BATELEC account creation request has been rejected because we found an existing application or account associated with your information.
+
+          To resolve this issue:
+          1. Check if you already have a BATELEC app account by trying to log in
+          2. If you forgot your password, use the "Forgot Password" option to reset it
+          3. If you have a pending application, wait for its processing instead of submitting new ones
+          4. Contact BATELEC customer service if you need assistance accessing your existing account`
+  },
+  {
+    value: 'other',
+    label: 'Other',
+    defaultMessage: `Your BATELEC account creation request has been rejected. Please review the additional comments below for specific details about the rejection.
+
+          To resolve this issue:
+          1. Carefully read the specific rejection reason provided
+          2. Address all mentioned issues before resubmitting
+          3. Contact BATELEC customer service if you need clarification
+          4. Submit a new account creation request once all issues are resolved`
+  }
+];
+
+// Rejection Modal Reason Options
+const RejectionModal = ({ show, onClose, user, onContinue, loading }) => {
+  const [selectedReason, setSelectedReason] = useState('');
+  const [adminNotes, setAdminNotes] = useState('');
+
+  const getCurrentReason = () => {
+    return rejectionReasons.find(reason => reason.value === selectedReason);
   };
 
-  const getVerificationStatusColor = (status) => {
-    switch (status) {
-      case 'auto_verified':
-      case 'manually_verified':
-        return "text-green-600 bg-green-100";
-      case 'pending_manual':
-        return "text-yellow-600 bg-yellow-100";
-      case 'rejected':
-        return "text-red-600 bg-red-100";
-      case 'unverified':
-      default:
-        return "text-gray-600 bg-gray-100";
-    }
+  const handleContinue = () => {
+    if (!selectedReason) return;
+    onContinue(selectedReason, adminNotes);
   };
 
-  const getVerificationStatusText = (status) => {
-    switch (status) {
-      case 'auto_verified':
-        return "Auto Verified";
-      case 'manually_verified':
-        return "Manually Verified";
-      case 'pending_manual':
-        return "Pending Review";
-      case 'rejected':
-        return "Rejected";
-      case 'unverified':
-      default:
-        return "Unverified";
-    }
-  };
+  if (!show || !user) return null;
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-  };
-
-  const exportToCSV = () => {
-    setExportingType("csv");
-    const csvContent = [
-      ["Name", "Email", "Barangay", "Verification Status", "User Role", "Account Number", "Created At"],
-      ...filteredUsers.map(user => [
-        user.name || "",
-        user.email || "",
-        user.barangay || "",
-        getVerificationStatusText(user.verificationStatus),
-        user.userRole || "",
-        user.accountNumber || "",
-        new Date(user.createdAt).toLocaleDateString()
-      ])
-    ].map(row => row.join(",")).join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `users_export_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    window.URL.revokeObjectURL(url);
-    
-    setTimeout(() => {
-      setExportingType(null);
-      setShowExportModal(false);
-    }, 1000);
-  };
-
-  const exportToPDF = () => {
-    setExportingType("pdf");
-    const doc = new jsPDF();
-    
-    doc.setFontSize(16);
-    doc.text("User Management Report", 14, 20);
-    doc.setFontSize(10);
-    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
-
-    const tableData = filteredUsers.map(user => [
-      user.name || "",
-      user.email || "",
-      user.barangay || "",
-      getVerificationStatusText(user.verificationStatus),
-      user.userRole || "",
-      user.accountNumber || ""
-    ]);
-
-    autoTable(doc, {
-      startY: 40,
-      head: [["Name", "Email", "Barangay", "Status", "Role", "Account #"]],
-      body: tableData,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [34, 197, 94] }
-    });
-
-    doc.save(`users_report_${new Date().toISOString().split('T')[0]}.pdf`);
-    
-    setTimeout(() => {
-      setExportingType(null);
-      setShowExportModal(false);
-    }, 1000);
-  };
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] p-6">
-      <h2 className="text-3xl font-semibold font-inter text-gray-800 mb-5">
-        User Management
-      </h2>
-
-      {/* Enhanced Statistics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
-          <h4 className="text-sm text-gray-500 font-inter mb-2">Total Users</h4>
-          <span className="text-2xl font-semibold text-gray-800 font-inter">{statistics.totalUsers}</span>
+    <Modal
+      show={show}
+      onClose={onClose}
+      title="Reject Verification Request" 
+      actions={[
+        <button
+          key="cancel"
+          onClick={() => setState(prev => ({ 
+            ...prev, 
+            showRejectionModal: false,
+            showViewModal: true
+          }))}
+          disabled={state.isUpdating}
+            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium"
+        >
+          Cancel
+        </button>,
+        <button
+          key="continue"
+          onClick={handleContinue}
+          disabled={!selectedReason || (selectedReason === 'other' && !adminNotes.trim())}
+          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center gap-2"
+        >
+          <FiX className="w-4 h-4" /> Reject
+        </button>
+      ]}
+    >
+      <div className="space-y-6">
+        {/* User Information */}
+        <div className="bg-gray-50 p-4 mb-4 rounded-md border border-gray-200">
+          <h3 className="font-semibold text-gray-800 mb-1">User Information</h3>
+          <div className="grid grid-cols-2 gap-x-1 gap-y-1 text-sm">
+            <div><span className="font-medium">Name:</span> {user.fullName || user.name}</div>
+            <div><span className="font-medium">Email:</span> {user.email}</div>
+            <div><span className="font-medium">Reference ID:</span> {user.referenceId}</div>
+            <div><span className="font-medium">Consumer Type:</span> 
+              <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
+                !user.accountNumber ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+              }`}>
+                {!user.accountNumber ? 'New Consumer' : 'Existing Consumer'}
+              </span>
+            </div>
+          </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
-          <h4 className="text-sm text-gray-500 font-inter mb-2">Auto Verified</h4>
-          <span className="text-2xl font-semibold text-green-600 font-inter">{statistics.autoVerified}</span>
+        {/* Rejection Details */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="bg-orange-100 rounded-full p-1">
+              <svg className="w-4 h-4 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <h3 className="text-red-600 font-semibold">Rejection Details</h3>
+          </div>
+
+          {/* Rejection Reason */}
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-medium mb-2">
+              Reason for Rejection <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <select
+                value={selectedReason}
+                onChange={(e) => setSelectedReason(e.target.value)}
+                className="w-full shadow-sm border border-gray-500 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 font-inter py-2 px-4 cursor-pointer appearance-none pr-8"
+              >
+                <option value="">Select a reason...</option>
+                {rejectionReasons.map((reason) => (
+                  <option key={reason.value} value={reason.value}>
+                    {reason.label}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                <FaChevronDown className="text-gray-500" />
+              </div>
+            </div>
+          </div>
+
+          {/* Default Email Message */}
+          {selectedReason && (
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-medium mb-2">
+                Default Email Message
+              </label>
+              <textarea
+                value={getCurrentReason()?.defaultMessage || ''}
+                readOnly
+                className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 text-sm"
+                rows="8"
+              />
+            </div>
+          )}
+
+          {/* Additional Comments */}
+          <div className="mt-2">
+            <label className="block text-gray-700 text-sm font-medium mb-2">
+              Additional Comments {selectedReason !== 'other' && '(Optional)'}
+            </label>
+            <textarea
+              value={adminNotes}
+              onChange={(e) => setAdminNotes(e.target.value)}
+              placeholder={
+                selectedReason === 'other'
+                  ? 'Please provide the reason for rejection...'
+                  : 'Add any additional notes or specific instructions. This will be appended to the default message above.'
+              }
+              className={`w-full p-3 border rounded-md ${
+                selectedReason === 'other'
+                  ? 'border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500'
+                  : 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500'
+              }`}
+              rows="3"
+            />
+            {selectedReason === 'other' && !adminNotes && (
+              <p className="text-sm text-red-500 mt-1">
+                Additional comments are required when selecting "Other".
+              </p>
+            )}
+          </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
-          <h4 className="text-sm text-gray-500 font-inter mb-2">Manually Verified</h4>
-          <span className="text-2xl font-semibold text-blue-600 font-inter">{statistics.manuallyVerified}</span>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
-          <h4 className="text-sm text-gray-500 font-inter mb-2">Pending Review</h4>
-          <span className="text-2xl font-semibold text-yellow-600 font-inter">{statistics.pendingManual}</span>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
-          <h4 className="text-sm text-gray-500 font-inter mb-2">Unverified</h4>
-          <span className="text-2xl font-semibold text-gray-600 font-inter">{statistics.unverified}</span>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
-          <h4 className="text-sm text-gray-500 font-inter mb-2">Rejected</h4>
-          <span className="text-2xl font-semibold text-red-600 font-inter">{statistics.rejected}</span>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
-          <h4 className="text-sm text-gray-500 font-inter mb-2">Verified Role</h4>
-          <span className="text-2xl font-semibold text-green-600 font-inter">{statistics.verifiedUsers}</span>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
-          <h4 className="text-sm text-gray-500 font-inter mb-2">Basic Role</h4>
-          <span className="text-2xl font-semibold text-blue-600 font-inter">{statistics.basicUsers}</span>
+        {/* Admin Info */}
+        <div className="bg-blue-50 p-4 mt-2 rounded-lg">
+          <div className="text-sm">
+            <div className="mb-1">
+              <span className="text-gray-600">Rejected by</span>
+              <div className="text-blue-600 font-semibold">Super Admin</div>
+            </div>
+            <div>
+              <span className="text-gray-600">Rejected at</span>
+              <div className="text-blue-600 font-semibold">{currentDate}</div>
+            </div>
+          </div>
         </div>
       </div>
+    </Modal>
+  );
+};
 
-      {/* Enhanced Search and Filters */}
-      <div className="flex flex-col gap-4 mb-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 flex-wrap">
-          {/* Search Input */}
-          <div className="relative w-full md:w-[400px]">
-            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-            <input
-              type="text"
-              placeholder="Search users by name, email, username, or account number..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="p-3 pl-10 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 font-inter w-full"
+// Confirmation Modal for Rejection
+const ConfirmRejectionModal = ({ 
+  show, 
+  onClose, 
+  user, 
+  onConfirm, 
+  loading,
+  rejectionReason,
+  adminNotes 
+}) => {
+  if (!show || !user) return null;
+
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  // Find the rejection reason label
+  const reasonLabel = rejectionReasons.find(r => r.value === rejectionReason)?.label || rejectionReason;
+
+  return (
+    <Modal
+      show={show}
+      onClose={onClose}
+      title={
+        <div className="text-white px-3 py-1 flex items-center gap-2">
+          Confirm Rejection
+        </div>
+      }
+      actions={[
+          <button
+            key="cancel"
+            onClick={() => setState(prev => ({ 
+              ...prev, 
+            showConfirmRejectionModal: false,
+            showRejectionModal: true
+            }))}
+            className="px-4 py-2 border border-gray-400 text-gray-700 rounded-md hover:bg-gray-100"
+          >
+            Cancel
+          </button>,
+        <button
+          key="confirm"
+          onClick={onConfirm} 
+          disabled={loading}
+          className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium"
+        >
+          {loading ? "Processing..." : "Confirm Rejection"}
+        </button>
+      ]}
+    >
+      <div className="text-center space-y-3 p-4">
+        {/* Warning Icon */}
+        <div className="flex justify-center">
+          <div className="w-40 h-40 bg-red-100 rounded-full flex items-center justify-center">
+            <svg className="w-35 h-35 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Main Question */}
+        <h3 className="text-lg font-semibold mb-10 text-gray-800">
+          Are you sure you want to reject this verification request?
+        </h3>
+
+        {/* Warning Message */}
+        <div className="bg-red-50 border border-red-200 rounded p-4 flex items-center gap-2 justify-center ">
+          <svg className="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+          <span className="font-semibold text-red-800">This action is IRREVERSIBLE!</span>
+        </div>
+
+        {/* Request Details */}
+        <div className="bg-gray-50 border border-gray-200 rounded p-4 text-left">
+          <h4 className="font-semibold text-gray-800 mb-3">Request Details:</h4>
+          <div className="space-y-1 text-sm">
+            <div><span className="font-medium">User:</span> {user.fullName || user.name} ({user.email})</div>
+            <div><span className="font-medium">Account:</span> {user.accountNumber || "N/A"}</div>
+            <div><span className="font-medium">Date:</span> {currentDate}</div>
+          </div>
+        </div>
+
+        {/* Rejection Reason */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded p-4 text-left">
+          <div className="text-sm">
+            <div className="mb-2">
+              <span className="font-medium">Rejection Reason:</span> {reasonLabel}
+            </div>
+            {adminNotes && (
+              <div>
+                <span className="font-medium">Custom Message:</span> {adminNotes}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Final Notice */}
+        <p className="text-sm text-gray-600">
+          The user will be notified via email and will not be able to resubmit this request.
+        </p>
+      </div>
+    </Modal>
+  );
+};
+
+
+// Account Linking Modal
+const AccountLinkingModal = ({ 
+  show, 
+  onClose, 
+  user, 
+  onApprove, 
+  loading,
+  batelecAccounts,
+  onSearchAccounts 
+}) => {
+  const [selectedAccount, setSelectedAccount] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedBarangay, setSelectedBarangay] = useState('');
+  const [adminNotes, setAdminNotes] = useState('');
+  const [filteredAccounts, setFilteredAccounts] = useState([]);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
+  useEffect(() => {
+    const filtered = batelecAccounts.filter(account => 
+      !account.isRegistered && (
+        account.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        account.accountNumber?.includes(searchQuery) ||
+        account.meterNumber?.includes(searchQuery)
+      ) && (
+        !selectedBarangay || 
+        (account.barangay && account.barangay.toLowerCase() === selectedBarangay.toLowerCase())
+      )
+    );
+    setFilteredAccounts(filtered);
+  }, [searchQuery, selectedBarangay, batelecAccounts]);
+
+  const handleApproveClick = () => {
+    if (!selectedAccount && user && !user.accountNumber) return;
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmApproval = () => {
+    const accountData = batelecAccounts.find(acc => acc.accountNumber === selectedAccount);
+    onApprove(selectedAccount, accountData, adminNotes);
+    setShowConfirmation(false);
+  };
+
+  const handleCloseConfirmation = () => {
+    setShowConfirmation(false);
+  };
+
+  const handleBarangayChange = (value) => {
+    setSelectedBarangay(value);
+  };
+
+  if (!show || !user) return null;
+
+  const isNewConsumer = !user.accountNumber;
+  const accountData = batelecAccounts.find(acc => acc.accountNumber === selectedAccount);
+
+  return (
+    <>
+      <Modal
+        show={show && !showConfirmation}
+        onClose={onClose}
+        title={isNewConsumer ? "Link Account & Approve User" : "Approve User Verification"}
+        actions={[
+          ////
+         <button
+            key="cancel"
+            onClick={() => setState(prev => ({ 
+              ...prev, 
+            showAccountLinkModal: false,
+            showViewModal: true
+            }))}
+            className="px-4 py-2 border border-gray-400 text-gray-700 rounded-md hover:bg-gray-100"
+          >
+            Cancel
+          </button>,
+          <button
+            key="approve"
+            onClick={handleApproveClick}
+            disabled={loading || (isNewConsumer && !selectedAccount)}
+            className={`px-6 py-2 text-white rounded-md flex items-center gap-2 font-medium ${
+              (isNewConsumer && !selectedAccount) 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-green-600 hover:bg-green-700'
+            }`}
+          >
+            <FiCheck className="w-4 h-4" />
+            Approve User
+          </button>
+        ]}
+      >
+        <div className="space-y-6">
+          {/* User Information */}
+          <div className="bg-gray-50 p-4 mb-4 rounded-md border border-gray-200">
+            <h3 className="font-semibold text-gray-900 mb-1">User Information</h3>
+            <div className="grid grid-cols-2 gap-x-1 gap-y-1 text-sm">
+              <div>
+                <span className="text-gray-600">Name:</span> 
+                <span className="ml-2 text-gray-900">{user.fullName || user.name}</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Reference ID:</span> 
+                <span className="ml-2 text-gray-900">{user.referenceId}</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Email:</span> 
+                <span className="ml-2 text-gray-900">{user.email}</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Consumer Type:</span>
+                <span className="ml-2 px-2 py-1 rounded text-xs bg-blue-100 text-blue-800 font-medium">
+                  {isNewConsumer ? 'New Consumer' : 'Existing Consumer'}
+                </span>
+              </div>
+              {user.barangay && (
+                <div>
+                  <span className="text-gray-600">Barangay:</span> 
+                  <span className="ml-2 text-gray-900">{user.barangay}</span>
+                </div>
+              )}
+              {user.requestedDate && (
+                <div>
+                  <span className="text-gray-600">Requested:</span> 
+                  <span className="ml-2 text-gray-900">{user.requestedDate}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Account Linking Section (only for new consumers) */}
+          {isNewConsumer && (
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-2">🔍 Find Matching Customer Account</h3>
+              
+              {/* Search Box and Filter */}
+              <div className="mb-4 flex gap-4">
+                <div className="flex-1 relative">
+                  <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    placeholder="Search by name, account number, or meter number..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <FilterSelect
+                  value={selectedBarangay}
+                  onChange={handleBarangayChange}
+                  options={[{value: "", label: "All Barangays"}, ...barangayOptions]}
+                  placeholder="Filter by Barangay"
+                  className="min-w-[180px]"
+                />
+              </div>
+
+              {/* Account Table */}
+              <div className="border border-gray-300 rounded-lg">
+                <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                  <h4 className="font-semibold text-gray-900">
+                    Matching Customer Accounts ({filteredAccounts.length} found)
+                  </h4>
+                </div>
+                
+                <div className="overflow-hidden">
+                  {/* Table Header */}
+                  <div className="bg-gray-50 border-b border-gray-200">
+                    <div className="grid grid-cols-12 gap-4 px-4 py-3 text-sm font-medium text-gray-700">
+                      <div className="col-span-1"></div>
+                      <div className="col-span-4">Name</div>
+                      <div className="col-span-2">Barangay</div>
+                      <div className="col-span-3">Account ID</div>
+                      <div className="col-span-2">Meter</div>
+                    </div>
+                  </div>
+                  
+                  {/* Table Body */}
+                  <div className="divide-y divide-gray-200 max-h-80 overflow-y-auto">
+                    {filteredAccounts.length > 0 ? (
+                      filteredAccounts.map((account, index) => (
+                        <label key={account.accountNumber} className="grid grid-cols-12 gap-4 px-4 py-4 hover:bg-gray-50 cursor-pointer text-sm">
+                          <div className="col-span-1 flex items-center">
+                            <input
+                              type="radio"
+                              name="selectedAccount"
+                              value={account.accountNumber}
+                              checked={selectedAccount === account.accountNumber}
+                              onChange={(e) => setSelectedAccount(e.target.value)}
+                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                            />
+                          </div>
+                          <div className="col-span-4 text-gray-900">{account.customerName}</div>
+                          <div className="col-span-2 text-gray-600">{account.barangay || 'N/A'}</div>
+                          <div className="col-span-3 text-gray-900">{account.accountNumber}</div>
+                          <div className="col-span-2 text-gray-600">{account.meterNumber}</div>
+                        </label>
+                      ))
+                    ) : (
+                      <div className="px-4 py-8 text-center text-gray-500">
+                        {searchQuery || selectedBarangay ? 'No matching accounts found' : 'No available accounts to link'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {selectedAccount && (
+                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                  <div className="flex items-center gap-2 text-green-800">
+                    <FiLink className="w-4 h-4" />
+                    <span className="font-medium">Account Selected</span>
+                  </div>
+                  <div className="text-sm text-green-700 mt-1">
+                    This account will be linked to {user.fullName || user.name}'s profile upon approval.
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+         {/* Approval Summary */}
+            <div className="bg-yellow-50 p-4 mb-4 rounded-md border border-yellow-200">
+              <h4 className="font-semibold text-yellow-800 mb-3">Approval Summary</h4>
+              <ul className="text-sm text-yellow-700 space-y-1">
+                 <li>• User verification status will change to "manually_verified"</li>
+                 <li>• User will gain access to BATELEC energy data</li>
+                 {isNewConsumer && selectedAccount && (
+                   <li>• Account {selectedAccount} will be linked to this user</li>
+                 )}
+                 <li>• User will receive approval confirmation email</li>
+               </ul>
+             </div>
+
+          {/* Existing Consumer Info */}
+          {!isNewConsumer && (
+            <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
+              <h3 className="font-semibold text-blue-800 mb-2">Existing Account Information</h3>
+              <div className="text-sm text-blue-700">
+                <div><span className="font-medium">Account Number:</span> {user.accountNumber}</div>
+                <div className="mt-1">This user has already provided their BATELEC account number.</div>
+              </div>
+            </div>
+          )}
+
+          {/* Admin Notes */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Admin Notes (Optional)
+            </label>
+            <textarea
+              value={adminNotes}
+              onChange={(e) => setAdminNotes(e.target.value)}
+              placeholder="Enter any additional notes for this approval..."
+              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              rows="3"
             />
           </div>
+        </div>
+      </Modal>
 
-          {/* Export Buttons */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => {
-                setExportType("csv");
-                setShowExportModal(true);
-              }}
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition"
-            >
-              Export CSV
-            </button>
-            <button
-              onClick={() => {
-                setExportType("pdf");
-                setShowExportModal(true);
-              }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
-            >
-              Export PDF
-            </button>
+      {/* Confirmation Modal */}
+      <AccountLinkingConfirmation
+        show={showConfirmation}
+        onClose={handleCloseConfirmation}
+        onConfirm={handleConfirmApproval}
+        user={user}
+        selectedAccount={selectedAccount}
+        accountData={accountData}
+        adminNotes={adminNotes}
+        loading={loading}
+      />
+    </>
+  );
+};
+
+// Account Linking Confirmation Modal
+const AccountLinkingConfirmation = ({ 
+  show, 
+  onClose, 
+  onConfirm, 
+  user, 
+  selectedAccount, 
+  accountData, 
+  adminNotes,
+  loading 
+}) => {
+  console.log('AccountLinkingConfirmation render:', { show, user: !!user });
+  
+  if (!show || !user) {
+    console.log('AccountLinkingConfirmation not showing:', { show, hasUser: !!user });
+    return null;
+  }
+
+  const isNewConsumer = !user.accountNumber;
+
+  return (
+    <Modal
+      show={show}
+      onClose={onClose}
+      title="Link Account Confirmation"
+      actions={[
+        <button
+          key="cancel"
+          onClick={onClose}
+          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium"
+        >
+          Cancel
+        </button>,
+        <button
+          key="confirm"
+          onClick={onConfirm}
+          disabled={loading}
+          className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium flex items-center gap-2"
+        >
+          {loading ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+              Processing...
+            </>
+          ) : (
+            'Link Account'
+          )}
+        </button>
+      ]}
+    >
+      <div className="space-y-6">
+        {/* Warning Icon */}
+         <div className="w-145 h-75 bg-yellow-50 p-4 rounded-lg mb-2 text-center mx-auto" style={{maxWidth: '95%'}}>
+        <div className="mx-auto w-36 h-36 bg-yellow-400 rounded-full flex items-center justify-center">
+          <svg className="w-20 h-20 text-black" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16h2v2h-2v-2zm0-6h2v4h-2v-4z"/>
+          </svg>
+        </div>
+
+        {/* Confirmation Message */}
+        <div className="text-center">
+          <p className="text-gray-900 mb-3 mt-2 font-semibold">
+            Are you sure you want to link this verification request to:
+          </p>
+
+
+            <div className="font-semibold text-lg text-gray-600 mb-1">
+              {user.fullName || user.name}
+            </div>
+            <div className="text-sm text-gray-600">
+              {user.email}
+            </div>
+            {isNewConsumer && accountData && (
+              <div className="text-sm text-gray-900 font-medium">
+                Account: {selectedAccount}
+              </div>
+            )}
+            {!isNewConsumer && (
+              <div className="text-sm text-gray-900 font-medium">
+                Account: {user.accountNumber}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Filter Row */}
-        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-          {/* Active/Inactive Tabs */}
-          <div className="flex border border-gray-300 rounded-md overflow-hidden bg-white shadow-sm">
-            <button
-              onClick={() => setActiveTab("active")}
-              className={`px-6 py-2 ${
-                activeTab === "active"
-                  ? "bg-green-600 text-white"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              Active ({statistics.totalUsers})
-            </button>
-            <div className="border-l border-gray-300"></div>
-            <button
-              onClick={() => setActiveTab("inactive")}
-              className={`px-6 py-2 ${
-                activeTab === "inactive"
-                  ? "bg-green-600 text-white"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              Archived ({statistics.archivedUsers || 0})
-            </button>
-          </div>
-
-          {/* Verification Status Filter */}
-          <div className="relative min-w-[180px]">
-            <select
-              className="p-2 border bg-white border-gray-300 rounded-md font-inter shadow-sm appearance-none pr-8 focus:outline-none focus:ring-2 focus:ring-green-500 w-full"
-              value={verificationFilter}
-              onChange={(e) => setVerificationFilter(e.target.value)}
-            >
-              <option value="">All Verification Status</option>
-              <option value="auto_verified">Auto Verified</option>
-              <option value="manually_verified">Manually Verified</option>
-              <option value="pending_manual">Pending Review</option>
-              <option value="unverified">Unverified</option>
-              <option value="rejected">Rejected</option>
-            </select>
-            <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
-              <FaChevronDown className="text-gray-500" />
+        {/* Action Items */}
+        <div className="w-145 h-25 bg-green-50 border border-green-200 p-4 rounded-lg mb-2 text-center mx-auto" style={{maxWidth: '95%'}}>
+          <div className="space-y-2 text-sm">
+            <div className="flex items-start gap-2">
+              <FiCheck className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+              <span className="text-green-800">Customer account will be activated immediately</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <FiMail className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+              <span className="text-green-800">Welcome email will be sent automatically</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <FiSmartphone className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+              <span className="text-green-800">App access will be granted</span>
             </div>
           </div>
+        </div>
 
-          {/* User Role Filter */}
-          <div className="relative min-w-[140px]">
-            <select
-              className="p-2 border bg-white border-gray-300 rounded-md font-inter shadow-sm appearance-none pr-8 focus:outline-none focus:ring-2 focus:ring-green-500 w-full"
-              value={userRoleFilter}
-              onChange={(e) => setUserRoleFilter(e.target.value)}
-            >
-              <option value="">All Roles</option>
-              <option value="verified">Verified</option>
-              <option value="basic">Basic</option>
-            </select>
-            <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
-              <FaChevronDown className="text-gray-500" />
+        {/* Account Details (for new consumers) */}
+        {isNewConsumer && accountData && (
+        <div className="w-145 h-40 bg-blue-50 border border-blue-200 p-4 rounded-lg mb-2 mx-auto" style={{maxWidth: '95%'}}>
+            <h4 className="font-semibold text-blue-800 mb-3">Account Details</h4>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+              <div>
+                <span className="text-blue-600">Customer Name:</span>
+                <div className="text-blue-900 font-medium">{accountData.customerName}</div>
+              </div>
+              <div>
+                <span className="text-blue-600">Account Number:</span>
+                <div className="text-blue-900 font-medium">{accountData.accountNumber}</div>
+              </div>
+              <div>
+                <span className="text-blue-600">Meter Number:</span>
+                <div className="text-blue-900 font-medium">{accountData.meterNumber}</div>
+              </div>
+              <div>
+                <span className="text-blue-600">Barangay:</span>
+                <div className="text-blue-900 font-medium">{accountData.barangay || 'N/A'}</div>
+              </div>
             </div>
           </div>
+        )}
 
-          {/* Barangay Filter */}
-          <div className="relative min-w-[180px]">
-            <select
-              className="p-2 border bg-white border-gray-300 rounded-md font-inter shadow-sm appearance-none pr-8 focus:outline-none focus:ring-2 focus:ring-green-500 w-full"
-              value={selectedBarangay}
-              onChange={(e) => setSelectedBarangay(e.target.value)}
-            >
-              <option value="">All Barangays</option>
-              {barangays.map(barangay => (
-                <option key={barangay} value={barangay}>{barangay}</option>
-              ))}
-            </select>
-            <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
-              <FaChevronDown className="text-gray-500" />
+        {/* Admin Notes (if provided) */}
+        {adminNotes && (
+          <div className="w-145 h-25 bg-gray-50 border border-gray-200 rounded-lg p-4 mb-2 mx-auto" style={{maxWidth: '95%'}}>
+            <h4 className="font-semibold text-gray-800 mb-2">Admin Notes</h4>
+            <p className="text-sm text-gray-700">{adminNotes}</p>
+          </div>
+        )}
+
+        {/* Warning Message */}
+        <div className="w-145 h-23 bg-orange-50 border border-orange-200 p-4 rounded-lg mb-2 mx-auto" style={{maxWidth: '95%'}}>
+          <div className="flex items-start gap-2">
+            <FiAlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+            <div className="text-sm">
+              <p className="text-yellow-800 font-medium mb-1">Important:</p>
+              <p className="text-yellow-700">
+                This action cannot be undone. The user will immediately gain access to their account 
+                and receive confirmation via email.
+              </p>
             </div>
           </div>
         </div>
       </div>
+    </Modal>
+  );
+};
+            // Effects
+            useEffect(() => {
+            fetchUsers();
+            fetchUserStatistics();
+          }, [state.currentPage, state.search, state.verificationFilter, state.userRoleFilter, state.activeTab, state.showPendingOnly]); 
 
-      {/* Enhanced Users Table */}
-      {isLoading ? (
+            // Filter data
+          const filteredUsers = state.users.filter(u => {
+            const matchesBarangay = !state.selectedBarangay || 
+              (u.barangay && u.barangay.toLowerCase() === state.selectedBarangay.toLowerCase());
+            
+            const matchesTab = 
+              (state.activeTab === "active" && !u.isArchived) ||
+              (state.activeTab === "inactive" && u.isArchived) ||
+              (state.activeTab === "pending"); // Add this line
+            
+            return matchesBarangay && matchesTab;
+          });
+            const formatDate = (dateString) => {
+              if (!dateString) return "N/A";
+              return new Date(dateString).toLocaleDateString("en-US", {
+                year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit"
+              });
+            };
+
+            // Filter options
+            const verificationOptions = [
+              { value: "auto_verified", label: "Auto Verified" },
+              { value: "manually_verified", label: "Manually Verified" },
+              { value: "pending_manual", label: "Pending Review" },
+              { value: "unverified", label: "Unverified" },
+              { value: "rejected", label: "Rejected" }
+            ];
+
+            const roleOptions = [
+              { value: "verified", label: "Verified" },
+              { value: "basic", label: "Basic" }
+            ];
+
+            const barangayOptions = barangaysInNasugbu.map(b => ({ value: b, label: b }));
+
+            return (
+              <div className="min-h-screen bg-[#F5F5F5] p-6">
+                <h2 className="text-3xl font-semibold font-inter text-gray-800 mb-5">User Management</h2>
+
+                {/* Statistics Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+                  <StatCard title="Total Users" value={state.statistics.totalUsers} />
+                  <StatCard title="Auto Verified" value={state.statistics.autoVerified} color="text-green-600" />
+                  <StatCard title="Manually Verified" value={state.statistics.manuallyVerified} color="text-blue-600" />
+                  <StatCard title="Pending Review" value={state.statistics.pendingManual} color="text-yellow-600" />
+                  <StatCard title="Unverified" value={state.statistics.unverified} color="text-gray-600" />
+                  <StatCard title="Rejected" value={state.statistics.rejected} color="text-red-600" />
+                  <StatCard title="Verified Role" value={state.statistics.verifiedUsers} color="text-green-600" />
+                  <StatCard title="Basic Role" value={state.statistics.basicUsers} color="text-blue-600" />
+                </div>
+
+                {/* Search and Filters */}
+                <div className="flex flex-col gap-4 mb-6">
+                  <div className="relative w-full md:w-[400px]">
+                    <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                    <input
+                      type="text"
+                      placeholder="Search users..."
+                      value={state.search}
+                      onChange={(e) => setState(prev => ({ ...prev, search: e.target.value }))}
+                      className="p-3 pl-10 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 font-inter w-full"
+                    />
+                  </div>
+
+                  <div className="flex flex-col md:flex-row gap-4 items-start md:items-center md:justify-between">
+            {/* Left side: Tabs and other filters */}
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+              {/* Active/Inactive/Pending Button */}
+              <div className="flex border border-gray-300 rounded-md overflow-hidden bg-white shadow-sm">
+                {['active', 'inactive', 'pending'].map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setState(prev => ({ 
+                      ...prev, 
+                      activeTab: tab,
+                      showPendingOnly: false 
+                    }))}
+                    className={`px-6 py-2 ${
+                      state.activeTab === tab && !state.showPendingOnly
+                        ? "bg-green-600 text-white" 
+                        : "text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    {tab === 'active' 
+                      ? `Active (${state.statistics.totalUsers})` 
+                      : tab === 'inactive' 
+                        ? `Archived (${state.statistics.archivedUsers || 0})` 
+                        : `Pending (${state.statistics.pendingManual || 0})`
+                    }
+                  </button>
+                ))}
+              </div>
+
+              {/* Only show these filters when NOT on the pending tab */}
+              {state.activeTab !== 'pending' && (
+                <>
+                  <FilterSelect
+                    value={state.verificationFilter}
+                    onChange={(value) => setState(prev => ({ 
+                      ...prev, 
+                      verificationFilter: value,
+                      showPendingOnly: false 
+                    }))}
+                    options={verificationOptions}
+                    placeholder="All Verification Status"
+                    className="min-w-[180px]"
+                  />
+
+                  <FilterSelect
+                    value={state.userRoleFilter}
+                    onChange={(value) => setState(prev => ({ ...prev, userRoleFilter: value }))}
+                    options={roleOptions}
+                    placeholder="All Roles"
+                    className="min-w-[140px]"
+                  />
+                </>
+              )}
+            </div>
+
+          {/* Right side: Barangay filter */}
+          <FilterSelect
+            value={state.selectedBarangay}
+            onChange={(value) => setState(prev => ({ ...prev, selectedBarangay: value }))}
+            options={barangayOptions}
+            placeholder="All Barangays"
+            className="min-w-[180px]"
+          />
+        </div>
+      </div>
+      {/* Users Table */}
+      {state.isLoading ? (
         <div className="flex justify-center items-center h-[400px]">
           <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-green-600"></div>
         </div>
@@ -553,39 +1258,37 @@ const Users = () => {
         <div className="bg-white rounded-lg shadow border border-gray-200">
           <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
             <table className="min-w-full table-auto">
-              <thead className="bg-[#F5F5F5] border-b border-gray-200 sticky top-0">
+              <thead className="bg-[#F5F5F5] border-b border-gray-200 sticky top-0 z-10">
                 <tr className="text-left align-middle">
                   <th className="px-4 py-3 font-bold text-gray-500 text-sm">#</th>
                   <th className="px-4 py-3 font-bold text-gray-500 text-sm">Name</th>
                   <th className="px-4 py-3 font-bold text-gray-500 text-sm">Email</th>
                   <th className="px-4 py-3 font-bold text-gray-500 text-sm">Account #</th>
+                  <th className="px-4 py-3 font-bold text-gray-500 text-sm">Type</th>
                   <th className="px-4 py-3 font-bold text-gray-500 text-sm">Barangay</th>
                   <th className="px-4 py-3 font-bold text-gray-500 text-sm">Verification</th>
-                  <th className="px-4 py-3 font-bold text-gray-500 text-sm">Role</th>
                   <th className="px-4 py-3 font-bold text-gray-500 text-sm text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredUsers.length > 0 ? filteredUsers.map((user, index) => (
                   <tr key={user._id} className="hover:bg-gray-50 align-middle">
-                    <td className="px-4 py-4 text-sm">{((currentPage - 1) * usersPerPage) + index + 1}</td>
-                    <td className="px-4 py-4 text-sm font-medium">{user.name}</td>
-                    <td className="px-4 py-4 text-sm text-gray-600">{user.email}</td>
-                    <td className="px-4 py-4 text-sm">{user.accountNumber || "N/A"}</td>
-                    <td className="px-4 py-4 text-sm">{user.barangay || "N/A"}</td>
-                    <td className="px-4 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getVerificationStatusColor(user.verificationStatus)}`}>
-                        {getVerificationStatusText(user.verificationStatus)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-sm">
+                    <td className="px-3 py-4 text-sm">{((state.currentPage - 1) * usersPerPage) + index + 1}</td>
+                    <td className="px-3 py-4 text-sm font-medium">{user.fullName || user.name}</td>
+                    <td className="px-3 py-4 text-sm text-gray-600">{user.email}</td>
+                    <td className="px-3 py-4 text-sm">{user.accountNumber || "N/A"}</td>
+                    <td className="px-3 py-4">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user.userRole === 'verified' ? 'text-green-800 bg-green-100' : 'text-blue-800 bg-blue-100'
+                        user.accountNumber ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
                       }`}>
-                        {user.userRole || 'basic'}
+                        {user.accountNumber ? 'Existing' : 'New'}
                       </span>
                     </td>
-                    <td className="px-4 py-4 text-center">
+                    <td className="px-3 py-4 text-sm">{user.barangay || "N/A"}</td>
+                    <td className="px-3 py-4">
+                      <StatusBadge status={user.verificationStatus} />
+                    </td>
+                    <td className="px-3 py-4 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleView(user)}
@@ -594,42 +1297,15 @@ const Users = () => {
                         >
                           <FiEye className="w-4 h-4" />
                         </button>
-
-                        {user.verificationStatus === 'pending_manual' && (
-                          <>
-                            <button
-                              onClick={() => openVerificationModal(user, 'approve')}
-                              className="text-green-600 hover:text-green-800 p-1 rounded"
-                              title="Approve"
-                            >
-                              <FiCheck className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => openVerificationModal(user, 'reject')}
-                              className="text-red-600 hover:text-red-800 p-1 rounded"
-                              title="Reject"
-                            >
-                              <FiX className="w-4 h-4" />
-                            </button>
-                          </>
-                        )}
-
-                        {(user.verificationStatus === 'rejected' || user.verificationStatus === 'manually_verified') && (
-                          <button
-                            onClick={() => openVerificationModal(user, 'reset')}
-                            className="text-yellow-600 hover:text-yellow-800 p-1 rounded"
-                            title="Reset Verification"
-                          >
-                            <FiRotateCw className="w-4 h-4" />
-                          </button>
-                        )}
-
-                        {/* Archive/Restore Toggle */}
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input
                             type="checkbox"
                             checked={!user.isArchived}
-                            onChange={() => openDeleteModal(user._id)}
+                            onChange={() => setState(prev => ({ 
+                              ...prev, 
+                              showDeleteModal: true, 
+                              userToDelete: user._id 
+                            }))}
                             className="sr-only peer"
                           />
                           <div className="w-9 h-5 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-500 rounded-full peer peer-checked:bg-green-600 transition-all"></div>
@@ -639,49 +1315,42 @@ const Users = () => {
                     </td>
                   </tr>
                 )) : (
-                  <tr>
-                    <td colSpan="8" className="px-4 py-8 text-center text-gray-500">
-                      No users found
-                    </td>
-                  </tr>
+                  <td colSpan="8" className="px-4 py-8 text-center text-gray-500">
+                          {state.activeTab === "pending" ? "No pending users found" : "No users found"}
+                        </td>
                 )}
               </tbody>
             </table>
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
+          {state.totalPages > 1 && (
             <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
               <div className="text-sm text-gray-500">
-                Showing {((currentPage - 1) * usersPerPage) + 1} to {Math.min(currentPage * usersPerPage, statistics.totalUsers)} of {statistics.totalUsers} users
+                Showing {((state.currentPage - 1) * usersPerPage) + 1} to {Math.min(state.currentPage * usersPerPage, state.statistics.totalUsers)} of {state.statistics.totalUsers} users
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => paginate(currentPage - 1)}
-                  disabled={currentPage === 1}
+                  onClick={() => setState(prev => ({ ...prev, currentPage: prev.currentPage - 1 }))}
+                  disabled={state.currentPage === 1}
                   className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
                 
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                {Array.from({ length: Math.min(5, state.totalPages) }, (_, i) => {
                   let pageNum;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
+                  if (state.totalPages <= 5) pageNum = i + 1;
+                  else if (state.currentPage <= 3) pageNum = i + 1;
+                  else if (state.currentPage >= state.totalPages - 2) pageNum = state.totalPages - 4 + i;
+                  else pageNum = state.currentPage - 2 + i;
                   
                   return (
                     <button
                       key={pageNum}
-                      onClick={() => paginate(pageNum)}
+                      onClick={() => setState(prev => ({ ...prev, currentPage: pageNum }))}
                       className={`px-3 py-1 text-sm border rounded-md ${
-                        currentPage === pageNum
+                        state.currentPage === pageNum
                           ? 'bg-green-600 text-white border-green-600'
                           : 'border-gray-300 hover:bg-gray-100'
                       }`}
@@ -692,8 +1361,8 @@ const Users = () => {
                 })}
                 
                 <button
-                  onClick={() => paginate(currentPage + 1)}
-                  disabled={currentPage === totalPages}
+                  onClick={() => setState(prev => ({ ...prev, currentPage: prev.currentPage + 1 }))}
+                  disabled={state.currentPage === state.totalPages}
                   className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
@@ -704,735 +1373,196 @@ const Users = () => {
         </div>
       )}
 
-      {/* View User Details Modal */}
-{/* Redesigned View User Details Modal */}
-{showViewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-7xl max-h-[95vh] overflow-hidden">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6 relative">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="bg-white/20 p-3 rounded-full">
-                    <FiEye className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-white text-2xl font-bold">
-                      {isLoadingUserDetails ? "Loading User Details..." : viewingUser?.name || "User Profile"}
-                    </h2>
-                    <p className="text-blue-100 text-sm">
-                      {viewingUser?.email || "User information and verification status"}
-                    </p>
-                  </div>
+      {/* View User Modal */}
+      <Modal
+        show={state.showViewModal}
+        onClose={() => setState(prev => ({ 
+          ...prev, 
+          showViewModal: false, 
+          viewingUser: null, 
+          batelecAccount: null 
+        }))}
+        title={state.viewingUser?.fullName || state.viewingUser?.name || "User Details"}
+        loading={state.isLoadingUserDetails}
+        actions={state.viewingUser?.verificationStatus === 'pending_manual' && [
+          <button
+            key="approve"
+            onClick={() => {
+              setState(prev => ({ ...prev, showViewModal: false }));
+              handleApproveUser(state.viewingUser);
+            }}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+          >
+            <FiCheck className="w-4 h-4" /> 
+            {!state.viewingUser?.accountNumber ? 'Link & Approve' : 'Approve'}
+          </button>,
+          <button
+  key="reject"
+  onClick={() => setState(prev => ({ 
+    ...prev, 
+    showViewModal: false, 
+    showRejectionModal: true, 
+    verificationAction: { user: state.viewingUser, action: 'reject' } 
+  }))}
+  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+>
+  <FiX className="w-4 h-4" /> Reject
+</button>
+        ]}
+      >
+        {state.viewingUser && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* User Info */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
+              <div className="space-y-3">
+                <div><span className="font-medium">Name:</span> {state.viewingUser.fullName || state.viewingUser.name}</div>
+                <div><span className="font-medium">Email:</span> {state.viewingUser.email}</div>
+                <div><span className="font-medium">Phone:</span> {state.viewingUser.phone || "Not provided"}</div>
+                <div><span className="font-medium">Barangay:</span> {state.viewingUser.barangay || "Not provided"}</div>
+                <div><span className="font-medium">Reference ID:</span> {state.viewingUser.referenceId || "N/A"}</div>
+                <div>
+                  <span className="font-medium">Consumer Type:</span> 
+                  <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    state.viewingUser.accountNumber ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                  }`}>
+                    {state.viewingUser.accountNumber ? 'Existing Consumer' : 'New Consumer'}
+                  </span>
                 </div>
-                <button
-                  onClick={closeViewModal}
-                  className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
-                >
-                  <FiX className="w-6 h-6" />
-                </button>
+                <div><span className="font-medium">Status:</span> 
+                  <StatusBadge status={state.viewingUser.verificationStatus} />
+                </div>
+                <div><span className="font-medium">Registered:</span> {formatDate(state.viewingUser.createdAt)}</div>
               </div>
             </div>
-            
-            {isLoadingUserDetails ? (
-              <div className="flex flex-col justify-center items-center h-[500px] bg-gray-50">
-                <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mb-4"></div>
-                <p className="text-gray-600 text-lg">Loading user details...</p>
-              </div>
-            ) : viewingUser ? (
-              <div className="max-h-[calc(95vh-120px)] overflow-y-auto">
-                {/* Status Banner */}
-                <div className="bg-gradient-to-r from-gray-50 to-blue-50 px-8 py-4 border-b">
-                  <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-600">Status:</span>
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        viewingUser.isArchived ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                      }`}>
-                        {viewingUser.isArchived ? 'Archived' : 'Active'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-600">Verification:</span>
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getVerificationStatusColor(viewingUser.verificationStatus)}`}>
-                        {getVerificationStatusText(viewingUser.verificationStatus)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-600">Role:</span>
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        viewingUser.userRole === 'verified' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {viewingUser.userRole || 'basic'}
-                      </span>
-                    </div>
-                    {viewingUser.canAccessBatelecData && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-600">BATELEC Access:</span>
-                        <span className="px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
-                          Enabled
-                        </span>
-                      </div>
+
+            {/* BATELEC Account */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">BATELEC Account</h3>
+              {state.batelecAccount ? (
+                <div className="space-y-3">
+                  <div><span className="font-medium">Account #:</span> {state.batelecAccount.accountNumber}</div>
+                  <div><span className="font-medium">Customer:</span> {state.batelecAccount.customerName}</div>
+                  <div><span className="font-medium">Meter #:</span> {state.batelecAccount.meterNumber}</div>
+                  <div><span className="font-medium">Address:</span> {state.batelecAccount.address || "N/A"}</div>
+                  <div><span className="font-medium">Type:</span> {state.batelecAccount.consumerType || "N/A"}</div>
+                  <div><span className="font-medium">Latest Reading:</span> {state.batelecAccount.latestReading?.currentReading || "N/A"} kWh</div>
+                </div>
+              ) : state.viewingUser.accountNumber ? (
+                <p className="text-gray-500">BATELEC account data not found</p>
+              ) : (
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <p className="text-blue-800 font-medium">New Consumer</p>
+                  <p className="text-blue-600 text-sm mt-1">This user needs to be linked to a BATELEC account during approval.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Verification Request Details */}
+            {state.viewingUser.manualVerificationRequest?.requested && (
+              <div className="md:col-span-2">
+                <h3 className="text-lg font-semibold mb-4">Verification Request</h3>
+                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                  <div className="space-y-2 text-sm">
+                    <div><span className="font-medium">Reason:</span> {state.viewingUser.manualVerificationRequest.reason}</div>
+                    <div><span className="font-medium">Requested:</span> {formatDate(state.viewingUser.manualVerificationRequest.requestedAt)}</div>
+                    {state.viewingUser.manualVerificationRequest.adminNotes && (
+                      <div><span className="font-medium">Admin Notes:</span> {state.viewingUser.manualVerificationRequest.adminNotes}</div>
                     )}
                   </div>
-                </div>
-
-                {/* Main Content */}
-                <div className="p-8">
-                  <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                    {/* Left Column - Personal Information */}
-                    <div className="xl:col-span-1">
-                      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                        <div className="flex items-center gap-3 mb-6">
-                          <div className="bg-blue-100 p-2 rounded-lg">
-                            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                          </div>
-                          <h3 className="text-xl font-bold text-gray-900">Personal Information</h3>
-                        </div>
-                        
-                        <div className="space-y-6">
-                          <div className="group">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Full Name</label>
-                            <p className="text-lg font-medium text-gray-900 bg-gray-50 p-3 rounded-lg group-hover:bg-gray-100 transition-colors">
-                              {viewingUser.name}
-                            </p>
-                          </div>
-                          
-                          <div className="group">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Email Address</label>
-                            <p className="text-lg text-gray-900 bg-gray-50 p-3 rounded-lg group-hover:bg-gray-100 transition-colors break-all">
-                              {viewingUser.email}
-                            </p>
-                          </div>
-                          
-                          <div className="group">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Username</label>
-                            <p className="text-lg text-gray-900 bg-gray-50 p-3 rounded-lg group-hover:bg-gray-100 transition-colors">
-                              {viewingUser.username || "Not set"}
-                            </p>
-                          </div>
-                          
-                          <div className="group">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Phone Number</label>
-                            <p className="text-lg text-gray-900 bg-gray-50 p-3 rounded-lg group-hover:bg-gray-100 transition-colors">
-                              {viewingUser.phone || "Not provided"}
-                            </p>
-                          </div>
-                          
-                          <div className="group">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Barangay</label>
-                            <p className="text-lg text-gray-900 bg-gray-50 p-3 rounded-lg group-hover:bg-gray-100 transition-colors">
-                              {viewingUser.barangay || "Not provided"}
-                            </p>
-                          </div>
-                          
-                          <div className="pt-4 border-t border-gray-200">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Registration Date</label>
-                            <div className="flex items-center gap-2 text-gray-900 bg-gray-50 p-3 rounded-lg">
-                              <FiClock className="w-4 h-4 text-gray-500" />
-                              <span className="text-lg">{formatDate(viewingUser.createdAt)}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Middle Column - Verification Details */}
-                    <div className="xl:col-span-1">
-                      <div className="space-y-6">
-                        {/* Verification Status Card */}
-                        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                          <div className="flex items-center gap-3 mb-6">
-                            <div className="bg-green-100 p-2 rounded-lg">
-                              <FiCheck className="w-5 h-5 text-green-600" />
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900">Verification Status</h3>
-                          </div>
-                          
-                          <div className="space-y-4">
-                            <div className="text-center py-6 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl border-2 border-dashed border-gray-200">
-                              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-lg font-semibold ${getVerificationStatusColor(viewingUser.verificationStatus)}`}>
-                                {viewingUser.verificationStatus === 'auto_verified' && <FiCheck className="w-5 h-5" />}
-                                {viewingUser.verificationStatus === 'manually_verified' && <FiCheck className="w-5 h-5" />}
-                                {viewingUser.verificationStatus === 'pending_manual' && <FiClock className="w-5 h-5" />}
-                                {viewingUser.verificationStatus === 'rejected' && <FiX className="w-5 h-5" />}
-                                {getVerificationStatusText(viewingUser.verificationStatus)}
-                              </div>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                                <p className="text-sm text-gray-500 mb-1">Account Verified</p>
-                                <p className={`font-semibold ${viewingUser.accountVerified ? 'text-green-600' : 'text-red-600'}`}>
-                                  {viewingUser.accountVerified ? 'Yes' : 'No'}
-                                </p>
-                              </div>
-                              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                                <p className="text-sm text-gray-500 mb-1">BATELEC Access</p>
-                                <p className={`font-semibold ${viewingUser.canAccessBatelecData ? 'text-green-600' : 'text-red-600'}`}>
-                                  {viewingUser.canAccessBatelecData ? 'Enabled' : 'Disabled'}
-                                </p>
-                              </div>
-                            </div>
-                            
-                            {viewingUser.accountNumber && (
-                              <div className="mt-4">
-                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">BATELEC Account Number</label>
-                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border-l-4 border-blue-500">
-                                  <p className="text-xl font-mono font-bold text-blue-800">{viewingUser.accountNumber}</p>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Manual Verification Request */}
-                        {viewingUser.manualVerificationRequest && viewingUser.manualVerificationRequest.requested && (
-                          <div className="bg-white border border-orange-200 rounded-xl p-6 shadow-sm">
-                            <div className="flex items-center gap-3 mb-4">
-                              <div className="bg-orange-100 p-2 rounded-lg">
-                                <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                              </div>
-                              <h3 className="text-lg font-bold text-gray-900">Manual Verification Request</h3>
-                            </div>
-                            
-                            <div className="space-y-4">
-                              <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-400">
-                                <p className="text-sm font-medium text-orange-800 mb-2">Request Date</p>
-                                <p className="text-orange-900">{formatDate(viewingUser.manualVerificationRequest.requestedAt)}</p>
-                              </div>
-                              
-                              <div>
-                                <label className="text-sm font-medium text-gray-700 mb-2 block">Reason for Request</label>
-                                <div className="bg-gray-50 p-4 rounded-lg border">
-                                  <p className="text-gray-800 leading-relaxed">
-                                    {viewingUser.manualVerificationRequest.reason || "No reason provided"}
-                                  </p>
-                                </div>
-                              </div>
-                              
-                              {viewingUser.manualVerificationRequest.adminNotes && (
-                                <div>
-                                  <label className="text-sm font-medium text-gray-700 mb-2 block">Admin Notes</label>
-                                  <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-400">
-                                    <p className="text-blue-900">{viewingUser.manualVerificationRequest.adminNotes}</p>
-                                  </div>
-                                </div>
-                              )}
-                              
-                              {viewingUser.manualVerificationRequest.reviewedBy && (
-                                <div className="flex items-center justify-between text-sm bg-gray-100 p-3 rounded-lg">
-                                  <span className="text-gray-600">Reviewed by:</span>
-                                  <span className="font-medium text-gray-900">{viewingUser.manualVerificationRequest.reviewedBy.name}</span>
-                                </div>
-                              )}
-                              
-                              {viewingUser.manualVerificationRequest.reviewedAt && (
-                                <div className="flex items-center justify-between text-sm bg-gray-100 p-3 rounded-lg">
-                                  <span className="text-gray-600">Reviewed at:</span>
-                                  <span className="font-medium text-gray-900">{formatDate(viewingUser.manualVerificationRequest.reviewedAt)}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Right Column - BATELEC Account Information */}
-                    <div className="xl:col-span-1">
-                      {batelecAccount ? (
-                        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                          <div className="flex items-center gap-3 mb-6">
-                            <div className="bg-purple-100 p-2 rounded-lg">
-                              <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                              </svg>
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900">BATELEC Account</h3>
-                          </div>
-                          
-                          <div className="space-y-6">
-                            <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-xl border">
-                              <div className="grid grid-cols-1 gap-4">
-                                <div>
-                                  <label className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-1 block">Account Number</label>
-                                  <p className="text-xl font-mono font-bold text-purple-900">{batelecAccount.accountNumber}</p>
-                                </div>
-                                <div>
-                                  <label className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-1 block">Meter Number</label>
-                                  <p className="text-xl font-mono font-bold text-purple-900">{batelecAccount.meterNumber}</p>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div>
-                              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Customer Name</label>
-                              <p className="text-lg font-medium text-gray-900 bg-gray-50 p-3 rounded-lg">
-                                {batelecAccount.customerName}
-                              </p>
-                            </div>
-                            
-                            <div className="bg-blue-50 p-4 rounded-xl border-l-4 border-blue-500">
-                              <label className="text-sm font-semibold text-blue-700 mb-2 block">Latest Reading</label>
-                              <div className="flex items-center gap-2">
-                                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                </svg>
-                                <span className="text-xl font-bold text-blue-800">
-                                  {batelecAccount.latestReading ? `${batelecAccount.latestReading} kWh` : 'No reading available'}
-                                </span>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                              <span className="text-sm font-medium text-gray-700">Registration Status</span>
-                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                batelecAccount.isRegistered ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                              }`}>
-                                {batelecAccount.isRegistered ? 'Registered' : 'Not Registered'}
-                              </span>
-                            </div>
-                            
-                            {batelecAccount.lastUpdated && (
-                              <div className="pt-4 border-t border-gray-200">
-                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Last Updated</label>
-                                <div className="flex items-center gap-2 text-gray-600">
-                                  <FiClock className="w-4 h-4" />
-                                  <span>{formatDate(batelecAccount.lastUpdated)}</span>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                          <div className="text-center py-12">
-                            <div className="bg-gray-100 p-4 rounded-full w-16 h-16 mx-auto mb-4">
-                              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                              </svg>
-                            </div>
-                            <h3 className="text-lg font-semibold text-gray-600 mb-2">No BATELEC Account</h3>
-                            <p className="text-gray-500">This user has not linked a BATELEC account yet.</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer with Actions */}
-                <div className="bg-gray-50 px-8 py-6 border-t">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-500">
-                      User ID: <span className="font-mono font-medium">{viewingUser._id}</span>
-                    </div>
-                    <div className="flex gap-3">
-                      {viewingUser.verificationStatus === 'pending_manual' && (
-                        <>
-                          <button
-                            onClick={() => {
-                              closeViewModal();
-                              openVerificationModal(viewingUser, 'approve');
-                            }}
-                            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
-                          >
-                            <FiCheck className="w-4 h-4" />
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => {
-                              closeViewModal();
-                              openVerificationModal(viewingUser, 'reject');
-                            }}
-                            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
-                          >
-                            <FiX className="w-4 h-4" />
-                            Reject
-                          </button>
-                        </>
-                      )}
-                      <button
-                        onClick={closeViewModal}
-                        className="flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors"
-                      >
-                        Close
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="p-8 text-center text-gray-500 h-[500px] flex items-center justify-center">
-                <div>
-                  <div className="bg-gray-100 p-4 rounded-full w-16 h-16 mx-auto mb-4">
-                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-600 mb-2">User Details Unavailable</h3>
-                  <p className="text-gray-500">Unable to load user information at this time.</p>
                 </div>
               </div>
             )}
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
-      {/* Export Modal */}
-      {showExportModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
-            <div className="bg-green-600 rounded-t-lg px-6 py-4">
-              <h2 className="text-white text-xl font-semibold">Confirm Export</h2>
-            </div>
-            <div className="px-6 py-6">
-              <p className="text-gray-800 text-base mb-6">
-                Are you sure you want to export the user data as <strong>{exportType?.toUpperCase()}</strong>?
-              </p>
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={() => setShowExportModal(false)}
-                  className="px-4 py-2 border border-gray-400 text-gray-700 rounded-md hover:bg-gray-100 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    if (exportType === "csv") exportToCSV();
-                    else if (exportType === "pdf") exportToPDF();
-                  }}
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition flex items-center justify-center gap-2"
-                  disabled={exportingType !== null}
-                >
-                  {exportingType ? (
-                    <>
-                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8v8z"
-                        ></path>
-                      </svg>
-                      Exporting...
-                    </>
-                  ) : (
-                    "Confirm"
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Account Linking Modal */}
+      <AccountLinkingModal
+        show={state.showAccountLinkModal}
+        onClose={() => setState(prev => ({ 
+          ...prev, 
+          showAccountLinkModal: false,
+          verificationAction: null
+        }))}
+        user={state.verificationAction?.user}
+        onApprove={handleAccountLinkApproval}
+        loading={state.isUpdating}
+        batelecAccounts={state.batelecAccounts}
+        onSearchAccounts={fetchBatelecAccounts}
+      />
 
-      {/* Archive/Restore Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
-            <div className="bg-green-600 rounded-t-lg px-6 py-4">
-              <h2 className="text-white text-xl font-semibold">
-                {activeTab === "active" ? "Confirm Archive" : "Confirm Restore"}
-              </h2>
-            </div>
-            <div className="px-6 py-6">
-              <p className="text-gray-800 text-base mb-6">
-                Are you sure you want to {activeTab === "active" ? "archive" : "restore"} this user?
-              </p>
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={closeDeleteModal}
-                  className="px-4 py-2 border border-gray-400 text-gray-700 rounded-md hover:bg-gray-100 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmDeleteUser}
-                  className={`px-4 py-2 text-white rounded-md transition flex items-center justify-center gap-2 ${
-                    activeTab === "active"
-                      ? "bg-red-600 hover:bg-red-700"
-                      : "bg-green-600 hover:bg-green-700"
-                  }`}
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? (
-                    <>
-                      <svg
-                        className="animate-spin h-5 w-5 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8v8z"
-                        ></path>
-                      </svg>
-                      {activeTab === "active" ? "Archiving..." : "Restoring..."}
-                    </>
-                  ) : (
-                    activeTab === "active" ? "Archive" : "Restore"
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Delete Confirmation Modal */}
+      <Modal
+        show={state.showDeleteModal}
+        onClose={() => setState(prev => ({ 
+          ...prev, 
+          showDeleteModal: false, 
+          userToDelete: null 
+        }))}
+        title={state.activeTab === "active" ? "Archive User" : "Restore User"}
+        actions={[
+          <button
+            key="cancel"
+            onClick={() => setState(prev => ({ 
+              ...prev, 
+              showDeleteModal: false, 
+              userToDelete: null 
+            }))}
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+          >
+            Cancel
+          </button>,
+          <button
+            key="confirm"
+            onClick={() => handleArchiveToggle(state.userToDelete)}
+            disabled={state.isDeleting}
+            className={`px-4 py-2 text-white rounded-md flex items-center gap-2 ${
+              state.activeTab === "active" ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"
+            }`}
+          >
+            {state.isDeleting ? "Processing..." : (state.activeTab === "active" ? "Archive" : "Restore")}
+          </button>
+        ]}
+      >
+        <p>Are you sure you want to {state.activeTab === "active" ? "archive" : "restore"} this user?</p>
+      </Modal>
 
-      {/* Verification Action Modal */}
-      {showVerificationModal && verificationAction && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
-            <div className="bg-green-600 rounded-t-lg px-6 py-4">
-              <h2 className="text-white text-xl font-semibold">
-                {verificationAction.action === 'approve' && 'Approve Verification'}
-                {verificationAction.action === 'reject' && 'Reject Verification'}
-                {verificationAction.action === 'reset' && 'Reset Verification'}
-              </h2>
-            </div>
-            <div className="px-6 py-6">
-              <div className="mb-4">
-                <p className="text-gray-800 text-base mb-2">
-                  User: <strong>{verificationAction.user.name}</strong>
-                </p>
-                <p className="text-gray-600 text-sm mb-4">
-                  Account: {verificationAction.user.accountNumber || 'N/A'}
-                </p>
-              </div>
-              
-              <div className="mb-6">
-                <label className="block text-gray-700 text-sm font-medium mb-2">
-                  {verificationAction.action === 'reset' ? 'Reset Reason (Optional)' : 'Admin Notes (Optional)'}
-                </label>
-                <textarea
-                  value={adminNotes}
-                  onChange={(e) => setAdminNotes(e.target.value)}
-                  placeholder={
-                    verificationAction.action === 'approve' ? 'Enter approval notes...' :
-                    verificationAction.action === 'reject' ? 'Enter rejection reason...' :
-                    'Enter reset reason...'
-                  }
-                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  rows="3"
-                />
-              </div>
+      <RejectionModal
+          show={state.showRejectionModal}
+          onClose={() => setState(prev => ({ 
+            ...prev, 
+            showRejectionModal: false,
+            verificationAction: null,
+            selectedRejectionReason: '',
+            rejectionNotes: ''
+          }))}
+          user={state.verificationAction?.user}
+          onContinue={(reason, notes) => setState(prev => ({
+            ...prev,
+            showRejectionModal: false,
+            showConfirmRejectionModal: true,
+            selectedRejectionReason: reason,
+            rejectionNotes: notes
+          }))}
+          loading={state.isUpdating}
+        />
 
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={closeVerificationModal}
-                  className="px-4 py-2 border border-gray-400 text-gray-700 rounded-md hover:bg-gray-100 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmVerificationAction}
-                  className={`px-4 py-2 text-white rounded-md transition flex items-center justify-center gap-2 ${
-                    verificationAction.action === 'approve' ? 'bg-green-600 hover:bg-green-700' :
-                    verificationAction.action === 'reject' ? 'bg-red-600 hover:bg-red-700' :
-                    'bg-yellow-600 hover:bg-yellow-700'
-                  }`}
-                  disabled={isUpdating}
-                >
-                  {isUpdating ? (
-                    <>
-                      <svg
-                        className="animate-spin h-5 w-5 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8v8z"
-                        ></path>
-                      </svg>
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      {verificationAction.action === 'approve' && 'Approve'}
-                      {verificationAction.action === 'reject' && 'Reject'}
-                      {verificationAction.action === 'reset' && 'Reset'}
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit User Modal */}
-      {editingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
-            <h3 className="text-lg font-semibold mb-4">Edit User</h3>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-gray-700">Name</label>
-                <input
-                  type="text"
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  required
-                />
-                {!formData.name && (
-                  <p className="text-red-600 text-sm mt-1">Name is required.</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-gray-700">Email</label>
-                <input
-                  type="email"
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  required
-                />
-                {!formData.email && (
-                  <p className="text-red-600 text-sm mt-1">Email is required.</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-gray-700">Barangay</label>
-                <div className="relative">
-                  <select
-                    className="w-full p-2 border border-gray-300 rounded-md appearance-none pr-8 focus:outline-none focus:ring-2 focus:ring-green-500"
-                    value={formData.location}
-                    onChange={(e) =>
-                      setFormData({ ...formData, location: e.target.value })
-                    }
-                    required
-                  >
-                    <option value="">Select Barangay</option>
-                    {barangays.map((b) => (
-                      <option key={b} value={b}>
-                        {b}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
-                    <FaChevronDown className="text-gray-500" />
-                  </div>
-                </div>
-                {!formData.location && (
-                  <p className="text-red-600 text-sm mt-1">Barangay is required.</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-gray-700">Verification Status</label>
-                <div className="relative">
-                  <select
-                    className="w-full p-2 border border-gray-300 rounded-md appearance-none pr-8 focus:outline-none focus:ring-2 focus:ring-green-500"
-                    value={formData.verificationStatus}
-                    onChange={(e) =>
-                      setFormData({ ...formData, verificationStatus: e.target.value })
-                    }
-                  >
-                    <option value="unverified">Unverified</option>
-                    <option value="auto_verified">Auto Verified</option>
-                    <option value="manually_verified">Manually Verified</option>
-                    <option value="pending_manual">Pending Manual Review</option>
-                    <option value="rejected">Rejected</option>
-                  </select>
-                  <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
-                    <FaChevronDown className="text-gray-500" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end mt-6 gap-3">
-              <button
-                onClick={() => setEditingUser(null)}
-                className="px-4 py-2 border border-gray-400 text-gray-700 rounded-md hover:bg-gray-100 transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={async () => {
-                  setIsUpdating(true);
-                  await handleUpdateVerificationStatus(editingUser, formData.verificationStatus, 'Updated via admin panel');
-                  setEditingUser(null);
-                  setIsUpdating(false);
-                }}
-                className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition flex items-center justify-center gap-2"
-                disabled={isUpdating || !formData.name || !formData.email || !formData.location}
-              >
-                {isUpdating ? (
-                  <>
-                    <svg
-                      className="animate-spin h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8v8z"
-                      />
-                    </svg>
-                    Updating...
-                  </>
-                ) : (
-                  "Update"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        <ConfirmRejectionModal
+          show={state.showConfirmRejectionModal}
+          onClose={() => setState(prev => ({ 
+            ...prev, 
+            showConfirmRejectionModal: false 
+          }))}
+          user={state.verificationAction?.user}
+          onConfirm={handleRejectUser}
+          loading={state.isUpdating}
+          rejectionReason={state.selectedRejectionReason}
+          adminNotes={state.rejectionNotes}
+        />
     </div>
   );
 };
 
 export default Users;
+

@@ -7,6 +7,8 @@ import user from '../assets/SidebarLogo/user.png';
 import megaphone from '../assets/SidebarLogo/megaphone.png';
 import menu from '../assets/SidebarLogo/menu.png';
 import setting from '../assets/SidebarLogo/setting.png';
+import customer from '../assets/SidebarLogo/customer.png';
+import audit from '../assets/SidebarLogo/audit.png';
 
 export default function Sidebar({ sidebarOpen, setSidebarOpen, setShowLogoutModal }) {
   const location = useLocation();
@@ -30,11 +32,11 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, setShowLogoutModa
   const menuItems = [
     { name: "Dashboard", path: "/dashboard", icon: menu, size: 'w-6 h-6.5' },
     { name: "News & Updates", path: "/news", icon: megaphone, size: 'w-7 h-7' },
-    { name: "Customer Management", path: "/customers", icon: user, size: 'w-7 h-6.5' }, // ✅ Added Customer Management
+    { name: "Customer Management", path: "/customers", icon: customer, size: 'w-7 h-6.5' },
     ...(role === "superadmin"
       ? [
           { name: "Admin Management", path: "/admin-management", icon: admin, size: 'w-6 h-7' },
-          { name: "Audit Logs", path: "/audit-logs", icon: setting, size: 'w-6 h-6.4' },
+          { name: "Audit Logs", path: "/audit-logs", icon: audit, size: 'w-8 h-8' },
         ]
       : []),
     { name: "Account Settings", path: "/settings", icon: setting, size: 'w-6 h-6.4' },
@@ -93,9 +95,9 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, setShowLogoutModa
             }`}
           >
             <img
-              src={user}
+              src={customer}
               alt="Customer Management Icon"
-              className={`w-7 h-6.5 mr-4 transition-transform duration-200 ${
+              className={`w-8 h-6.5 mr-4 transition-transform duration-200 ${
                 activeItem === "/customers" ? "scale-110" : "opacity-80"
               }`}
             />

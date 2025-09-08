@@ -176,7 +176,8 @@ const CustomerManagement = () => {
     });
   };
 
-  // Get registration status badge
+  // Get registration status badge (commented out for future use)
+  /*
   const getRegistrationBadge = (account) => {
     if (account.isRegistered && account.registeredUserId) {
       return (
@@ -191,6 +192,33 @@ const CustomerManagement = () => {
       </span>
     );
   };
+  */
+
+  const handleDownloadTemplate = () => {
+  const headers = [
+    "accountNumber",
+    "meterNumber",
+    "customerName",
+    "address",
+    "contactNumber",
+    "consumerType",
+    "previousReading",
+    "currentReading",
+    "readingDate",
+    "trackingPeriod",
+  ];
+
+  const csvContent = headers.join(",") + "\n"; // Just headers for the template
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", "EnergyReadingsCSV_template.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] p-6">
@@ -282,7 +310,7 @@ const CustomerManagement = () => {
                 <th className="px-6 py-3 text-left font-bold text-gray-500">Reading Date</th>
                 <th className="px-6 py-3 text-left font-bold text-gray-500">Consumer Type</th>
                 <th className="px-6 py-3 text-left font-bold text-gray-500">Tracking Period</th>
-                <th className="px-6 py-3 text-left font-bold text-gray-500">Status</th>
+                {/* <th className="px-6 py-3 text-left font-bold text-gray-500">Status</th> */}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -319,14 +347,15 @@ const CustomerManagement = () => {
                     <td className="px-6 py-4">
                       {account.latestReading?.trackingPeriod || '-'}
                     </td>
-                    <td className="px-6 py-4">
+                 
+                    {/* <td className="px-6 py-4">
                       {getRegistrationBadge(account)}
-                    </td>
+                    </td> */}
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="10" className="px-6 py-12 text-center">
+                  <td colSpan="9" className="px-6 py-12 text-center">
                     {batelecAccounts.length === 0 ? (
                       <div className="flex flex-col items-center">
                         <FiFile className="h-12 w-12 text-gray-300 mb-4" />
@@ -428,27 +457,37 @@ const CustomerManagement = () => {
                   <p className="mb-2 font-semibold text-gray-700">Expected CSV format:</p>
                   <div className="space-y-1">
                     <p className="font-mono text-xs bg-white px-2 py-1 rounded border">
-                      accountNumber, meterNumber, customerName, address, contactNumber, consumerType, previousReading, currentReading, readingDate, trackingPeriod, billingPeriod
+                      accountNumber, customerName, meterNumber, previousReading, currentReading, totalkWh, readingDate, consumerType, trackingPeriod
                     </p>
                   </div>
                   <div className="mt-3 space-y-1">
                     <p className="font-medium">Required fields:</p>
                     <ul className="list-disc list-inside space-y-1 text-xs">
                       <li><strong>accountNumber:</strong> BATELEC account number</li>
+                      <li><strong>customerName:</strong> Name of the customer</li>
                       <li><strong>meterNumber:</strong> Electricity meter number</li>
                       <li><strong>previousReading:</strong> Previous meter reading</li>
                       <li><strong>currentReading:</strong> Current meter reading</li>
+                      <li><strong>totalkWh:</strong> Total kWh consumed</li>
                       <li><strong>readingDate:</strong> Date of reading (YYYY-MM-DD)</li>
+                      <li><strong>consumerType:</strong> Type of consumer (e.g., Residential, Commercial)</li>
                       <li><strong>trackingPeriod:</strong> Tracking period (e.g., "January 2025")</li>
                     </ul>
                   </div>
                 </div>
               </div>
-
+              <div className="mt-6 flex justify-between items-center gap-3">
+              <button
+                onClick={handleDownloadTemplate}
+                className="w-full px-4 py-2 bg-yellow-500 text-white font-medium rounded-md hover:bg-yellow-600 transition-colors"
+              >
+                Download CSV File Template
+              </button>
+              </div>
               <div className="mt-4 flex justify-end gap-2">
                 <button
                   onClick={handleModalClose}
-                  className="px-4 py-2 bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors"
+                  className="w-full px-4 py-2 bg-gray-400 text-white font-medium rounded-md hover:bg-gray-600 transition-colors"
                   disabled={isLoading}
                 >
                   Cancel
