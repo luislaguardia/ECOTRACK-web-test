@@ -21,35 +21,42 @@ import { BASE_URL } from "../../config";
 const Dashboard = () => {
   // --- State Management ---
   const [isLoading, setIsLoading] = useState(true);
-  const [totalUsers, setTotalUsers] = useState(0);
-  const [verifiedUsers, setVerifiedUsers] = useState(0);
+  
+  // User Statistics from the proper endpoint
+  const [userStats, setUserStats] = useState({
+    totalUsers: 0,
+    autoVerified: 0,
+    manuallyVerified: 0,
+    pendingManual: 0,
+    unverified: 0,
+    rejected: 0,
+    verifiedUsers: 0,
+    basicUsers: 0
+  });
+
   const [totalNews, setTotalNews] = useState(0);
   const [usageData, setUsageData] = useState([]);
   const [deviceData, setDeviceData] = useState([]);
   const [allUsers, setAllUsers] = useState([]); // State to hold all user data for exports
 
   // Previous counts for growth calculation (initialized to 1 to prevent division by zero)
-  const [prevTotalUsers, setPrevTotalUsers] = useState(1);
-  const [prevVerifiedUsers, setPrevVerifiedUsers] = useState(1);
+  const [prevUserStats, setPrevUserStats] = useState({
+    totalUsers: 1,
+    verifiedUsers: 1
+  });
   const [prevTotalNews, setPrevTotalNews] = useState(1);
 
   // Export related states
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportType, setExportType] = useState(null); // 'csv' or 'pdf'
   const [fileName, setFileName] = useState("dashboard_export");
-  // const [showPreview, setShowPreview] = useState(false);
-  // const [previewData, setPreviewData] = useState(null);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
-  // const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
   const [exportError, setExportError] = useState(null);
-  const [exportProgress, setExportProgress] = useState(0); // State for export progress
+  const [exportProgress, setExportProgress] = useState(0);
 
   // --- Refs ---
-  // Reference to the entire dashboard container for PDF capture
   const dashboardRef = useRef(null);
-  // Reference to the export modal for temporary hiding during PDF capture
   const exportModalRef = useRef(null);
-  // Reference to the main dashboard header
   const dashboardHeaderRef = useRef(null);
 
   // --- Pie Colors ---
@@ -67,7 +74,7 @@ const Dashboard = () => {
     const fetchAll = async () => {
       setIsLoading(true);
       await Promise.all([
-        fetchUserCount(),
+        fetchUserStatistics(),
         fetchNewsCount(),
         fetchUsageData(),
         fetchDeviceData(),
@@ -87,22 +94,24 @@ const Dashboard = () => {
   };
 
   // --- Data Fetching Functions ---
-  const fetchUserCount = async () => {
+  const fetchUserStatistics = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get(`${BASE_URL}/api/users`, {
+      const res = await axios.get(`${BASE_URL}/api/users/statistics`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const users = res.data;
-      const verified = users.filter((u) => u.isVerified).length;
-
-      setTotalUsers(users.length);
-      setVerifiedUsers(verified);
-      setPrevTotalUsers(Math.max(users.length - Math.floor(users.length * 0.1), 1));
-      setPrevVerifiedUsers(Math.max(verified - Math.floor(verified * 0.05), 1));
+      
+      const stats = res.data;
+      setUserStats(stats);
+      
+      // Set previous stats for growth calculation (simulate ~10% growth)
+      setPrevUserStats({
+        totalUsers: Math.max(stats.totalUsers - Math.floor(stats.totalUsers * 0.1), 1),
+        verifiedUsers: Math.max(stats.verifiedUsers - Math.floor(stats.verifiedUsers * 0.05), 1)
+      });
     } catch (err) {
-      console.error("Error fetching user counts:", err);
-      setExportError("Failed to load user data.");
+      console.error("Error fetching user statistics:", err);
+      setExportError("Failed to load user statistics.");
     }
   };
 
@@ -148,7 +157,8 @@ const Dashboard = () => {
       );
 
       if (othersTotal > 0 || rawData.some((item) => item.name.toLowerCase() === "unknown")) {
-        finalTopFive.push({ name: "Other Devices", value: othersTotal }); }
+        finalTopFive.push({ name: "Other Devices", value: othersTotal }); 
+      }
       
       setDeviceData(finalTopFive);
     } catch (err) {
@@ -162,8 +172,9 @@ const Dashboard = () => {
       const token = localStorage.getItem("token");
       const res = await axios.get(`${BASE_URL}/api/users`, {
         headers: { Authorization: `Bearer ${token}` },
+        params: { limit: 1000 } // Get more users for export
       });
-      setAllUsers(res.data);
+      setAllUsers(res.data.users || res.data); // Handle both paginated and non-paginated responses
     } catch (err) {
       console.error("Error fetching all users:", err);
       setExportError("Failed to load full user list for export.");
@@ -177,7 +188,6 @@ const Dashboard = () => {
     setExportError(null);
     setExportProgress(0);
   };
-
 
   const performExport = async () => {
     try {
@@ -200,22 +210,31 @@ const Dashboard = () => {
   
   const exportCSV = () => {
     const generalData = [
+      ["Dashboard Summary"],
       ["Metric", "Value"],
-      ["Total Users", totalUsers],
-      ["Verified Users", verifiedUsers],
+      ["Total Users", userStats.totalUsers],
+      ["Verified Users (Total)", userStats.verifiedUsers],
+      ["Auto Verified", userStats.autoVerified],
+      ["Manually Verified", userStats.manuallyVerified],
+      ["Pending Manual Verification", userStats.pendingManual],
+      ["Unverified Users", userStats.unverified],
+      ["Rejected Users", userStats.rejected],
+      ["Basic Users", userStats.basicUsers],
       ["Total News Posted", totalNews],
     ];
 
     const userData = [
       [],
-      ["User List"],
-      ["UserID", "Name", "Email", "Location", "Status"],
+      ["Detailed User List"],
+      ["UserID", "Name", "Email", "Account Number", "Verification Status", "User Role", "Created At"],
       ...allUsers.map((u) => [
-        u._id,
-        u.name,
-        u.email,
-        u.barangay || "N/A",
-        u.isVerified ? "Active" : "Inactive",
+        u._id || "N/A",
+        u.name || u.fullName || "N/A",
+        u.email || "N/A",
+        u.accountNumber || "N/A",
+        u.verificationStatus || "N/A",
+        u.userRole || "N/A",
+        u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "N/A",
       ]),
     ];
 
@@ -230,298 +249,186 @@ const Dashboard = () => {
     document.body.removeChild(link);
   };
 
+  const exportPDF = async () => {
+    try {
+      setExportProgress(5);
+      const doc = new jsPDF("p", "mm", "a4");
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
 
+      // Page 1 - Title and Statistics Summary
+      const title = "Batelec I Nasugbu Dashboard Report";
+      doc.setFontSize(20);
+      const titleWidth = doc.getStringUnitWidth(title) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+      doc.text(title, (pageWidth - titleWidth) / 2, 20);
 
-// const exportPDF = async () => {
-//   try {
-//     setExportProgress(5);
-//     const doc = new jsPDF("p", "mm", "a4");
-//     const pageWidth = doc.internal.pageSize.getWidth();
-//     const pageHeight = doc.internal.pageSize.getHeight();
+      const dateText = `Generated on: ${new Date().toLocaleDateString()}`;
+      doc.setFontSize(12);
+      const dateWidth = doc.getStringUnitWidth(dateText) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+      doc.text(dateText, (pageWidth - dateWidth) / 2, 30);
 
-//     // Page 1 - Title and Dashboard
-//     const title = "Batelec I Nasugbu Report";
-//     doc.setFontSize(20);
-//     const titleWidth = doc.getStringUnitWidth(title) * doc.internal.getFontSize() / doc.internal.scaleFactor;
-//     doc.text(title, (pageWidth - titleWidth) / 2, 20);
+      setExportProgress(10);
 
-//     const dateText = `Generated on: ${new Date().toLocaleDateString()}`;
-//     doc.setFontSize(12);
-//     const dateWidth = doc.getStringUnitWidth(dateText) * doc.internal.getFontSize() / doc.internal.scaleFactor;
-//     doc.text(dateText, (pageWidth - dateWidth) / 2, 30);
-
-//     doc.setFontSize(16);
-//     doc.text("Dashboard Overview", 14, 45);
-
-//     setExportProgress(10);
-
-//     if (!dashboardRef.current) throw new Error("Dashboard reference not found for PDF export.");
-
-//     // Temporarily hide elements before rendering
-//     const elementsToHide = [];
-//     if (dashboardHeaderRef.current) elementsToHide.push(dashboardHeaderRef.current);
-//     dashboardRef.current.querySelectorAll('.export-button').forEach(el => elementsToHide.push(el));
-//     elementsToHide.forEach(el => el.style.visibility = 'hidden');
-
-//     await new Promise((r) => setTimeout(r, 500));
-//     setExportProgress(15);
-
-//     const dashboardCanvas = await html2canvas(dashboardRef.current, {
-//       scale: 2,
-//       useCORS: true,
-//       allowTaint: false,
-//       backgroundColor: "#f5f5f5",
-//       scrollX: 0,
-//       scrollY: 0,
-//       windowWidth: dashboardRef.current.scrollWidth,
-//       windowHeight: dashboardRef.current.scrollHeight,
-//       width: dashboardRef.current.scrollWidth,
-//       height: dashboardRef.current.scrollHeight,
-//       onclone: (clonedDoc) => {
-//         const allElements = clonedDoc.querySelectorAll("*");
-      
-//         allElements.forEach((el) => {
-//           const computed = window.getComputedStyle(el);
-      
-//           if (computed.backgroundColor.includes("oklch")) {
-//             el.style.backgroundColor = "#ffffff"; // or a fallback color
-//           }
-      
-//           if (computed.color.includes("oklch")) {
-//             el.style.color = "#000000";
-//           }
-      
-//           if (computed.borderColor.includes("oklch")) {
-//             el.style.borderColor = "#d1d5db";
-//           }
-      
-//           el.style.transform = "none";
-//           el.style.animation = "none";
-//           el.style.transition = "none";
-//         });
-//       },
-//       ignoreElements: (el) => el.closest('.export-modal-container') !== null,
-//     });
-
-//     elementsToHide.forEach(el => el.style.visibility = '');
-//     setExportProgress(50);
-
-//     if (!dashboardCanvas.width || !dashboardCanvas.height) {
-//       throw new Error("Dashboard capture failed - canvas is empty.");
-//     }
-
-//     const dashboardImg = dashboardCanvas.toDataURL("image/jpeg", 0.9);
-//     const maxWidth = pageWidth - 20;
-//     const maxHeight = pageHeight - 60;
-//     let imgWidth = maxWidth;
-//     let imgHeight = (dashboardCanvas.height * imgWidth) / dashboardCanvas.width;
-
-//     if (imgHeight > maxHeight) {
-//       imgHeight = maxHeight;
-//       imgWidth = (dashboardCanvas.width * imgHeight) / dashboardCanvas.height;
-//     }
-
-//     doc.addImage(dashboardImg, "JPEG", (pageWidth - imgWidth) / 2, 50, imgWidth, imgHeight);
-//     setExportProgress(70);
-
-//     // Page 2 - User Data Table
-//     if (allUsers && allUsers.length > 0) {
-//       doc.addPage();
-//       doc.setFontSize(16);
-//       doc.text("User Data Overview", 14, 20);
-
-//       const tableData = allUsers.map((u) => [
-//         u._id?.substring(0, 8) || "N/A",
-//         u.name || "N/A",
-//         u.email?.length > 35 ? u.email.substring(0, 32) + "..." : u.email || "N/A",
-//         u.barangay || "N/A",
-//         u.isVerified ? "Verified" : "Unverified",
-//       ]);
-
-//       autoTable(doc, {
-//         head: [["ID", "Name", "Email", "Barangay", "Status"]],
-//         body: tableData,
-//         startY: 30,
-//         styles: {
-//           fontSize: 8,
-//           cellPadding: 2.5,
-//         },
-//         headStyles: {
-//           fillColor: [34, 197, 94],
-//           textColor: 255,
-//           fontSize: 9,
-//         },
-//         alternateRowStyles: {
-//           fillColor: [248, 250, 252],
-//         },
-//         columnStyles: {
-//           0: { cellWidth: 20 },
-//           1: { cellWidth: 40 },
-//           2: { cellWidth: 60 },
-//           3: { cellWidth: 35 },
-//           4: { cellWidth: 25 },
-//         },
-//         margin: { left: 14, right: 14 },
-//         didDrawPage: () => {
-//           if (allUsers.length > 100) {
-//             doc.setFontSize(10);
-//             doc.text(`Note: Total users: ${allUsers.length}`, 14, doc.internal.pageSize.getHeight() - 10);
-//           }
-//         },
-//       });
-//     }
-
-//     setExportProgress(100);
-//     doc.save(`${fileName || 'dashboard_report'}.pdf`);
-//   } catch (error) {
-//     console.error("Detailed PDF export error:", error);
-//     setExportError(`PDF Export Failed: ${error.message}`);
-//     throw error;
-//   }
-// };
-
-const exportPDF = async () => {
-  try {
-    setExportProgress(5);
-    const doc = new jsPDF("p", "mm", "a4");
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-
-    // Page 1 - Title and Dashboard
-    const title = "Batelec I Nasugbu Report";
-    doc.setFontSize(20);
-    const titleWidth = doc.getStringUnitWidth(title) * doc.internal.getFontSize() / doc.internal.scaleFactor;
-    doc.text(title, (pageWidth - titleWidth) / 2, 20);
-
-    const dateText = `Generated on: ${new Date().toLocaleDateString()}`;
-    doc.setFontSize(12);
-    const dateWidth = doc.getStringUnitWidth(dateText) * doc.internal.getFontSize() / doc.internal.scaleFactor;
-    doc.text(dateText, (pageWidth - dateWidth) / 2, 30);
-
-    doc.setFontSize(16);
-    doc.text("Dashboard Overview", 14, 45);
-
-    setExportProgress(10);
-
-    if (!dashboardRef.current) throw new Error("Dashboard reference not found for PDF export.");
-
-    // Temporarily hide elements before rendering
-    const elementsToHide = [];
-    if (dashboardHeaderRef.current) elementsToHide.push(dashboardHeaderRef.current);
-    dashboardRef.current.querySelectorAll('.export-button').forEach(el => elementsToHide.push(el));
-    elementsToHide.forEach(el => el.style.visibility = 'hidden');
-
-    await new Promise((r) => setTimeout(r, 500));
-    setExportProgress(15);
-
-    const dashboardCanvas = await html2canvas(dashboardRef.current, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: false,
-      backgroundColor: "#ffffff",
-      scrollX: 0,
-      scrollY: 0,
-      windowWidth: dashboardRef.current.scrollWidth,
-      windowHeight: dashboardRef.current.scrollHeight,
-      width: dashboardRef.current.scrollWidth,
-      height: dashboardRef.current.scrollHeight,
-      onclone: (clonedDoc) => {
-        const allElements = clonedDoc.querySelectorAll("*");
-        allElements.forEach((el) => {
-          const computed = window.getComputedStyle(el);
-          if (computed.backgroundColor.includes("oklch")) el.style.backgroundColor = "#ffffff";
-          if (computed.color.includes("oklch")) el.style.color = "#000000";
-          if (computed.borderColor.includes("oklch")) el.style.borderColor = "#d1d5db";
-          el.style.transform = "none";
-          el.style.animation = "none";
-          el.style.transition = "none";
-        });
-        clonedDoc.querySelectorAll(".export-button").forEach(el => (el.style.display = "none"));
-      },
-      ignoreElements: (el) => el.closest('.export-modal-container') !== null,
-    });
-
-    elementsToHide.forEach(el => el.style.visibility = '');
-    setExportProgress(50);
-
-    if (!dashboardCanvas.width || !dashboardCanvas.height) {
-      throw new Error("Dashboard capture failed - canvas is empty.");
-    }
-
-    // Fit image below header (starts at y = 50), keep proportions
-    const dashboardImg = dashboardCanvas.toDataURL("image/jpeg", 0.95);
-    const availableHeight = pageHeight - 60; // leave margin under title
-    const availableWidth = pageWidth - 20;
-
-    const ratio = Math.min(availableWidth / dashboardCanvas.width, availableHeight / dashboardCanvas.height);
-    const imgWidth = dashboardCanvas.width * ratio;
-    const imgHeight = dashboardCanvas.height * ratio;
-
-    const xOffset = (pageWidth - imgWidth) / 2;
-    const yOffset = 50;
-
-    doc.addImage(dashboardImg, "JPEG", xOffset, yOffset, imgWidth, imgHeight);
-    setExportProgress(70);
-
-    // Page 2 - User Data Table
-    if (allUsers && allUsers.length > 0) {
-      doc.addPage();
+      // Add statistics summary table
       doc.setFontSize(16);
-      doc.text("User Data Overview", 14, 20);
+      doc.text("User Statistics Summary", 14, 45);
 
-      const tableData = allUsers.map((u) => [
-        u._id?.substring(0, 8) || "N/A",
-        u.name || "N/A",
-        u.email?.length > 35 ? u.email.substring(0, 32) + "..." : u.email || "N/A",
-        u.barangay || "N/A",
-        u.isVerified ? "Verified" : "Unverified",
-      ]);
+      const statsData = [
+        ["Total Users", userStats.totalUsers.toString()],
+        ["Verified Users (Total)", userStats.verifiedUsers.toString()],
+        ["Auto Verified", userStats.autoVerified.toString()],
+        ["Manually Verified", userStats.manuallyVerified.toString()],
+        ["Pending Manual Verification", userStats.pendingManual.toString()],
+        ["Unverified Users", userStats.unverified.toString()],
+        ["Rejected Users", userStats.rejected.toString()],
+        ["Basic Users", userStats.basicUsers.toString()],
+        ["Total News Posts", totalNews.toString()],
+      ];
 
       autoTable(doc, {
-        head: [["ID", "Name", "Email", "Barangay", "Status"]],
-        body: tableData,
-        startY: 30,
+        head: [["Metric", "Count"]],
+        body: statsData,
+        startY: 55,
         styles: {
-          fontSize: 8,
-          cellPadding: 2.5,
+          fontSize: 10,
+          cellPadding: 3,
         },
         headStyles: {
           fillColor: [34, 197, 94],
           textColor: 255,
-          fontSize: 9,
+          fontSize: 11,
         },
         alternateRowStyles: {
           fillColor: [248, 250, 252],
         },
         columnStyles: {
-          0: { cellWidth: 20 },
-          1: { cellWidth: 40 },
-          2: { cellWidth: 60 },
-          3: { cellWidth: 35 },
-          4: { cellWidth: 25 },
+          0: { cellWidth: 120 },
+          1: { cellWidth: 50 },
         },
         margin: { left: 14, right: 14 },
-        didDrawPage: () => {
-          if (allUsers.length > 100) {
-            doc.setFontSize(10);
-            doc.text(`Note: Total users: ${allUsers.length}`, 14, doc.internal.pageSize.getHeight() - 10);
-          }
-        },
       });
-    }
 
-    setExportProgress(100);
-    doc.save(`${fileName || 'dashboard_report'}.pdf`);
-  } catch (error) {
-    console.error("Detailed PDF export error:", error);
-    setExportError(`PDF Export Failed: ${error.message}`);
-    throw error;
-  }
-};
+      setExportProgress(30);
+
+      // Add dashboard screenshot if possible
+      if (dashboardRef.current) {
+        // Temporarily hide elements before rendering
+        const elementsToHide = [];
+        if (dashboardHeaderRef.current) elementsToHide.push(dashboardHeaderRef.current);
+        dashboardRef.current.querySelectorAll('.export-button').forEach(el => elementsToHide.push(el));
+        elementsToHide.forEach(el => el.style.visibility = 'hidden');
+
+        await new Promise((r) => setTimeout(r, 500));
+
+        try {
+          const dashboardCanvas = await html2canvas(dashboardRef.current, {
+            scale: 1.5,
+            useCORS: true,
+            allowTaint: false,
+            backgroundColor: "#ffffff",
+            scrollX: 0,
+            scrollY: 0,
+            onclone: (clonedDoc) => {
+              const allElements = clonedDoc.querySelectorAll("*");
+              allElements.forEach((el) => {
+                const computed = window.getComputedStyle(el);
+                if (computed.backgroundColor.includes("oklch")) el.style.backgroundColor = "#ffffff";
+                if (computed.color.includes("oklch")) el.style.color = "#000000";
+                if (computed.borderColor.includes("oklch")) el.style.borderColor = "#d1d5db";
+                el.style.transform = "none";
+                el.style.animation = "none";
+                el.style.transition = "none";
+              });
+              clonedDoc.querySelectorAll(".export-button").forEach(el => (el.style.display = "none"));
+            },
+            ignoreElements: (el) => el.closest('.export-modal-container') !== null,
+          });
+
+          if (dashboardCanvas.width && dashboardCanvas.height) {
+            doc.addPage();
+            doc.setFontSize(16);
+            doc.text("Dashboard Visual Overview", 14, 20);
+
+            const dashboardImg = dashboardCanvas.toDataURL("image/jpeg", 0.8);
+            const availableHeight = pageHeight - 40;
+            const availableWidth = pageWidth - 20;
+
+            const ratio = Math.min(availableWidth / dashboardCanvas.width, availableHeight / dashboardCanvas.height);
+            const imgWidth = dashboardCanvas.width * ratio;
+            const imgHeight = dashboardCanvas.height * ratio;
+
+            const xOffset = (pageWidth - imgWidth) / 2;
+            const yOffset = 30;
+
+            doc.addImage(dashboardImg, "JPEG", xOffset, yOffset, imgWidth, imgHeight);
+          }
+        } catch (canvasError) {
+          console.warn("Could not capture dashboard image:", canvasError);
+        }
+
+        elementsToHide.forEach(el => el.style.visibility = '');
+      }
+
+      setExportProgress(70);
+
+      // Page 3 - User Data Table
+      if (allUsers && allUsers.length > 0) {
+        doc.addPage();
+        doc.setFontSize(16);
+        doc.text("Detailed User List", 14, 20);
+
+        const tableData = allUsers.map((u) => [
+          u._id?.substring(0, 8) || "N/A",
+          u.name || u.fullName || "N/A",
+          u.email?.length > 30 ? u.email.substring(0, 27) + "..." : u.email || "N/A",
+          u.accountNumber || "N/A",
+          u.verificationStatus || "N/A",
+          u.userRole || "N/A",
+        ]);
+
+        autoTable(doc, {
+          head: [["ID", "Name", "Email", "Account #", "Status", "Role"]],
+          body: tableData,
+          startY: 30,
+          styles: {
+            fontSize: 7,
+            cellPadding: 2,
+          },
+          headStyles: {
+            fillColor: [34, 197, 94],
+            textColor: 255,
+            fontSize: 8,
+          },
+          alternateRowStyles: {
+            fillColor: [248, 250, 252],
+          },
+          columnStyles: {
+            0: { cellWidth: 18 },
+            1: { cellWidth: 35 },
+            2: { cellWidth: 45 },
+            3: { cellWidth: 25 },
+            4: { cellWidth: 30 },
+            5: { cellWidth: 20 },
+          },
+          margin: { left: 14, right: 14 },
+          didDrawPage: () => {
+            doc.setFontSize(10);
+            doc.text(`Total users: ${allUsers.length}`, 14, doc.internal.pageSize.getHeight() - 10);
+          },
+        });
+      }
+
+      setExportProgress(100);
+      doc.save(`${fileName || 'dashboard_report'}.pdf`);
+    } catch (error) {
+      console.error("Detailed PDF export error:", error);
+      setExportError(`PDF Export Failed: ${error.message}`);
+      throw error;
+    }
+  };
 
   // --- Render ---
   return (
-    // The dashboardRef is on the outermost div containing all dashboard content.
     <div ref={dashboardRef} className="bg-[#F5F5F5] p-6">
       {isLoading ? (
         <div className="flex justify-center items-center h-[80vh]">
@@ -559,19 +466,52 @@ const exportPDF = async () => {
             </div>
           )}
 
-          {/* Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Enhanced Metrics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
               <h4 className="text-lg text-gray-500 font-inter">Total Users</h4>
               <div className="flex items-center justify-between">
-                <span className="text-3xl font-semibold text-gray-800 font-inter">{totalUsers}</span>
+                <span className="text-3xl font-semibold text-gray-800 font-inter">{userStats.totalUsers}</span>
                 <span className="text-green-600 font-semibold text-sm bg-green-100 px-2 py-1 rounded-full">
-                  {getGrowth(totalUsers, prevTotalUsers)}
+                  {getGrowth(userStats.totalUsers, prevUserStats.totalUsers)}
                 </span>
               </div>
+              <div className="mt-2 text-sm text-gray-600">
+                <div>Basic: {userStats.basicUsers}</div>
+                <div>Verified: {userStats.verifiedUsers}</div>
+              </div>
             </div>
+
             <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-              <h4 className="text-lg text-gray-500 font-inter">Total News Posted</h4>
+              <h4 className="text-lg text-gray-500 font-inter">Verified Users</h4>
+              <div className="flex items-center justify-between">
+                <span className="text-3xl font-semibold text-gray-800 font-inter">{userStats.verifiedUsers}</span>
+                <span className="text-green-600 font-semibold text-sm bg-green-100 px-2 py-1 rounded-full">
+                  {getGrowth(userStats.verifiedUsers, prevUserStats.verifiedUsers)}
+                </span>
+              </div>
+              <div className="mt-2 text-sm text-gray-600">
+                <div>Auto: {userStats.autoVerified}</div>
+                <div>Manual: {userStats.manuallyVerified}</div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <h4 className="text-lg text-gray-500 font-inter">Pending Verification</h4>
+              <div className="flex items-center justify-between">
+                <span className="text-3xl font-semibold text-gray-800 font-inter">{userStats.pendingManual}</span>
+                <span className="text-orange-600 font-semibold text-sm bg-orange-100 px-2 py-1 rounded-full">
+                  Manual Review
+                </span>
+              </div>
+              <div className="mt-2 text-sm text-gray-600">
+                <div>Unverified: {userStats.unverified}</div>
+                <div>Rejected: {userStats.rejected}</div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <h4 className="text-lg text-gray-500 font-inter">Total News</h4>
               <div className="flex items-center justify-between">
                 <span className="text-3xl font-semibold text-gray-800 font-inter">{totalNews}</span>
                 <span className="text-green-600 font-semibold text-sm bg-green-100 px-2 py-1 rounded-full">
@@ -579,19 +519,8 @@ const exportPDF = async () => {
                 </span>
               </div>
             </div>
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-              <h4 className="text-lg text-gray-500 font-inter">Verified Users</h4>
-              <div className="flex items-center justify-between">
-                <span className="text-3xl font-semibold text-gray-800 font-inter">{verifiedUsers}</span>
-                <span className="text-green-600 font-semibold text-sm bg-green-100 px-2 py-1 rounded-full">
-                  {getGrowth(verifiedUsers, prevVerifiedUsers)}
-                </span>
-              </div>
-            </div>
           </div>
 
-          {/* Charts */}
-          
           {/* Charts */}
           <div className="flex flex-col md:flex-row gap-6">
             <div className="bg-white p-6 rounded-lg border flex-1 border-gray-200">
@@ -638,66 +567,61 @@ const exportPDF = async () => {
           
           {/* Export Modal */}
           {showExportModal && (
-  <div
-    ref={exportModalRef}
-    className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm flex items-center justify-center z-50 export-modal-container"
-  >
-    <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
-      <div className="bg-green-600 rounded-t-lg py-3 px-6">
-        <h3 className="text-lg font-semibold text-white">Export Dashboard Data</h3>
-      </div>
-      <div className="p-6">
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            File Name
-          </label>
-          <input
-            type="text"
-            value={fileName}
-            onChange={(e) => setFileName(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-            placeholder="Enter file name"
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            File will be saved as: {fileName}.{exportType}
-          </p>
-        </div>
+            <div
+              ref={exportModalRef}
+              className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm flex items-center justify-center z-50 export-modal-container"
+            >
+              <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
+                <div className="bg-green-600 rounded-t-lg py-3 px-6">
+                  <h3 className="text-lg font-semibold text-white">Export Dashboard Data</h3>
+                </div>
+                <div className="p-6">
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      File Name
+                    </label>
+                    <input
+                      type="text"
+                      value={fileName}
+                      onChange={(e) => setFileName(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="Enter file name"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      File will be saved as: {fileName}.{exportType}
+                    </p>
+                  </div>
 
-        <p className="text-gray-700 mb-4">
-          Export format: <strong>{exportType?.toUpperCase()}</strong>
-        </p>
+                  <p className="text-gray-700 mb-4">
+                    Export format: <strong>{exportType?.toUpperCase()}</strong>
+                  </p>
 
-        <div className="flex justify-end gap-2">
-          <button
-            onClick={() => setShowExportModal(false)}
-            className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-100 shadow-sm"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={performExport}
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 shadow-sm"
-            disabled={isExportingPDF}
-          >
-            {isExportingPDF ? (
-              <div className="flex items-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
-                Exporting... ({exportProgress}%)
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => setShowExportModal(false)}
+                      className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-100 shadow-sm"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={performExport}
+                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 shadow-sm"
+                      disabled={isExportingPDF}
+                    >
+                      {isExportingPDF ? (
+                        <div className="flex items-center">
+                          <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
+                          Exporting... ({exportProgress}%)
+                        </div>
+                      ) : (
+                        "Export"
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
-            ) : (
-              "Export"
-            )}
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
-
-          
-          {/* Preview Modal */}
-
-
+            </div>
+          )}
         </>
       )}
     </div>
