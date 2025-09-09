@@ -415,7 +415,7 @@ To resolve this issue:
 ];
 
 // Rejection Modal Reason Options
-const RejectionModal = ({ show, onClose, user, onContinue, loading }) => {
+const RejectionModal = ({ show, onClose, user, onContinue }) => {
   const [selectedReason, setSelectedReason] = useState('');
   const [adminNotes, setAdminNotes] = useState('');
 
@@ -694,9 +694,7 @@ const AccountLinkingModal = ({ 
   user, 
   onApprove, 
   loading,
-  batelecAccounts,
-  onSearchAccounts 
-}) => {
+  batelecAccounts}) => {
   const [selectedAccount, setSelectedAccount] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBarangay, setSelectedBarangay] = useState('');
@@ -863,7 +861,7 @@ const AccountLinkingModal = ({ 
                   {/* Table Body */}
                   <div className="divide-y divide-gray-200 max-h-80 overflow-y-auto">
                     {filteredAccounts.length > 0 ? (
-                      filteredAccounts.map((account, index) => (
+                      filteredAccounts.map((account) => (
                         <label key={account.accountNumber} className="grid grid-cols-12 gap-4 px-4 py-4 hover:bg-gray-50 cursor-pointer text-sm">
                           <div className="col-span-1 flex items-center">
                             <input
