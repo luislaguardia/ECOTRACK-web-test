@@ -21,6 +21,8 @@ import { BASE_URL } from "../../config";
 const Dashboard = () => {
   // --- State Management ---
   const [isLoading, setIsLoading] = useState(true);
+  const [dashboardScreenshot, setDashboardScreenshot] = useState(null);
+  const [isCapturingScreenshot, setIsCapturingScreenshot] = useState(false);
   
   // User Statistics from the proper endpoint
   const [userStats, setUserStats] = useState({
@@ -37,9 +39,9 @@ const Dashboard = () => {
   const [totalNews, setTotalNews] = useState(0);
   const [usageData, setUsageData] = useState([]);
   const [deviceData, setDeviceData] = useState([]);
-  const [allUsers, setAllUsers] = useState([]); // State to hold all user data for exports
+  const [allUsers, setAllUsers] = useState([]);
 
-  // Previous counts for growth calculation (initialized to 1 to prevent division by zero)
+  // Previous counts for growth calculation
   const [prevUserStats, setPrevUserStats] = useState({
     totalUsers: 1,
     verifiedUsers: 1
@@ -48,11 +50,20 @@ const Dashboard = () => {
 
   // Export related states
   const [showExportModal, setShowExportModal] = useState(false);
-  const [exportType, setExportType] = useState(null); // 'csv' or 'pdf'
+  const [exportType, setExportType] = useState(null);
   const [fileName, setFileName] = useState("dashboard_export");
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [exportError, setExportError] = useState(null);
   const [exportProgress, setExportProgress] = useState(0);
+
+  // Export configuration states
+  const [exportConfig, setExportConfig] = useState({
+    dateFrom: "",
+    dateTo: "",
+    title: "Batelec I Nasugbu Dashboard Report",
+    header: "Dashboard Visual Overview",
+    description: "User Statistics Summary"
+  });
 
   // --- Refs ---
   const dashboardRef = useRef(null);
@@ -61,12 +72,12 @@ const Dashboard = () => {
 
   // --- Pie Colors ---
   const COLORS = [
-    "#119718", // green
-    "#2D710E", // greener
-    "#17594A", // darker green
-    "#5D8C55", // green leaf
-    "#8EAC50", // yellow green
-    "#D3D04F", // yellow
+    "#119718",
+    "#2D710E",
+    "#17594A",
+    "#5D8C55",
+    "#8EAC50",
+    "#D3D04F",
   ];
 
   // --- Effects ---
@@ -85,12 +96,60 @@ const Dashboard = () => {
     fetchAll();
   }, []);
 
+  // Update preview when export config changes
+  useEffect(() => {
+    if (showExportModal && exportType === "pdf") {
+      updatePreview();
+    }
+  }, [exportConfig, showExportModal, exportType]);
+
   // --- Helper Functions ---
   const getGrowth = (current, prev) => {
     if (prev <= 0) return current > 0 ? "+100%" : "0%";
     const diff = current - prev;
     const growth = (diff / prev) * 100;
     return `${diff >= 0 ? "+" : ""}${growth.toFixed(1)}%`;
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const updatePreview = async () => {
+    if (exportType === "pdf") {
+      // Generate PDF preview
+      if (dashboardRef.current) {
+        try {
+          const canvas = await html2canvas(dashboardRef.current, {
+            scale: 0.8,
+            useCORS: true,
+            allowTaint: false,
+            backgroundColor: "#ffffff",
+            scrollX: 0,
+            scrollY: 0,
+            onclone: (clonedDoc) => {
+              const allElements = clonedDoc.querySelectorAll("*");
+              allElements.forEach((el) => {
+                const computed = window.getComputedStyle(el);
+                if (computed.backgroundColor.includes("oklch")) el.style.backgroundColor = "#ffffff";
+                if (computed.color.includes("oklch")) el.style.color = "#000000";
+                if (computed.borderColor.includes("oklch")) el.style.borderColor = "#d1d5db";
+                el.style.transform = "none";
+                el.style.animation = "none";
+                el.style.transition = "none";
+              });
+              clonedDoc.querySelectorAll(".export-button").forEach(el => (el.style.display = "none"));
+            },
+            ignoreElements: (el) => el.closest('.export-modal-container') !== null,
+          });
+          
+          setDashboardScreenshot(canvas.toDataURL("image/jpeg", 0.85));
+        } catch (error) {
+          console.error("Failed to capture preview:", error);
+        }
+      }
+    }
   };
 
   // --- Data Fetching Functions ---
@@ -104,7 +163,6 @@ const Dashboard = () => {
       const stats = res.data;
       setUserStats(stats);
       
-      // Set previous stats for growth calculation (simulate ~10% growth)
       setPrevUserStats({
         totalUsers: Math.max(stats.totalUsers - Math.floor(stats.totalUsers * 0.1), 1),
         verifiedUsers: Math.max(stats.verifiedUsers - Math.floor(stats.verifiedUsers * 0.05), 1)
@@ -148,7 +206,6 @@ const Dashboard = () => {
       }));
 
       const sorted = rawData.sort((a, b) => b.value - a.value);
-
       const topFive = sorted.slice(0, 5);
       const othersTotal = sorted.slice(5).reduce((acc, item) => acc + item.value, 0);
 
@@ -172,21 +229,30 @@ const Dashboard = () => {
       const token = localStorage.getItem("token");
       const res = await axios.get(`${BASE_URL}/api/users`, {
         headers: { Authorization: `Bearer ${token}` },
-        params: { limit: 1000 } // Get more users for export
+        params: { limit: 1000 }
       });
-      setAllUsers(res.data.users || res.data); // Handle both paginated and non-paginated responses
+      setAllUsers(res.data.users || res.data);
     } catch (err) {
       console.error("Error fetching all users:", err);
       setExportError("Failed to load full user list for export.");
     }
   };
 
-  const handleExportClick = (type) => {
+  const handleExportClick = async (type) => {
     setExportType(type);
-    setFileName(`dashboard_export_${new Date().toISOString().split('T')[0]}`);
-    setShowExportModal(true);
+    const currentDate = new Date().toISOString().split('T')[0];
+    setFileName(`dashboard_export_${currentDate}`);
     setExportError(null);
     setExportProgress(0);
+    
+    // Set default configuration
+    setExportConfig(prev => ({
+      ...prev,
+      dateFrom: prev.dateFrom || "",
+      dateTo: prev.dateTo || "",
+    }));
+
+    setShowExportModal(true);
   };
 
   const performExport = async () => {
@@ -209,8 +275,14 @@ const Dashboard = () => {
   };
   
   const exportCSV = () => {
+    const dateRange = exportConfig.dateFrom && exportConfig.dateTo 
+      ? `Date Range: ${formatDate(exportConfig.dateFrom)} to ${formatDate(exportConfig.dateTo)}`
+      : `Generated on: ${new Date().toLocaleDateString()}`;
+
     const generalData = [
-      ["Dashboard Summary"],
+      [exportConfig.title],
+      [dateRange],
+      [""],
       ["Metric", "Value"],
       ["Total Users", userStats.totalUsers],
       ["Verified Users (Total)", userStats.verifiedUsers],
@@ -225,7 +297,7 @@ const Dashboard = () => {
 
     const userData = [
       [],
-      ["Detailed User List"],
+      [exportConfig.description || "Detailed User List"],
       ["UserID", "Name", "Email", "Account Number", "Verification Status", "User Role", "Created At"],
       ...allUsers.map((u) => [
         u._id || "N/A",
@@ -249,184 +321,183 @@ const Dashboard = () => {
     document.body.removeChild(link);
   };
 
-  const exportPDF = async () => {
-    try {
-      setExportProgress(5);
-      const doc = new jsPDF("p", "mm", "a4");
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
+const exportPDF = async () => {
+  try {
+    setExportProgress(5);
+    const doc = new jsPDF("p", "mm", "a4");
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
 
-      // Page 1 - Title and Statistics Summary
-      const title = "Batelec I Nasugbu Dashboard Report";
-      doc.setFontSize(20);
-      const titleWidth = doc.getStringUnitWidth(title) * doc.internal.getFontSize() / doc.internal.scaleFactor;
-      doc.text(title, (pageWidth - titleWidth) / 2, 20);
+    // Page 1 - Title and configuration
+    doc.setFontSize(20);
+    const titleWidth = doc.getStringUnitWidth(exportConfig.title) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+    doc.text(exportConfig.title, (pageWidth - titleWidth) / 2, 15);
 
-      const dateText = `Generated on: ${new Date().toLocaleDateString()}`;
-      doc.setFontSize(12);
-      const dateWidth = doc.getStringUnitWidth(dateText) * doc.internal.getFontSize() / doc.internal.scaleFactor;
-      doc.text(dateText, (pageWidth - dateWidth) / 2, 30);
+    const dateText = exportConfig.dateFrom && exportConfig.dateTo 
+      ? `Date Range: ${formatDate(exportConfig.dateFrom)} to ${formatDate(exportConfig.dateTo)}`
+      : `Generated on: ${new Date().toLocaleDateString()}`;
+    
+    doc.setFontSize(12);
+    const dateWidth = doc.getStringUnitWidth(dateText) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+    doc.text(dateText, (pageWidth - dateWidth) / 2, 25);
 
-      setExportProgress(10);
+    setExportProgress(10);
 
-      // Add statistics summary table
+    const contentWidth = pageWidth - 20;
+
+    // Add dashboard screenshot
+    if (dashboardScreenshot) {
       doc.setFontSize(16);
-      doc.text("User Statistics Summary", 14, 45);
+      doc.text(exportConfig.header || "Dashboard Visual Overview", 14, 40);
+      
+      // Add description below the header
+      doc.setFontSize(12);
+      const descriptionLines = doc.splitTextToSize(exportConfig.description || "User Statistics Summary", contentWidth - 10);
+      doc.text(descriptionLines, 14, 50);
+      
+      const img = new Image();
+      img.src = dashboardScreenshot;
+      
+      await new Promise((resolve) => {
+        img.onload = () => {
+          const ratio = contentWidth / img.width;
+          // Reduce the image height by applying a scaling factor (0.7 = 70% of original height)
+          const imgHeight = img.height * ratio * 0.7;
+          
+          // Position image below description with some spacing
+          const imageY = 50 + (descriptionLines.length * 5) + 10;
+          doc.addImage(dashboardScreenshot, "JPEG", 10, imageY, contentWidth, imgHeight);
+          
+          const currentY = imageY + imgHeight;
+          const spaceNeeded = 50;
+          
+          if (currentY + spaceNeeded < pageHeight - 20) {
+            addStatisticsTable(doc, currentY + 15, contentWidth);
+          } else {
+            doc.addPage();
+            addStatisticsTable(doc, 20, contentWidth);
+          }
+          resolve();
+        };
+      });
+    }
 
-      const statsData = [
-        ["Total Users", userStats.totalUsers.toString()],
-        ["Verified Users (Total)", userStats.verifiedUsers.toString()],
-        ["Auto Verified", userStats.autoVerified.toString()],
-        ["Manually Verified", userStats.manuallyVerified.toString()],
-        ["Pending Manual Verification", userStats.pendingManual.toString()],
-        ["Unverified Users", userStats.unverified.toString()],
-        ["Rejected Users", userStats.rejected.toString()],
-        ["Basic Users", userStats.basicUsers.toString()],
-        ["Total News Posts", totalNews.toString()],
-      ];
+    setExportProgress(60);
 
+    // Add user data table
+    if (allUsers && allUsers.length > 0) {
+      doc.addPage();
+      doc.setFontSize(16);
+      doc.text(exportConfig.description || "Detailed User List", 14, 20);
+
+      const tableData = allUsers.map((u) => [
+        u._id?.substring(0, 8) || "N/A",
+        u.name || u.fullName || "N/A",
+        u.email?.length > 30 ? u.email.substring(0, 27) + "..." : u.email || "N/A",
+        u.accountNumber || "N/A",
+        u.verificationStatus || "N/A",
+        u.userRole || "N/A",
+      ]);
+
+      const userTableWidth = contentWidth;
+      const columnWidths = {
+        0: userTableWidth * 0.12,
+        1: userTableWidth * 0.20,
+        2: userTableWidth * 0.28,
+        3: userTableWidth * 0.15,
+        4: userTableWidth * 0.15,
+        5: userTableWidth * 0.10,
+      };
+
+      let finalY = 25;
+      
       autoTable(doc, {
-        head: [["Metric", "Count"]],
-        body: statsData,
-        startY: 55,
+        head: [["ID", "Name", "Email", "Account #", "Status", "Role"]],
+        body: tableData,
+        startY: 25,
         styles: {
-          fontSize: 10,
+          fontSize: 7,
           cellPadding: 3,
+          lineColor: [200, 200, 200],
+          lineWidth: 0.1,
         },
         headStyles: {
           fillColor: [34, 197, 94],
           textColor: 255,
-          fontSize: 11,
+          fontSize: 8,
         },
         alternateRowStyles: {
           fillColor: [248, 250, 252],
         },
-        columnStyles: {
-          0: { cellWidth: 120 },
-          1: { cellWidth: 50 },
-        },
-        margin: { left: 14, right: 14 },
-      });
-
-      setExportProgress(30);
-
-      // Add dashboard screenshot if possible
-      if (dashboardRef.current) {
-        // Temporarily hide elements before rendering
-        const elementsToHide = [];
-        if (dashboardHeaderRef.current) elementsToHide.push(dashboardHeaderRef.current);
-        dashboardRef.current.querySelectorAll('.export-button').forEach(el => elementsToHide.push(el));
-        elementsToHide.forEach(el => el.style.visibility = 'hidden');
-
-        await new Promise((r) => setTimeout(r, 500));
-
-        try {
-          const dashboardCanvas = await html2canvas(dashboardRef.current, {
-            scale: 1.5,
-            useCORS: true,
-            allowTaint: false,
-            backgroundColor: "#ffffff",
-            scrollX: 0,
-            scrollY: 0,
-            onclone: (clonedDoc) => {
-              const allElements = clonedDoc.querySelectorAll("*");
-              allElements.forEach((el) => {
-                const computed = window.getComputedStyle(el);
-                if (computed.backgroundColor.includes("oklch")) el.style.backgroundColor = "#ffffff";
-                if (computed.color.includes("oklch")) el.style.color = "#000000";
-                if (computed.borderColor.includes("oklch")) el.style.borderColor = "#d1d5db";
-                el.style.transform = "none";
-                el.style.animation = "none";
-                el.style.transition = "none";
-              });
-              clonedDoc.querySelectorAll(".export-button").forEach(el => (el.style.display = "none"));
-            },
-            ignoreElements: (el) => el.closest('.export-modal-container') !== null,
-          });
-
-          if (dashboardCanvas.width && dashboardCanvas.height) {
-            doc.addPage();
-            doc.setFontSize(16);
-            doc.text("Dashboard Visual Overview", 14, 20);
-
-            const dashboardImg = dashboardCanvas.toDataURL("image/jpeg", 0.8);
-            const availableHeight = pageHeight - 40;
-            const availableWidth = pageWidth - 20;
-
-            const ratio = Math.min(availableWidth / dashboardCanvas.width, availableHeight / dashboardCanvas.height);
-            const imgWidth = dashboardCanvas.width * ratio;
-            const imgHeight = dashboardCanvas.height * ratio;
-
-            const xOffset = (pageWidth - imgWidth) / 2;
-            const yOffset = 30;
-
-            doc.addImage(dashboardImg, "JPEG", xOffset, yOffset, imgWidth, imgHeight);
+        columnStyles: columnWidths,
+        margin: { left: 10, right: 10 },
+        tableWidth: userTableWidth,
+        didDrawPage: function(data) {
+          if (data.cursor && data.cursor.y) {
+            finalY = data.cursor.y;
           }
-        } catch (canvasError) {
-          console.warn("Could not capture dashboard image:", canvasError);
-        }
-
-        elementsToHide.forEach(el => el.style.visibility = '');
-      }
-
-      setExportProgress(70);
-
-      // Page 3 - User Data Table
-      if (allUsers && allUsers.length > 0) {
-        doc.addPage();
-        doc.setFontSize(16);
-        doc.text("Detailed User List", 14, 20);
-
-        const tableData = allUsers.map((u) => [
-          u._id?.substring(0, 8) || "N/A",
-          u.name || u.fullName || "N/A",
-          u.email?.length > 30 ? u.email.substring(0, 27) + "..." : u.email || "N/A",
-          u.accountNumber || "N/A",
-          u.verificationStatus || "N/A",
-          u.userRole || "N/A",
-        ]);
-
-        autoTable(doc, {
-          head: [["ID", "Name", "Email", "Account #", "Status", "Role"]],
-          body: tableData,
-          startY: 30,
-          styles: {
-            fontSize: 7,
-            cellPadding: 2,
-          },
-          headStyles: {
-            fillColor: [34, 197, 94],
-            textColor: 255,
-            fontSize: 8,
-          },
-          alternateRowStyles: {
-            fillColor: [248, 250, 252],
-          },
-          columnStyles: {
-            0: { cellWidth: 18 },
-            1: { cellWidth: 35 },
-            2: { cellWidth: 45 },
-            3: { cellWidth: 25 },
-            4: { cellWidth: 30 },
-            5: { cellWidth: 20 },
-          },
-          margin: { left: 14, right: 14 },
-          didDrawPage: () => {
-            doc.setFontSize(10);
-            doc.text(`Total users: ${allUsers.length}`, 14, doc.internal.pageSize.getHeight() - 10);
-          },
-        });
-      }
-
-      setExportProgress(100);
-      doc.save(`${fileName || 'dashboard_report'}.pdf`);
-    } catch (error) {
-      console.error("Detailed PDF export error:", error);
-      setExportError(`PDF Export Failed: ${error.message}`);
-      throw error;
+        },
+      });
+      
+      doc.setFontSize(10);
+      doc.text(`Total users: ${allUsers.length}`, 14, finalY + 10);
     }
-  };
 
+    setExportProgress(100);
+    doc.save(`${fileName || 'dashboard_report'}.pdf`);
+  } catch (error) {
+    console.error("Detailed PDF export error:", error);
+    setExportError(`PDF Export Failed: ${error.message}`);
+    throw error;
+  }
+};
+
+const addStatisticsTable = (doc, startY, contentWidth) => {
+  doc.setFontSize(16);
+  doc.text("User Statistics Summary", 14, startY);
+
+  const statsData = [
+    ["Total Users", userStats.totalUsers.toString()],
+    ["Verified Users", userStats.verifiedUsers.toString()],
+    ["Auto Verified", userStats.autoVerified.toString()],
+    ["Manual Verified", userStats.manuallyVerified.toString()],
+    ["Pending Verification", userStats.pendingManual.toString()],
+    ["Unverified Users", userStats.unverified.toString()],
+    ["Rejected Users", userStats.rejected.toString()],
+    ["Basic Users", userStats.basicUsers.toString()],
+    ["News Posts", totalNews.toString()],
+  ];
+
+  const firstColWidth = contentWidth * 0.7;
+  const secondColWidth = contentWidth * 0.3;
+
+  autoTable(doc, {
+    head: [["Metric", "Count"]],
+    body: statsData,
+    startY: startY + 10, // Add some space after the title
+    styles: {
+      fontSize: 9,
+      cellPadding: 2,
+      lineColor: [200, 200, 200],
+      lineWidth: 0.1,
+    },
+    headStyles: {
+      fillColor: [34, 197, 94],
+      textColor: 255,
+      fontSize: 10,
+      cellPadding: 2,
+    },
+    alternateRowStyles: {
+      fillColor: [248, 250, 252],
+    },
+    columnStyles: {
+      0: { cellWidth: firstColWidth },
+      1: { cellWidth: secondColWidth },
+    },
+    margin: { left: 10, right: 10 },
+    tableWidth: contentWidth,
+  });
+};
   // --- Render ---
   return (
     <div ref={dashboardRef} className="bg-[#F5F5F5] p-6">
@@ -449,9 +520,17 @@ const Dashboard = () => {
               </button>
               <button
                 onClick={() => handleExportClick("pdf")}
-                className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all font-inter shadow-md export-button"
+                disabled={isCapturingScreenshot}
+                className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all font-inter shadow-md export-button flex items-center justify-center"
               >
-                Export PDF
+                {isCapturingScreenshot ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                    Capturing...
+                  </>
+                ) : (
+                  "Export PDF"
+                )}
               </button>
             </div>
           </div>
@@ -461,7 +540,7 @@ const Dashboard = () => {
               <strong className="font-bold">Export Error!</strong>
               <span className="block sm:inline ml-2">{exportError}</span>
               <span className="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer" onClick={() => setExportError(null)}>
-                <svg className="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.414l-2.651 2.651a1.2 1.2 0 1 1-1.697-1.697L8.586 10 5.935 7.349a1.2 1.2 0 1 1 1.697-1.697L10 8.586l2.651-2.651a1.2 1.2 0 1 1 1.697 1.697L11.414 10l2.651 2.651a1.2 1.2 0 0 1 0 1.698z"/></svg>
+                <svg className="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.414l-2.651 2.651a1.2 1.2 0 1 1-1.697-1.697L8.586 10 5.935 7.349a1.2 1.2 0 1 1 1.697-1.697L10 8.586l-2.651 2.651a1.2 1.2 0 0 1-1.697-1.697L8.586 10 5.935 7.349a1.2 1.2 0 1 1 1.697-1.697L10 8.586l2.651-2.651a1.2 1.2 0 1 1 1.697 1.697L11.414 10l2.651 2.651a1.2 1.2 0 0 1 0 1.698z"/></svg>
               </span>
             </div>
           )}
@@ -565,61 +644,339 @@ const Dashboard = () => {
             </div>
           </div>
           
-          {/* Export Modal */}
+           {/* Enhanced Export Modal */}
           {showExportModal && (
             <div
               ref={exportModalRef}
-              className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm flex items-center justify-center z-50 export-modal-container"
+              className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm flex items-center justify-center z-50 export-modal-container p-4"
             >
-              <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
-                <div className="bg-green-600 rounded-t-lg py-3 px-6">
-                  <h3 className="text-lg font-semibold text-white">Export Dashboard Data</h3>
-                </div>
-                <div className="p-6">
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      File Name
-                    </label>
-                    <input
-                      type="text"
-                      value={fileName}
-                      onChange={(e) => setFileName(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                      placeholder="Enter file name"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      File will be saved as: {fileName}.{exportType}
-                    </p>
+              {exportType === "csv" ? (
+                // Simple CSV Modal
+                <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+                  <div className="bg-green-600 py-3 px-6 rounded-t-lg">
+                    <h3 className="text-lg font-semibold text-white">Export CSV</h3>
                   </div>
-
-                  <p className="text-gray-700 mb-4">
-                    Export format: <strong>{exportType?.toUpperCase()}</strong>
-                  </p>
-
-                  <div className="flex justify-end gap-2">
-                    <button
-                      onClick={() => setShowExportModal(false)}
-                      className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-100 shadow-sm"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={performExport}
-                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 shadow-sm"
-                      disabled={isExportingPDF}
-                    >
-                      {isExportingPDF ? (
-                        <div className="flex items-center">
-                          <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
-                          Exporting... ({exportProgress}%)
+                  <div className="p-6">
+                    <div className="space-y-4">
+                      {/* Configuration Section */}
+                      <div>
+                        <h4 className="text-sm font-semibold text-blue-600 uppercase tracking-wide mb-3">CONFIGURATION</h4>
+                        
+                        {/* Date Range */}
+                        <div className="space-y-2">
+                          <div>
+                            <input
+                              type="date"
+                              value={exportConfig.dateFrom}
+                              onChange={(e) => setExportConfig(prev => ({ ...prev, dateFrom: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                              placeholder="mm/dd/yyyy"
+                            />
+                          </div>
+                          <div className="text-center text-xs text-gray-500">to</div>
+                          <div>
+                            <input
+                              type="date"
+                              value={exportConfig.dateTo}
+                              onChange={(e) => setExportConfig(prev => ({ ...prev, dateTo: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                              placeholder="mm/dd/yyyy"
+                            />
+                          </div>
                         </div>
-                      ) : (
-                        "Export"
-                      )}
-                    </button>
+
+                        {/* Title */}
+                        <div className="mt-4">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                          <input
+                            type="text"
+                            value={exportConfig.title}
+                            onChange={(e) => setExportConfig(prev => ({ ...prev, title: e.target.value }))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                            placeholder="Enter Title"
+                          />
+                        </div>
+
+                        {/* Header */}
+                        <div className="mt-4">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Header</label>
+                          <input
+                            type="text"
+                            value={exportConfig.header}
+                            onChange={(e) => setExportConfig(prev => ({ ...prev, header: e.target.value }))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                            placeholder="Enter Header"
+                          />
+                        </div>
+
+                        {/* Description */}
+                        <div className="mt-4">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                          <textarea
+                            value={exportConfig.description}
+                            onChange={(e) => setExportConfig(prev => ({ ...prev, description: e.target.value }))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                            placeholder="Enter Description"
+                            rows={3}
+                          />
+                        </div>
+                      </div>
+
+                      {/* File Name */}
+                      <div className="mt-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          File Name
+                        </label>
+                        <input
+                          type="text"
+                          value={fileName}
+                          onChange={(e) => setFileName(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                          placeholder="Enter file name"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          File will be saved as: {fileName}.{exportType}
+                        </p>
+                      </div>
+
+                      <p className="text-gray-700 mt-4">
+                        Export format: <strong>{exportType?.toUpperCase()}</strong>
+                      </p>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex justify-end gap-2 mt-8 pt-4 border-t border-gray-200">
+                      <button
+                        onClick={() => setShowExportModal(false)}
+                        className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-100 shadow-sm"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={performExport}
+                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 shadow-sm"
+                      >
+                        Export
+                      </button>
+                    </div>
                   </div>
                 </div>
+              ) : (
+                // PDF Modal with Preview
+<div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex">
+  {/* Left Panel - Configuration */}
+  <div className="w-1/3 border-r border-gray-200">
+    <div className="bg-green-600 py-3 px-6">
+      <h3 className="text-lg font-semibold text-white">Export Dashboard Data</h3>
+    </div>
+    <div className="p-6 overflow-y-auto max-h-[calc(90vh-60px)]">
+      <div className="space-y-4">
+        {/* Configuration Section */}
+        <div>
+          <h4 className="text-sm font-semibold text-blue-600 uppercase tracking-wide mb-3">CONFIGURATION</h4>
+          
+          {/* Date Range */}
+          <div className="space-y-2">
+            <div>
+              <input
+                type="date"
+                value={exportConfig.dateFrom}
+                onChange={(e) => setExportConfig(prev => ({ ...prev, dateFrom: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                placeholder="mm/dd/yyyy"
+              />
+            </div>
+            <div className="text-center text-xs text-gray-500">to</div>
+            <div>
+              <input
+                type="date"
+                value={exportConfig.dateTo}
+                onChange={(e) => setExportConfig(prev => ({ ...prev, dateTo: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                placeholder="mm/dd/yyyy"
+              />
+            </div>
+          </div>
+
+          {/* Title */}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+            <input
+              type="text"
+              value={exportConfig.title}
+              onChange={(e) => setExportConfig(prev => ({ ...prev, title: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+              placeholder="Enter Title"
+            />
+          </div>
+
+          {/* Header */}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Header</label>
+            <input
+              type="text"
+              value={exportConfig.header}
+              onChange={(e) => setExportConfig(prev => ({ ...prev, header: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+              placeholder="Enter Header"
+            />
+          </div>
+
+          {/* Description */}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea
+              value={exportConfig.description}
+              onChange={(e) => setExportConfig(prev => ({ ...prev, description: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+              placeholder="Enter Description"
+              rows={3}
+            />
+          </div>
+        </div>
+
+        {/* File Name */}
+        <div className="mt-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            File Name
+          </label>
+          <input
+            type="text"
+            value={fileName}
+            onChange={(e) => setFileName(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            placeholder="Enter file name"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            File will be saved as: {fileName}.{exportType}
+          </p>
+        </div>
+
+        <p className="text-gray-700 mt-4">
+          Export format: <strong>{exportType?.toUpperCase()}</strong>
+        </p>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex justify-end gap-2 mt-8 pt-4 border-t border-gray-200">
+        <button
+          onClick={() => setShowExportModal(false)}
+          className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-100 shadow-sm"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={performExport}
+          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 shadow-sm"
+          disabled={isExportingPDF}
+        >
+          {isExportingPDF ? (
+            <div className="flex items-center">
+              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
+              Exporting... ({exportProgress}%)
+            </div>
+          ) : (
+            "Export"
+          )}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {/* Right Panel - Preview */}
+  <div className="flex-1">
+    <div className="bg-green-600 py-3 px-6 border-b border-green-600">
+      <h4 className="text-lg font-semibold text-green-600">Preview</h4>
+    </div>
+    <div className="p-6 overflow-y-auto max-h-[calc(90vh-60px)]">
+      {/* A4 Page Container */}
+      <div className="bg-white border border-gray-300 shadow-lg mx-auto" style={{ width: '210mm', height: '297mm', padding: '20mm' }}>
+        {/* Page 1 - Title and Dashboard Overview */}
+        <div className="h-full flex flex-col">
+          {/* Title and Date */}
+          <div className="text-center mb-6">
+            <h1 className="text-xl font-bold text-gray-800 mb-2">
+              {exportConfig.title || "Batelec I Nasugbu Dashboard Report"}
+            </h1>
+            <p className="text-sm text-gray-600">
+              {exportConfig.dateFrom && exportConfig.dateTo 
+                ? `${formatDate(exportConfig.dateFrom)} to ${formatDate(exportConfig.dateTo)}`
+                : `Generated on: ${new Date().toLocaleDateString()}`
+              }
+            </p>
+          </div>
+
+          {/* Header and Description */}
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-gray-700 mb-3">
+              {exportConfig.header || "Dashboard Overview"}
+            </h2>
+            <p className="text-sm text-gray-700 leading-relaxed mb-4">
+              {exportConfig.description}
+            </p>
+            
+            {/* Dashboard Screenshot Preview */}
+            {dashboardScreenshot ? (
+              <div className="mb-4" style={{ maxHeight: '120mm', overflow: 'hidden' }}>
+                <img 
+                  src={dashboardScreenshot} 
+                  alt="Dashboard Preview" 
+                  className="w-full h-auto"
+                  style={{ objectFit: 'contain' }}
+                />
               </div>
+            ) : (
+              <div className="border border-gray-200 bg-gray-100 p-8 mb-4 text-center">
+                <div className="text-gray-500">Dashboard visual will appear here</div>
+              </div>
+            )}
+          </div>
+
+          {/* Statistics Table Preview */}
+          <div className="flex-grow">
+            <h3 className="text-base font-semibold text-gray-700 mb-3">
+              User Statistics Summary
+            </h3>
+            <div className="border border-gray-200 rounded overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-green-600 text-white">
+                    <th className="px-3 py-2 text-left">Metric</th>
+                    <th className="px-3 py-2 text-left">Count</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    ["Total Users", userStats.totalUsers],
+                    ["Verified Users", userStats.verifiedUsers],
+                    ["Auto Verified", userStats.autoVerified],
+                    ["Manual Verified", userStats.manuallyVerified],
+                    ["Pending Verification", userStats.pendingManual],
+                    ["Unverified Users", userStats.unverified],
+                    ["Rejected Users", userStats.rejected],
+                    ["Basic Users", userStats.basicUsers],
+                    ["News Posts", totalNews],
+                  ].map(([metric, value], index) => (
+                    <tr key={metric} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+                      <td className="px-3 py-2 border-b border-gray-200">{metric}</td>
+                      <td className="px-3 py-2 border-b border-gray-200">{value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Page Number */}
+          <div className="text-center text-xs text-gray-500 mt-4">
+            Page 1 of {Math.ceil(allUsers.length / 15) + 1}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+              )}
             </div>
           )}
         </>
