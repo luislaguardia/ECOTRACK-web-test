@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Search, Filter, Download, Eye, Calendar, User, Activity, Shield, AlertTriangle } from "lucide-react";
+import axios from "axios"; // Make sure to install axios: npm install axios
+import { Search, Shield, Download, Eye, Calendar, User, Activity } from "lucide-react";
+import { BASE_URL } from "../../config"; // Assuming you have a config file for your base URL
 
 const AuditLogs = () => {
-  const storedInfo = JSON.parse(localStorage.getItem("adminInfo"));
-  
+  const [logs, setLogs] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   // States for filtering and pagination
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedAction, setSelectedAction] = useState("");
@@ -12,100 +16,59 @@ const AuditLogs = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [selectedLog, setSelectedLog] = useState(null);
-  
-  // Auto redirect non-superadmin - implement with your router
-  // if (storedInfo?.role !== "superadmin") {
-  //   return <Navigate to="/dashboard" />;
-  // }
 
-  // Placeholder data - replace with actual API call
-  const mockAuditLogs = [
-    {
-      id: 1,
-      timestamp: "2025-01-15T10:30:00Z",
-      user: "admin@example.com",
-      action: "USER_CREATED",
-      resource: "User Management",
-      details: "Created new user: john.doe@example.com",
-      ipAddress: "192.168.1.100",
-      userAgent: "Mozilla/5.0...",
-      status: "SUCCESS",
-      severity: "INFO"
-    },
-    {
-      id: 2,
-      timestamp: "2025-01-15T09:15:00Z",
-      user: "admin@example.com",
-      action: "LOGIN_ATTEMPT",
-      resource: "Authentication",
-      details: "Failed login attempt",
-      ipAddress: "192.168.1.101",
-      userAgent: "Mozilla/5.0...",
-      status: "FAILED",
-      severity: "WARNING"
-    },
-    {
-      id: 3,
-      timestamp: "2025-01-15T08:45:00Z",
-      user: "superadmin@example.com",
-      action: "SYSTEM_CONFIG_CHANGED",
-      resource: "System Settings",
-      details: "Updated security settings",
-      ipAddress: "192.168.1.102",
-      userAgent: "Mozilla/5.0...",
-      status: "SUCCESS",
-      severity: "HIGH"
-    },
-    {
-      id: 4,
-      timestamp: "2025-01-14T16:20:00Z",
-      user: "admin@example.com",
-      action: "USER_DELETED",
-      resource: "User Management",
-      details: "Deleted user: inactive.user@example.com",
-      ipAddress: "192.168.1.100",
-      userAgent: "Mozilla/5.0...",
-      status: "SUCCESS",
-      severity: "CRITICAL"
-    },
-    {
-      id: 5,
-      timestamp: "2025-01-14T14:10:00Z",
-      user: "moderator@example.com",
-      action: "DATA_EXPORT",
-      resource: "Data Management",
-      details: "Exported user data for compliance audit",
-      ipAddress: "192.168.1.103",
-      userAgent: "Mozilla/5.0...",
-      status: "SUCCESS",
-      severity: "INFO"
-    }
-  ];
+  const token = localStorage.getItem("token");
 
-  // Action types for filter dropdown
-  const actionTypes = [
-    "USER_CREATED", "USER_UPDATED", "USER_DELETED", "LOGIN_ATTEMPT",
-    "LOGOUT", "PASSWORD_CHANGED", "SYSTEM_CONFIG_CHANGED", "DATA_EXPORT",
-    "DATA_IMPORT", "PERMISSION_CHANGED", "SECURITY_ALERT"
-  ];
+  useEffect(() => {
+    const fetchLogs = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const res = await axios.get(`${BASE_URL}/api/audit-logs`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setLogs(res.data);
+      } catch (err) {
+        console.error("Failed to fetch audit logs:", err);
+        setError("Failed to load audit logs. You may not have permission to view this page.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  // Get unique users for filter
-  const uniqueUsers = [...new Set(mockAuditLogs.map(log => log.user))];
+    fetchLogs();
+  }, [token]);
+
+  // Dynamically get action types and users from the logs for filtering
+  const actionTypes = [...new Set(logs.map(log => log.action))].sort();
+  const uniqueUsers = [...new Set(logs.map(log => log.actor?.email || 'Unknown Actor'))].sort();
 
   // Filter logs based on search and filters
-  const filteredLogs = mockAuditLogs.filter(log => {
-    const matchesSearch = searchTerm === "" || 
-      log.details.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.action.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredLogs = logs.filter(log => {
+    const actorEmail = log.actor?.email?.toLowerCase() || "";
+    const details = log.details?.toLowerCase() || "";
+    const action = log.action?.toLowerCase() || "";
+
+    const matchesSearch = searchTerm === "" ||
+      details.includes(searchTerm.toLowerCase()) ||
+      actorEmail.includes(searchTerm.toLowerCase()) ||
+      action.includes(searchTerm.toLowerCase());
     
     const matchesAction = selectedAction === "" || log.action === selectedAction;
-    const matchesUser = selectedUser === "" || log.user === selectedUser;
+    const matchesUser = selectedUser === "" || log.actor?.email === selectedUser;
     
-    // Date range filter would be implemented here
-    // const matchesDateRange = ...
+    // Date range filter logic
+    const logDate = new Date(log.createdAt);
+    const fromDate = dateRange.from ? new Date(dateRange.from) : null;
+    const toDate = dateRange.to ? new Date(dateRange.to) : null;
+    if (fromDate) fromDate.setHours(0, 0, 0, 0); // Start of the day
+    if (toDate) toDate.setHours(23, 59, 59, 999);   // End of the day
+
+    const matchesDateRange = (!fromDate || logDate >= fromDate) && (!toDate || logDate <= toDate);
     
-    return matchesSearch && matchesAction && matchesUser;
+    return matchesSearch && matchesAction && matchesUser && matchesDateRange;
   });
 
   // Pagination
@@ -114,32 +77,16 @@ const AuditLogs = () => {
   const paginatedLogs = filteredLogs.slice(startIndex, startIndex + itemsPerPage);
 
   const formatTimestamp = (timestamp) => {
-    return new Date(timestamp).toLocaleString();
+    if (!timestamp) return "N/A";
+    return new Date(timestamp).toLocaleString('en-US', {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
   };
-
-  const getSeverityColor = (severity) => {
-    switch (severity) {
-      case "CRITICAL": return "text-red-600 bg-red-100";
-      case "HIGH": return "text-orange-600 bg-orange-100";
-      case "WARNING": return "text-yellow-600 bg-yellow-100";
-      case "INFO": return "text-blue-600 bg-blue-100";
-      default: return "text-gray-600 bg-gray-100";
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "SUCCESS": return "text-green-600 bg-green-100";
-      case "FAILED": return "text-red-600 bg-red-100";
-      case "PENDING": return "text-yellow-600 bg-yellow-100";
-      default: return "text-gray-600 bg-gray-100";
-    }
-  };
-
+  
   const handleExport = () => {
-    // Placeholder for export functionality
-    console.log("Exporting audit logs...");
-    alert("Export functionality will be implemented with backend integration");
+    // This can be enhanced to generate a proper CSV from `filteredLogs`
+    alert("Export functionality can be built here using the filtered data.");
   };
 
   const DetailModal = ({ log, onClose }) => {
@@ -147,59 +94,60 @@ const AuditLogs = () => {
     
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Audit Log Details</h3>
+        <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-4 border-b pb-2">
+            <h3 className="text-xl font-semibold text-gray-800">Audit Log Details</h3>
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-700"
+              className="text-gray-500 hover:text-gray-800 text-2xl"
             >
-              ×
+              &times;
             </button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Timestamp</label>
-              <p className="text-sm text-gray-900">{formatTimestamp(log.timestamp)}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div className="md:col-span-2">
+              <label className="block font-medium text-gray-600">Timestamp</label>
+              <p className="text-gray-900">{formatTimestamp(log.createdAt)}</p>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">User</label>
-              <p className="text-sm text-gray-900">{log.user}</p>
+             <div className="bg-gray-50 p-3 rounded-lg md:col-span-2">
+                <h4 className="font-semibold text-gray-700 mb-2">Actor</h4>
+                <div className="grid grid-cols-2 gap-2">
+                    <div>
+                        <label className="block font-medium text-gray-600">Email</label>
+                        <p className="text-gray-900">{log.actor?.email || 'N/A'}</p>
+                    </div>
+                     <div>
+                        <label className="block font-medium text-gray-600">Role</label>
+                        <p className="text-gray-900 capitalize">{log.actor?.role || 'N/A'}</p>
+                    </div>
+                </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Action</label>
-              <p className="text-sm text-gray-900">{log.action}</p>
+             <div className="bg-gray-50 p-3 rounded-lg md:col-span-2">
+                <h4 className="font-semibold text-gray-700 mb-2">Action</h4>
+                <div className="grid grid-cols-2 gap-2">
+                     <div>
+                        <label className="block font-medium text-gray-600">Action Type</label>
+                        <p className="text-gray-900 font-mono bg-gray-200 px-2 py-1 rounded inline-block">{log.action}</p>
+                    </div>
+                </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Resource</label>
-              <p className="text-sm text-gray-900">{log.resource}</p>
+             <div className="bg-gray-50 p-3 rounded-lg md:col-span-2">
+                <h4 className="font-semibold text-gray-700 mb-2">Target</h4>
+                <div className="grid grid-cols-2 gap-2">
+                     <div>
+                        <label className="block font-medium text-gray-600">Resource Type</label>
+                        <p className="text-gray-900">{log.target?.model || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <label className="block font-medium text-gray-600">Resource Name/ID</label>
+                        <p className="text-gray-900 break-all">{log.target?.displayText || log.target?.id || 'N/A'}</p>
+                    </div>
+                </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Status</label>
-              <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(log.status)}`}>
-                {log.status}
-              </span>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Severity</label>
-              <span className={`px-2 py-1 rounded-full text-xs ${getSeverityColor(log.severity)}`}>
-                {log.severity}
-              </span>
-            </div>
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700">Details</label>
-              <p className="text-sm text-gray-900">{log.details}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">IP Address</label>
-              <p className="text-sm text-gray-900">{log.ipAddress}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">User Agent</label>
-              <p className="text-sm text-gray-900 truncate" title={log.userAgent}>
-                {log.userAgent}
-              </p>
+            <div className="md:col-span-2">
+              <label className="block font-medium text-gray-600">Details</label>
+              <p className="text-gray-900 bg-gray-100 p-2 rounded-md">{log.details}</p>
             </div>
           </div>
         </div>
@@ -207,24 +155,33 @@ const AuditLogs = () => {
     );
   };
 
+  if (isLoading) {
+      return <div className="p-6 text-center">Loading audit logs...</div>;
+  }
+
+  if (error) {
+      return <div className="p-6 text-center text-red-600 bg-red-50 rounded-lg">{error}</div>;
+  }
+
+
   return (
-    <div className="p-6">
+<div className="p-6 bg-gray-50 min-h-screen max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
         <div className="flex justify-between items-center mb-2">
           <h1 className="text-2xl font-semibold text-gray-900 flex items-center gap-2">
-            <Shield className="h-6 w-6" />
+            <Shield className="h-6 w-6 text-blue-600" />
             Audit Logs
           </h1>
           <button
             onClick={handleExport}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 transition-colors"
           >
             <Download className="h-4 w-4" />
             Export Logs
           </button>
         </div>
-        <p className="text-gray-600">Monitor and track all system activities and user actions</p>
+        <p className="text-gray-600">Monitor and track all system activities and user actions.</p>
       </div>
 
       {/* Filters */}
@@ -235,7 +192,7 @@ const AuditLogs = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <input
               type="text"
-              placeholder="Search logs..."
+              placeholder="Search details, user, action..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -266,21 +223,20 @@ const AuditLogs = () => {
             ))}
           </select>
 
-          {/* Date Range - Placeholder */}
-          <div className="flex gap-2">
+          {/* Date Range */}
+          <div className="flex gap-2 items-center">
             <input
               type="date"
               value={dateRange.from}
               onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="From"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
+             <span className="text-gray-500">-</span>
             <input
               type="date"
               value={dateRange.to}
               onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="To"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
         </div>
@@ -289,7 +245,7 @@ const AuditLogs = () => {
       {/* Results Summary */}
       <div className="mb-4">
         <p className="text-sm text-gray-600">
-          Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredLogs.length)} of {filteredLogs.length} logs
+          Showing {filteredLogs.length > 0 ? startIndex + 1 : 0}-{Math.min(startIndex + itemsPerPage, filteredLogs.length)} of {filteredLogs.length} logs
         </p>
       </div>
 
@@ -299,75 +255,46 @@ const AuditLogs = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Timestamp
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  User
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Action
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Resource
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Severity
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actor</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Target Resource</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {paginatedLogs.length > 0 ? (
                 paginatedLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatTimestamp(log.timestamp)}
+                  <tr key={log._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{formatTimestamp(log.createdAt)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 font-medium">
+                        <div className="flex items-center">
+                            <User className="h-4 w-4 mr-2 text-gray-400" />
+                            {log.actor?.email || 'N/A'}
+                        </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div className="flex items-center">
-                        <User className="h-4 w-4 mr-2 text-gray-400" />
-                        {log.user}
-                      </div>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                       <span className="font-mono bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs">{log.action}</span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div className="flex items-center">
-                        <Activity className="h-4 w-4 mr-2 text-gray-400" />
-                        {log.action}
-                      </div>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{log.target?.model}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 max-w-sm truncate" title={log.details}>
+                        {log.details}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {log.resource}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(log.status)}`}>
-                        {log.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 rounded-full text-xs ${getSeverityColor(log.severity)}`}>
-                        {log.severity}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
                       <button
                         onClick={() => setSelectedLog(log)}
                         className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
                       >
                         <Eye className="h-4 w-4" />
-                        View Details
+                        Details
                       </button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                  <td colSpan="6" className="px-6 py-4 text-sm text-gray-500 text-center">
                     No audit logs found matching the current filters.
                   </td>
                 </tr>
@@ -397,35 +324,21 @@ const AuditLogs = () => {
             <span className="text-sm text-gray-700">per page</span>
           </div>
 
-          <div className="flex gap-2">
-            <button
+          <div className="flex items-center rounded-md shadow-sm">
+             <button
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              className="px-3 py-1 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+              className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
             >
               Previous
             </button>
-            
-            <div className="flex gap-1">
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`px-3 py-1 border rounded ${
-                    currentPage === i + 1
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
-
-            <button
+             <span className="px-4 py-2 border-t border-b border-gray-300 bg-white text-sm">
+                Page {currentPage} of {totalPages}
+             </span>
+             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+              className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
             >
               Next
             </button>

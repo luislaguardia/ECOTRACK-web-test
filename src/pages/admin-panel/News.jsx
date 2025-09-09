@@ -55,30 +55,31 @@ const News = () => {
 
   const token = localStorage.getItem("token");
 
-  const fetchNews = async () => {
+const fetchNews = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await axios.get(`${BASE_URL}/api/news`, {
-        params: {
-          category: filterCategory !== "all" ? filterCategory : undefined,
-        },
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setNewsList(res.data);
+        const res = await axios.get(`${BASE_URL}/api/news`, {
+            // Send all filters to the API
+            params: {
+                category: filterCategory !== "all" ? filterCategory : undefined,
+                status: statusFilter !== "all" ? statusFilter : undefined,
+                search: search || undefined,
+            },
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        setNewsList(res.data);
     } catch (err) {
-      console.error("Failed to fetch news:", err);
-      setError("Failed to load news. Please try again later.");
+        console.error("Failed to fetch news:", err);
+        setError("Failed to load news. Please try again later.");
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
-  };
+};
 
   useEffect(() => {
     fetchNews();
-  }, [filterCategory]);
+}, [filterCategory, statusFilter, search]); // Add dependencies
 
   const handleSubmit = async (status) => {
     // Validate input
