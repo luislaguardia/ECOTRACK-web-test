@@ -11,11 +11,6 @@ import {
   UserDetails,
 } from "./pages/admin-panel/Export";
 
-// ✅ Import new user management pages
-// import VerifiedUser from "./pages/admin-panel/VerifiedUser";
-// import NonVerifiedUser from "./pages/admin-panel/NonVerifiedUser";
-
-// ✅ Import Customer Management component
 import CustomerManagement from "./pages/admin-panel/CustomerManagement";
 
 import {
@@ -30,6 +25,7 @@ import {
 
 import NotFound from "./pages/admin-panel/404NotFound";
 import AuditLogs from "./pages/admin-panel/AuditLogs";
+import ActivityLogs from "./pages/admin-panel/ActivityLogs"; //
 
 const AdminLayout = ({ children }) => {
   const [logoutLoading, setLogoutLoading] = useState(false);
@@ -148,21 +144,27 @@ function App() {
           <Route path="/dashboard" element={<AdminLayout><Dashboard /></AdminLayout>} />
           <Route path="/news" element={<AdminLayout><News /></AdminLayout>} />
           
-          {/* ✅ User Management Routes */}
+          {/* User Management Routes */}
           <Route path="/users" element={<AdminLayout><Users /></AdminLayout>} />
-          {/* <Route path="/users/verified" element={<AdminLayout><VerifiedUser /></AdminLayout>} /> */}
-          {/* <Route path="/users/non-verified" element={<AdminLayout><NonVerifiedUser /></AdminLayout>} /> */}
           <Route path="/users/:id" element={<AdminLayout><UserDetails /></AdminLayout>} />
 
-          {/* ✅ Customer Management Route */}
+          {/* Customer Management Route */}
           <Route path="/customers" element={<AdminLayout><CustomerManagement /></AdminLayout>} />
 
           <Route path="/settings" element={<AdminLayout><Settings /></AdminLayout>} />
+          
+          {/* Superadmin specific routes */}
           {role === "superadmin" && (
             <>
               <Route path="/admin-management" element={<AdminLayout><AdminManagement /></AdminLayout>} />
               <Route path="/audit-logs" element={<AdminLayout><AuditLogs /></AdminLayout>} />
             </>
+          )}
+
+
+          {/* Admin specific routes */}
+          {role === "admin" && (
+            <Route path="/activity-logs" element={<AdminLayout><ActivityLogs /></AdminLayout>} />
           )}
         </>
       ) : null}

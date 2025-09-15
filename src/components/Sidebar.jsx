@@ -33,6 +33,12 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, setShowLogoutModa
     { name: "Dashboard", path: "/dashboard", icon: menu, size: 'w-6 h-6.5' },
     { name: "News & Updates", path: "/news", icon: megaphone, size: 'w-7 h-7' },
     { name: "Customer Management", path: "/customers", icon: customer, size: 'w-7 h-6.5' },
+// new role base
+    ...(role === "admin"
+      ? [
+          { name: "Activity Log", path: "/activity-logs", icon: audit, size: 'w-8 h-8' },
+        ]
+      : []),
     ...(role === "superadmin"
       ? [
           { name: "Admin Management", path: "/admin-management", icon: admin, size: 'w-6 h-7' },
