@@ -36,7 +36,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, setShowLogoutModa
 // new role base
     ...(role === "admin"
       ? [
-          { name: "Activity Log", path: "/activity-logs", icon: audit, size: 'w-8 h-8' },
+          { name: "Audit Logs", path: "/activity-logs", icon: audit, size: 'w-8 h-8' },
         ]
       : []),
     ...(role === "superadmin"
