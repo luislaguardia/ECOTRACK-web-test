@@ -39,6 +39,7 @@ const Dashboard = () => {
   const [totalNews, setTotalNews] = useState(0);
   const [usageData, setUsageData] = useState([]);
   const [deviceData, setDeviceData] = useState([]);
+  const [otherDevicesList, setOtherDevicesList] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
 
   // Previous counts for growth calculation
@@ -209,6 +210,10 @@ const Dashboard = () => {
       const sorted = rawData.sort((a, b) => b.value - a.value);
       const topFive = sorted.slice(0, 5);
       const othersTotal = sorted.slice(5).reduce((acc, item) => acc + item.value, 0);
+      const othersList = sorted
+        .slice(5)
+        .map((item) => (item.name?.toLowerCase() === "unknown" ? "Unknown" : item.name))
+        .filter(Boolean);
 
       const finalTopFive = topFive.map((item) =>
         item.name.toLowerCase() === "unknown" ? { ...item, name: "Others" } : item
@@ -219,6 +224,7 @@ const Dashboard = () => {
       }
       
       setDeviceData(finalTopFive);
+      setOtherDevicesList(othersList);
     } catch (err) {
       console.error("Error fetching device data:", err);
       setExportError("Failed to load device distribution data.");
@@ -637,7 +643,32 @@ const addStatisticsTable = (doc, startY, contentWidth) => {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const { name, value } = payload[0];
+                        if (name === "Other Devices") {
+                          return (
+                            <div className="bg-white p-3 border border-gray-200 rounded shadow text-xs max-w-[240px]">
+                              <div className="font-semibold mb-1">Other Devices ({value})</div>
+                              {otherDevicesList && otherDevicesList.length ? (
+                                <div className="text-gray-700 leading-snug whitespace-normal break-words">
+                                  {otherDevicesList.join(", ")}
+                                </div>
+                              ) : (
+                                <div className="text-gray-500">No additional devices</div>
+                              )}
+                            </div>
+                          );
+                        }
+                        return (
+                          <div className="bg-white p-2 border border-gray-200 rounded shadow text-xs">
+                            <div className="font-semibold">{name}</div>
+                            <div className="text-gray-700">{value}</div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }} />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
