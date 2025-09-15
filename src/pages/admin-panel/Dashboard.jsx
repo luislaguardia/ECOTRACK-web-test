@@ -176,8 +176,9 @@ const Dashboard = () => {
   const fetchNewsCount = async () => {
     try {
       const res = await axios.get(`${BASE_URL}/api/news`);
-      setTotalNews(res.data.length);
-      setPrevTotalNews(Math.max(res.data.length - Math.floor(res.data.length * 0.15), 1));
+      const total = res?.data?.pagination?.total ?? (Array.isArray(res?.data?.news) ? res.data.news.length : 0);
+      setTotalNews(total);
+      setPrevTotalNews(Math.max(total - Math.floor(total * 0.15), 1));
     } catch (err) {
       console.error("Error fetching news counts:", err);
       setExportError("Failed to load news data.");
