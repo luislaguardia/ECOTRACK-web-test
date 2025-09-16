@@ -250,7 +250,7 @@ const Dashboard = () => {
       );
 
       if (othersTotal > 0 || rawData.some((item) => item.name.toLowerCase() === "unknown")) {
-        finalTopFive.push({ name: "Other Devices", value: othersTotal }); 
+        finalTopFive.push({ name: "Custom Devices", value: othersTotal }); 
       }
       
       setDeviceData(finalTopFive);
@@ -328,7 +328,7 @@ const Dashboard = () => {
       [exportConfig.title],
       [dateRange],
       [""],
-      ["Metric", "Value"],
+      ["KPI", "Value"],
       ["Total Users", userStats.totalUsers],
       ["Verified Users (Total)", userStats.verifiedUsers],
       ["Auto Verified", userStats.autoVerified],
@@ -339,6 +339,11 @@ const Dashboard = () => {
       ["Basic Users", userStats.basicUsers],
       ["Total News Posted", totalNews],
     ];
+
+    // Device Distribution section
+    const deviceSectionHeader = [[""], ["Device Distribution"], ["Appliance", "Count"]];
+    const deviceRows = (fullDeviceList && fullDeviceList.length ? fullDeviceList : deviceData).map((d) => [d.name, d.value]);
+    const deviceDistribution = [...deviceSectionHeader, ...deviceRows];
 
     const userData = [
       [],
@@ -355,7 +360,7 @@ const Dashboard = () => {
       ]),
     ];
 
-    const data = [...generalData, ...userData];
+    const data = [...generalData, ...deviceDistribution, ...userData];
     const csv = data.map((row) => row.join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const link = document.createElement("a");
@@ -755,10 +760,10 @@ const addAISummary = (doc, contentWidth, pageHeight) => {
                     <Tooltip content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         const { name, value } = payload[0];
-                        if (name === "Other Devices") {
+                        if (name === "Custom Devices") {
                           return (
                             <div className="bg-white p-3 border border-gray-200 rounded shadow text-xs max-w-[240px]">
-                              <div className="font-semibold mb-1">Other Devices ({value})</div>
+                              <div className="font-semibold mb-1">Custom Devices ({value})</div>
                               {otherDevicesList && otherDevicesList.length ? (
                                 <div className="text-gray-700 leading-snug whitespace-normal break-words">
                                   {otherDevicesList.join(", ")}
