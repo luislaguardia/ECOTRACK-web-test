@@ -782,20 +782,6 @@ const addAISummary = (doc, contentWidth, pageHeight) => {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              {/* Device breakdown list */}
-              {fullDeviceList && fullDeviceList.length > 0 && (
-                <div className="mt-6 max-h-48 overflow-y-auto border-t border-gray-100 pt-3">
-                  <h5 className="font-medium text-gray-700 mb-2 text-sm">Device Distribution Breakdown</h5>
-                  <ul className="text-sm text-gray-700 grid grid-cols-1 gap-1">
-                    {fullDeviceList.map((d, idx) => (
-                      <li key={`${d.name}-${idx}`} className="flex justify-between">
-                        <span className="truncate pr-3">{d.name}</span>
-                        <span className="font-semibold">{d.value}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </div>
           </div>
           
