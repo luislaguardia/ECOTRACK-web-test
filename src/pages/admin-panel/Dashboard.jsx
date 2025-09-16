@@ -40,6 +40,7 @@ const Dashboard = () => {
   const [usageData, setUsageData] = useState([]);
   const [deviceData, setDeviceData] = useState([]);
   const [otherDevicesList, setOtherDevicesList] = useState([]);
+  const [fullDeviceList, setFullDeviceList] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
 
   // Previous counts for growth calculation
@@ -56,6 +57,10 @@ const Dashboard = () => {
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [exportError, setExportError] = useState(null);
   const [exportProgress, setExportProgress] = useState(0);
+  const [isAISummaryEnabled, setIsAISummaryEnabled] = useState(false);
+  const [aiSummary, setAiSummary] = useState("");
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [summaryError, setSummaryError] = useState(null);
 
   // Export configuration states
   const [exportConfig, setExportConfig] = useState({
@@ -123,7 +128,7 @@ const Dashboard = () => {
       if (dashboardRef.current) {
         try {
           const canvas = await html2canvas(dashboardRef.current, {
-            scale: 0.8,
+            scale: 2,
             useCORS: true,
             allowTaint: false,
             backgroundColor: "#ffffff",
@@ -145,11 +150,36 @@ const Dashboard = () => {
             ignoreElements: (el) => el.closest('.export-modal-container') !== null,
           });
           
-          setDashboardScreenshot(canvas.toDataURL("image/jpeg", 0.85));
+          setDashboardScreenshot(canvas.toDataURL("image/jpeg", 0.95));
         } catch (error) {
           console.error("Failed to capture preview:", error);
         }
       }
+    }
+  };
+
+  const fetchAISummary = async () => {
+    try {
+      setSummaryError(null);
+      setIsSummarizing(true);
+      const token = localStorage.getItem("token");
+      const res = await axios.post(
+        `${BASE_URL}/api/asis/dashboard/summary`,
+        {
+          userStats,
+          totalNews,
+          deviceData,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setAiSummary(res.data?.summary || "");
+    } catch (e) {
+      console.error("AI summary error:", e);
+      setSummaryError("Failed to generate AI summary.");
+    } finally {
+      setIsSummarizing(false);
     }
   };
 
@@ -225,6 +255,11 @@ const Dashboard = () => {
       
       setDeviceData(finalTopFive);
       setOtherDevicesList(othersList);
+      // Save full list for breakdown rendering (normalize unknown label)
+      setFullDeviceList(sorted.map((item) => ({
+        name: item.name?.toLowerCase() === "unknown" ? "Unknown" : item.name,
+        value: item.value,
+      })));
     } catch (err) {
       console.error("Error fetching device data:", err);
       setExportError("Failed to load device distribution data.");
@@ -271,6 +306,9 @@ const Dashboard = () => {
         exportCSV();
       } else if (exportType === "pdf") {
         setIsExportingPDF(true);
+        if (isAISummaryEnabled && !aiSummary) {
+          await fetchAISummary();
+        }
         await exportPDF();
       }
     } catch (error) {
@@ -357,10 +395,16 @@ const exportPDF = async () => {
       doc.setFontSize(16);
       doc.text(exportConfig.header || "Dashboard Visual Overview", 14, 40);
       
-      // Add description below the header
+      // Add description below the header with measured line height
       doc.setFontSize(12);
       const descriptionLines = doc.splitTextToSize(exportConfig.description || "User Statistics Summary", contentWidth - 10);
-      doc.text(descriptionLines, 14, 50);
+      const descriptionLineHeight = 5.5;
+      const descriptionStartY = 50;
+      let currentDescY = descriptionStartY;
+      descriptionLines.forEach((line) => {
+        doc.text(line, 14, currentDescY);
+        currentDescY += descriptionLineHeight;
+      });
       
       const img = new Image();
       img.src = dashboardScreenshot;
@@ -368,21 +412,61 @@ const exportPDF = async () => {
       await new Promise((resolve) => {
         img.onload = () => {
           const ratio = contentWidth / img.width;
-          // Reduce the image height by applying a scaling factor (0.7 = 70% of original height)
-          const imgHeight = img.height * ratio * 0.7;
-          
-          // Position image below description with some spacing
-          const imageY = 50 + (descriptionLines.length * 5) + 10;
-          doc.addImage(dashboardScreenshot, "JPEG", 10, imageY, contentWidth, imgHeight);
-          
-          const currentY = imageY + imgHeight;
-          const spaceNeeded = 50;
-          
-          if (currentY + spaceNeeded < pageHeight - 20) {
-            addStatisticsTable(doc, currentY + 15, contentWidth);
-          } else {
+          let targetWidth = contentWidth;
+          let targetHeight = img.height * ratio;
+
+          const imageY = currentDescY + 6;
+          const availableHeight = pageHeight - imageY - 20;
+
+          if (targetHeight > availableHeight) {
+            const scaleToFit = availableHeight / targetHeight;
+            targetWidth = targetWidth * scaleToFit;
+            targetHeight = targetHeight * scaleToFit;
+          }
+
+          doc.addImage(dashboardScreenshot, "JPEG", 10, imageY, targetWidth, targetHeight);
+
+          // Optionally include AI summary on a dedicated page (max 2 pages)
+          if (isAISummaryEnabled && aiSummary) {
+            addAISummary(doc, contentWidth, pageHeight);
+          }
+
+          // Place statistics table on a new page for consistent layout
+          doc.addPage();
+          addStatisticsTable(doc, 20, contentWidth);
+
+          // Device distribution breakdown table
+          if (fullDeviceList && fullDeviceList.length) {
             doc.addPage();
-            addStatisticsTable(doc, 20, contentWidth);
+            doc.setFontSize(16);
+            doc.text("Device Distribution Breakdown", 14, 20);
+            const deviceRows = fullDeviceList.map(d => [d.name, String(d.value)]);
+            autoTable(doc, {
+              head: [["Appliance", "Count"]],
+              body: deviceRows,
+              startY: 28,
+              styles: {
+                fontSize: 9,
+                cellPadding: 2,
+                lineColor: [200, 200, 200],
+                lineWidth: 0.1,
+              },
+              headStyles: {
+                fillColor: [34, 197, 94],
+                textColor: 255,
+                fontSize: 10,
+                cellPadding: 2,
+              },
+              alternateRowStyles: {
+                fillColor: [248, 250, 252],
+              },
+              margin: { left: 10, right: 10 },
+              tableWidth: contentWidth,
+              columnStyles: {
+                0: { cellWidth: contentWidth * 0.7 },
+                1: { cellWidth: contentWidth * 0.3 },
+              },
+            });
           }
           resolve();
         };
@@ -479,7 +563,7 @@ const addStatisticsTable = (doc, startY, contentWidth) => {
   const secondColWidth = contentWidth * 0.3;
 
   autoTable(doc, {
-    head: [["Metric", "Count"]],
+    head: [["KPI", "Count"]],
     body: statsData,
     startY: startY + 10, // Add some space after the title
     styles: {
@@ -501,6 +585,31 @@ const addStatisticsTable = (doc, startY, contentWidth) => {
       0: { cellWidth: firstColWidth },
       1: { cellWidth: secondColWidth },
     },
+    margin: { left: 10, right: 10 },
+    tableWidth: contentWidth,
+  });
+};
+
+const addAISummary = (doc, contentWidth, pageHeight) => {
+  // Calculate how many lines fit per page and cap to 2 pages
+  const approxLineHeight = 6; // mm
+  const availablePerPage = pageHeight - 40; // margins top/bottom
+  const maxLinesPerPage = Math.max(1, Math.floor(availablePerPage / approxLineHeight));
+  const wrapped = doc.splitTextToSize(aiSummary, contentWidth - 6);
+  const cappedLines = wrapped.slice(0, maxLinesPerPage * 2);
+
+  doc.addPage();
+  doc.setFontSize(16);
+  doc.text("AI Summary", 14, 20);
+
+  // Use autoTable for robust text layout and automatic wrapping
+  doc.setFontSize(11);
+  autoTable(doc, {
+    startY: 26,
+    theme: 'plain',
+    styles: { fontSize: 11, cellPadding: 3, lineWidth: 0 },
+    columnStyles: { 0: { cellWidth: contentWidth } },
+    body: [[cappedLines.join('\n')]],
     margin: { left: 10, right: 10 },
     tableWidth: contentWidth,
   });
@@ -673,6 +782,20 @@ const addStatisticsTable = (doc, startY, contentWidth) => {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
+              {/* Device breakdown list */}
+              {fullDeviceList && fullDeviceList.length > 0 && (
+                <div className="mt-6 max-h-48 overflow-y-auto border-t border-gray-100 pt-3">
+                  <h5 className="font-medium text-gray-700 mb-2 text-sm">Device Distribution Breakdown</h5>
+                  <ul className="text-sm text-gray-700 grid grid-cols-1 gap-1">
+                    {fullDeviceList.map((d, idx) => (
+                      <li key={`${d.name}-${idx}`} className="flex justify-between">
+                        <span className="truncate pr-3">{d.name}</span>
+                        <span className="font-semibold">{d.value}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
           
@@ -917,8 +1040,29 @@ const addStatisticsTable = (doc, startY, contentWidth) => {
 
   {/* Right Panel - Preview */}
   <div className="flex-1">
-    <div className="bg-green-600 py-3 px-6 border-b border-green-600">
-      <h4 className="text-lg font-semibold text-green-600">Preview</h4>
+    <div className="bg-green-600 py-3 px-6 border-b border-green-600 flex items-center justify-between">
+      <h4 className="text-lg font-semibold text-white">Preview</h4>
+      <div className="flex items-center gap-3">
+        <label className="flex items-center gap-2 text-sm text-gray-800">
+          <input
+            type="checkbox"
+            checked={isAISummaryEnabled}
+            onChange={(e) => {
+              setIsAISummaryEnabled(e.target.checked);
+              if (e.target.checked && !aiSummary && !isSummarizing) {
+                fetchAISummary();
+              }
+            }}
+          />
+          <span>Include AI summary</span>
+        </label>
+        {isSummarizing && (
+          <span className="text-xs text-gray-600">Generating summary…</span>
+        )}
+        {summaryError && (
+          <button className="text-xs text-red-600 underline" onClick={fetchAISummary}>Retry</button>
+        )}
+      </div>
     </div>
     <div className="p-6 overflow-y-auto max-h-[calc(90vh-60px)]">
       {/* A4 Page Container */}
@@ -973,7 +1117,7 @@ const addStatisticsTable = (doc, startY, contentWidth) => {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-green-600 text-white">
-                    <th className="px-3 py-2 text-left">Metric</th>
+                    <th className="px-3 py-2 text-left">KPI</th>
                     <th className="px-3 py-2 text-left">Count</th>
                   </tr>
                 </thead>
@@ -998,6 +1142,24 @@ const addStatisticsTable = (doc, startY, contentWidth) => {
               </table>
             </div>
           </div>
+
+          {/* Optional AI Summary Preview */}
+          {isAISummaryEnabled && (
+            <div className="mt-6">
+              <h3 className="text-base font-semibold text-gray-700 mb-3">AI Summary</h3>
+              <div className="border border-gray-200 rounded p-3 bg-gray-50 text-sm whitespace-pre-wrap">
+                {isSummarizing ? (
+                  <span className="text-gray-600">Generating summary…</span>
+                ) : aiSummary ? (
+                  aiSummary
+                ) : summaryError ? (
+                  <span className="text-red-600">{summaryError}</span>
+                ) : (
+                  <span className="text-gray-500">Enable to include an AI-generated overview.</span>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Page Number */}
           <div className="text-center text-xs text-gray-500 mt-4">
