@@ -163,7 +163,7 @@ const AuditLogs = () => {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
         <div className="bg-slate-50 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-           <div className="px-6 py-4 border-b bg-green-500 rounded-t-xl flex items-center justify-between">
+           <div className="px-6 py-4 bg-green-500 rounded-t-xl flex items-center justify-between">
                <div className="flex items-center gap-3">
                   <h3 className="text-xl font-bold text-white">Event Details</h3>
                   <ActionBadge action={log.action} />
@@ -213,7 +213,7 @@ const AuditLogs = () => {
   }
 
   return (
-    <div className="p-6 bg-slate-50 min-h-screen">
+    <div className="p-6 bg-[#F5F5F5] min-h-screen">
       <div className="mb-6">
           <h1 className="text-3xl font-bold text-slate-800">Audit Logs</h1>
           <p className="text-slate-600 mt-1">Monitor and track all system activities and user actions.</p>
@@ -258,20 +258,20 @@ const AuditLogs = () => {
           />
           
           {/* Date Range Filter */}
-          <div className="flex gap-2 items-center">
+          <div className="flex flex-col sm:flex-row gap-2 items-center min-w-0">
             <input 
               type="date" 
               value={dateRange.from} 
               onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))} 
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 min-w-0"
             />
-            <span className="text-slate-500">-</span>
-            <input 
+                        <span className="text-slate-500">-</span>
+                        <input 
               type="date" 
               value={dateRange.to} 
               onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))} 
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 min-w-0"
+/>
           </div>
         </div>
       </div>

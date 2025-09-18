@@ -15,13 +15,13 @@ const Users = () => {
     search: "",
     currentPage: 1,
     totalPages: 1,
-    activeTab: "active", // ✅ Now can be 'active', 'archived', 'pending', 'rejected'
+    activeTab: "all", // ✅ Now can be 'all', 'active', 'archived', 'pending', 'rejected'
     showRejectionModal: false,
     showConfirmRejectionModal: false,
     selectedRejectionReason: '',
     rejectionNotes: '',
     verificationFilter: "",
-    userRoleFilter: "",
+    userTypeFilter: "",
     selectedBarangay: "",
     
     // Modal states
@@ -59,8 +59,9 @@ const Users = () => {
         limit: usersPerPage,
         filterTab: state.activeTab,
         ...(state.search && { search: state.search }),
-        ...(state.verificationFilter && state.activeTab !== 'pending' && state.activeTab !== 'rejected' && { verificationStatus: state.verificationFilter }),
-        ...(state.userRoleFilter && { userRole: state.userRoleFilter }),
+        ...(state.verificationFilter && state.activeTab !== 'pending' && state.activeTab !== 'rejected' && state.activeTab !== 'active' && { verificationStatus: state.verificationFilter }),
+        ...(state.activeTab === 'active' && { verificationStatuses: 'auto_verified,manually_verified' }), // Send both statuses for active tab using verificationStatuses parameter
+        ...(state.userTypeFilter && { userType: state.userTypeFilter }),
         ...(state.selectedBarangay && { barangay: state.selectedBarangay }),
       });
 
@@ -1114,7 +1115,7 @@ const AccountLinkingConfirmation = ({ 
   useEffect(() => {
     fetchUsers();
     fetchUserStatistics();
-  }, [state.currentPage, state.search, state.verificationFilter, state.userRoleFilter, state.activeTab]);
+  }, [state.currentPage, state.search, state.verificationFilter, state.userTypeFilter, state.activeTab]);
 
   // Format date
   const formatDate = (dateString) => {
@@ -1133,9 +1134,9 @@ const AccountLinkingConfirmation = ({ 
     { value: "rejected", label: "Rejected" }
   ];
 
-  const roleOptions = [
-    { value: "verified", label: "Verified" },
-    { value: "basic", label: "Basic" }
+  const typeOptions = [
+    { value: "new", label: "New" },
+    { value: "existing", label: "Existing" }
   ];
 
   const barangayOptions = barangaysInNasugbu.map(b => ({ value: b, label: b }));
@@ -1172,12 +1173,18 @@ const AccountLinkingConfirmation = ({ 
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center md:justify-between">
           {/* Left side: Tabs and other filters */}
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-            {/* Active/Inactive/Pending/Rejected Button */}
+            {/* All/Active/Archived/Pending/Rejected Button */}
             <div className="flex border border-gray-300 rounded-md overflow-hidden bg-white shadow-sm">
-              {['active', 'archived', 'pending', 'rejected'].map(tab => (
+              {['all', 'active', 'archived', 'pending', 'rejected'].map(tab => (
                 <button
                   key={tab}
-                  onClick={() => setState(prev => ({ ...prev, activeTab: tab, currentPage: 1 }))}
+                  onClick={() => setState(prev => ({ 
+                    ...prev, 
+                    activeTab: tab, 
+                    currentPage: 1,
+                    // Clear verification filter when switching to active tab since it only shows verified users
+                    verificationFilter: tab === 'active' ? '' : prev.verificationFilter
+                  }))}
                   className={`px-6 py-2 capitalize ${
                     state.activeTab === tab 
                       ? "bg-green-600 text-white" 
@@ -1185,7 +1192,8 @@ const AccountLinkingConfirmation = ({ 
                   }`}
                 >
                   {tab} ({
-                    tab === 'active' ? state.statistics.totalUsers :
+                    tab === 'all' ? state.statistics.totalUsers :
+                    tab === 'active' ? (state.statistics.autoVerified + state.statistics.manuallyVerified) :
                     tab === 'archived' ? state.statistics.archivedUsers || 0 :
                     tab === 'pending' ? state.statistics.pendingManual :
                     state.statistics.rejected
@@ -1194,8 +1202,8 @@ const AccountLinkingConfirmation = ({ 
               ))}
             </div>
 
-            {/* Only show these filters when NOT on the pending/rejected tabs */}
-            {state.activeTab !== 'pending' && state.activeTab !== 'rejected' && (
+            {/* Only show these filters when NOT on the pending/rejected/active tabs */}
+            {state.activeTab !== 'pending' && state.activeTab !== 'rejected' && state.activeTab !== 'active' && (
               <>
                 <FilterSelect
                   value={state.verificationFilter}
@@ -1205,10 +1213,10 @@ const AccountLinkingConfirmation = ({ 
                   className="min-w-[180px]"
                 />
                 <FilterSelect
-                  value={state.userRoleFilter}
-                  onChange={(value) => setState(prev => ({ ...prev, userRoleFilter: value, currentPage: 1 }))}
-                  options={roleOptions}
-                  placeholder="All Roles"
+                  value={state.userTypeFilter}
+                  onChange={(value) => setState(prev => ({ ...prev, userTypeFilter: value, currentPage: 1 }))}
+                  options={typeOptions}
+                  placeholder="All Types"
                   className="min-w-[140px]"
                 />
               </>
@@ -1274,20 +1282,23 @@ const AccountLinkingConfirmation = ({ 
                         >
                           <FiEye className="w-4 h-4" />
                         </button>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={!user.isArchived}
-                            onChange={() => setState(prev => ({ 
-                              ...prev, 
-                              showDeleteModal: true, 
-                              userToDelete: user._id 
-                            }))}
-                            className="sr-only peer"
-                          />
-                          <div className="w-9 h-5 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-500 rounded-full peer peer-checked:bg-green-600 transition-all"></div>
-                          <div className="absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-all peer-checked:translate-x-4"></div>
-                        </label>
+                        {/* Only show archive toggle for active and archived tabs, not for all/pending/rejected */}
+                        {state.activeTab !== 'all' && state.activeTab !== 'pending' && state.activeTab !== 'rejected' && (
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={!user.isArchived}
+                              onChange={() => setState(prev => ({ 
+                                ...prev, 
+                                showDeleteModal: true, 
+                                userToDelete: user._id 
+                              }))}
+                              className="sr-only peer"
+                            />
+                            <div className="w-9 h-5 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-500 rounded-full peer peer-checked:bg-green-600 transition-all"></div>
+                            <div className="absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-all peer-checked:translate-x-4"></div>
+                          </label>
+                        )}
                       </div>
                     </td>
                   </tr>
