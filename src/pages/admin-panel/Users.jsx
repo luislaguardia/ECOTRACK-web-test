@@ -128,13 +128,160 @@ const Users = () => {
       console.error("Error fetching BATELEC accounts:", err);
       setState(prev => ({ ...prev, batelecAccounts: [], isLoadingAccounts: false }));
     }
-  };
+  };
 
-  // Event handlers
-  const handleView = async (user) => {
-    setState(prev => ({ ...prev, showViewModal: true }));
-    await fetchUserDetails(user._id);
-  };
+  // Helper functions
+  const formatLabel = (str) => {
+    return str
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  // Function to get full rejection reason details
+  const getRejectionReasonDetails = (reasonKey) => {
+    const rejectionReasons = {
+      // CATEGORY 1: RETRY ALLOWED - Technical/Format Issues
+      'api_connection_failed': {
+        title: 'API Connection Failed',
+        category: 'retry',
+        message: `Your Ecotrack account creation request has been rejected due to a temporary system issue during verification.
+
+To resolve this issue:
+1. Wait 30 minutes before trying again
+2. Ensure your internet connection is stable
+3. Double-check all information is entered correctly
+4. Contact customer service if the problem persists
+5. Once resolved, you may submit a new account creation request`
+      },
+      'system_timeout': {
+        title: 'System Timeout',
+        category: 'retry',
+        message: `Your Ecotrack account creation request has been rejected because the verification process timed out.
+
+To resolve this issue:
+1. Try again during off-peak hours (early morning or late evening)
+2. Ensure you have a stable internet connection
+3. Complete the registration form quickly to avoid timeout
+4. Contact customer service if timeouts continue
+5. You may submit a new account creation request immediately`
+      },
+      'information_format_error': {
+        title: 'Information Format Error',
+        category: 'retry',
+        message: `Your Ecotrack account creation request has been rejected because some information needs to be corrected.
+
+To resolve this issue:
+1. Double-check your name spelling matches your utility bill exactly
+2. Remove any special characters or numbers from name fields
+3. Ensure your middle name is entered correctly (leave blank if none)
+4. Verify all required fields are properly filled
+5. Once corrected, you may submit a new account creation request`
+      },
+      'phone_verification_required': {
+        title: 'Phone Number Verification Required',
+        category: 'retry',
+        message: `Your Ecotrack account creation request has been rejected because your phone number could not be verified.
+
+To resolve this issue:
+1. Ensure you are using the same phone number registered with your BATELEC account
+2. Verify the phone number is currently active and belongs to you
+3. Make sure this phone number hasn't been used for another Ecotrack account
+4. Contact BATELEC customer service to verify your registered phone number
+5. Once verified, you may submit a new account creation request`
+      },
+      'address_format_issue': {
+        title: 'Address Format Issue',
+        category: 'retry',
+        message: `Your Ecotrack account creation request has been rejected because your address information could not be verified.
+
+To resolve this issue:
+1. Verify you selected the correct barangay from the dropdown
+2. Ensure you are selecting the barangay where your utility service is located
+3. Check your utility bill for the exact barangay listed
+4. Contact BATELEC customer service if you're unsure of your service barangay
+5. Once verified, you may submit a new account creation request`
+      },
+      // CATEGORY 2: PERMANENT REJECTION (BLOCK) - Account/Security Issues
+      'no_customer_record': {
+        title: 'No Customer Record Found',
+        category: 'block',
+        message: `Your Ecotrack account creation request has been rejected after verification review.
+
+This email address is no longer eligible for account creation. If you believe this is an error, please contact BATELEC customer service directly with your reference ID: [REF_ID]
+
+For assistance, visit your nearest BATELEC office or call their customer service hotline.`
+      },
+      'account_creation_denied': {
+        title: 'Account Creation Denied',
+        category: 'block',
+        message: `Your Ecotrack account creation request has been rejected as the provided information could not be verified.
+
+This email address is no longer eligible for account creation. If you are a BATELEC customer and believe this is an error, please contact BATELEC customer service with your reference ID: [REF_ID]
+
+Please bring a valid ID and your latest utility bill when visiting BATELEC offices.`
+      },
+      'invalid_registration_attempt': {
+        title: 'Invalid Registration Attempt',
+        category: 'block',
+        message: `Your Ecotrack account creation request has been rejected due to security verification failure.
+
+This email address has been blocked from future registrations. If you believe this is an error, please contact BATELEC customer service directly with your reference ID: [REF_ID]
+
+For assistance, please visit your nearest BATELEC office with proper identification.`
+      },
+      'terms_of_service_violation': {
+        title: 'Terms of Service Violation',
+        category: 'block',
+        message: `Your Ecotrack account creation request has been rejected due to a policy violation.
+
+This email address is no longer eligible for account creation. If you believe this is an error or need clarification, please contact customer service with your reference ID: [REF_ID]
+
+Please review the Terms of Service before contacting support.`
+      },
+      'duplicate_account_violation': {
+        title: 'Duplicate Account Violation',
+        category: 'block',
+        message: `Your Ecotrack account creation request has been rejected because an account with this information already exists.
+
+This email address is no longer eligible for new account creation. If you forgot your login credentials, use the "Forgot Password" feature or contact customer service with your reference ID: [REF_ID]
+
+If you believe you don't have an existing account, please contact BATELEC customer service directly.`
+      },
+      'suspicious_activity_detected': {
+        title: 'Suspicious Activity Detected',
+        category: 'block',
+        message: `Your Ecotrack account creation request has been rejected due to security concerns.
+
+This email address has been permanently blocked from account creation. If you believe this is an error, please contact BATELEC customer service in person with your reference ID: [REF_ID]
+
+Please bring valid identification when visiting BATELEC offices.`
+      },
+      'admin_rejection_reason': {
+        title: 'Admin Rejection Reason',
+        category: 'block',
+        message: `Your BATELEC account creation request has been rejected. Please review the additional comments below for specific details about the rejection.
+
+To resolve this issue:
+1. Carefully read the specific rejection reason provided
+2. Address all mentioned issues before resubmitting
+3. Contact BATELEC customer service if you need clarification
+4. Submit a new account creation request once all issues are resolved`
+      }
+    };
+
+    return rejectionReasons[reasonKey] || {
+      title: 'Unknown Reason',
+      category: 'block',
+      message: 'No specific reason provided.'
+    };
+  };
+
+  // Event handlers
+  const handleView = async (user) => {
+    setState(prev => ({ ...prev, showViewModal: true }));
+    await fetchUserDetails(user._id);
+  };
 
   const handleApproveUser = async (user) => {
     const isNewConsumer = !user.accountNumber;
@@ -1476,124 +1623,256 @@ const AccountLinkingConfirmation = ({ 
           }
         >
           {state.viewingUser && (
-            <div className="space-y-3">
-              {/* Profile Header */}
-              <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  {state.viewingUser.fullName || state.viewingUser.name}
-                </h2>
-                <p className="text-sm text-gray-600">{state.viewingUser.email}</p>
-                <p className="text-sm text-gray-600 mt-1">
-                  Registered: {formatDate(state.viewingUser.createdAt)}
-                </p>
-              </div>
-
-              {/* Personal Information */}
-              <div className="p-6 rounded-xl border shadow-sm bg-white">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Personal Information
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                  <div>
-                    <p className="text-gray-700 font-semibold">Phone</p>
-                    <p className="text-gray-500">{state.viewingUser.phone || "Not provided"}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-700 font-semibold">Barangay</p>
-                    <p className="text-gray-500">{state.viewingUser.barangay || "Not provided"}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-700 font-semibold">Reference ID</p>
-                    <p className="text-gray-500">{state.viewingUser.referenceId || "N/A"}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-700 font-semibold">Consumer Type</p>
-                    <p>
-                      <span
-                        className={`inline-flex px-3 py-0.5 rounded-full text-xs font-medium ${
-                          state.viewingUser.accountNumber
-                            ? "bg-green-100 text-green-700"
-                            : "bg-blue-100 text-blue-700"
-                        }`}
-                      >
-                        {state.viewingUser.accountNumber ? "Existing Consumer" : "New Consumer"}
+            <div className="space-y-6">
+              {/* Modern Profile Header */}
+              <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-8 text-white">
+                <div className="absolute inset-0 bg-black/5"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                      <span className="text-2xl font-bold text-white">
+                        {(state.viewingUser.fullName || state.viewingUser.name).charAt(0).toUpperCase()}
                       </span>
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-700 font-semibold">Status</p>
-                    <StatusBadge status={state.viewingUser.verificationStatus} />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-white">
+                        {state.viewingUser.fullName || state.viewingUser.name}
+                      </h2>
+                      <p className="text-blue-100 text-sm">
+                        {state.viewingUser.email && !state.viewingUser.email.startsWith('nullified_') 
+                          ? state.viewingUser.email 
+                          : 'Email Removed (RETRY)'
+                        }
+                      </p>
+                      <p className="text-blue-200 text-xs mt-1">
+                        Member since {formatDate(state.viewingUser.createdAt)}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* BATELEC Account */}
-              <div className="p-6 rounded-xl border shadow-sm bg-white">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  BATELEC Account
-                </h3>
-                {state.batelecAccount ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+              {/* Status and Quick Info Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-gray-500 font-medium">Account #</p>
-                      <p className="text-gray-800">{state.batelecAccount.accountNumber}</p>
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Status</p>
+                      <div className="mt-1">
+                        <StatusBadge status={state.viewingUser.verificationStatus} />
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-gray-500 font-medium">Customer</p>
-                      <p className="text-gray-800">{state.batelecAccount.customerName}</p>
+                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <FiCheck className="w-4 h-4 text-blue-600" />
                     </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-gray-500 font-medium">Meter #</p>
-                      <p className="text-gray-800">{state.batelecAccount.meterNumber}</p>
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Consumer Type</p>
+                      <p className="text-sm font-semibold text-gray-900 mt-1">
+                        {state.viewingUser.accountNumber ? "Existing" : "New"}
+                      </p>
                     </div>
-                    <div>
-                      <p className="text-gray-500 font-medium">Address</p>
-                      <p className="text-gray-800">{state.batelecAccount.address || "N/A"}</p>
+                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                      <FiSmartphone className="w-4 h-4 text-green-600" />
                     </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-gray-500 font-medium">Type</p>
-                      <p className="text-gray-800">{state.batelecAccount.consumerType || "N/A"}</p>
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Reference ID</p>
+                      <p className="text-sm font-semibold text-gray-900 mt-1 font-mono">
+                        {state.viewingUser.referenceId || "N/A"}
+                      </p>
                     </div>
-                    <div>
-                      <p className="text-gray-500 font-medium">Latest Reading</p>
-                      <p className="text-gray-800">
-                        {state.batelecAccount.latestReading?.currentReading || "N/A"} kWh
+                    <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                      <FiMail className="w-4 h-4 text-purple-600" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                    <FiSmartphone className="w-5 h-5 text-gray-600 mr-2" />
+                    Contact Information
+                  </h3>
+                </div>
+                <div className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-gray-500">Phone Number</p>
+                      <p className="text-gray-900 font-medium">
+                        {state.viewingUser.phone || (
+                          <span className="text-gray-400 italic">Not provided</span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-gray-500">Barangay</p>
+                      <p className="text-gray-900 font-medium">
+                        {state.viewingUser.barangay || (
+                          <span className="text-gray-400 italic">Not provided</span>
+                        )}
                       </p>
                     </div>
                   </div>
-                ) : state.viewingUser.accountNumber ? (
-                  <p className="text-gray-500 text-sm">BATELEC account data not found</p>
-                ) : (
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 text-sm">
-                    <p className="text-blue-800 font-medium">New Consumer</p>
-                    <p className="text-blue-600 mt-1">
-                      This user needs to be linked to a BATELEC account during approval.
-                    </p>
+                </div>
+              </div>
+
+              {/* Rejection Details - Only for rejected users */}
+              {(state.viewingUser.verificationStatus === 'rejected_review' || state.viewingUser.verificationStatus === 'rejected_final') && state.viewingUser.manualVerificationRequest?.rejectionReason && (
+                <div className="bg-white rounded-xl border border-red-200 shadow-sm overflow-hidden">
+                  <div className="bg-red-50 px-6 py-3 border-b border-red-200">
+                    <h3 className="text-lg font-semibold text-red-900 flex items-center">
+                      <FiX className="w-5 h-5 text-red-600 mr-2" />
+                      Rejection Details
+                    </h3>
                   </div>
-                )}
+                  <div className="p-6">
+                    <div className="space-y-4">
+                      <div className="flex items-start space-x-3">
+                        <div className="w-2 h-2 bg-red-500 rounded-full mt-2"></div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-500 mb-1">Rejection Reason</p>
+                          <p className="text-red-800 font-semibold">
+                            {getRejectionReasonDetails(state.viewingUser.manualVerificationRequest.rejectionReason).title}
+                          </p>
+                        </div>
+                      </div>
+
+                      {state.viewingUser.manualVerificationRequest?.adminNotes && (
+                        <div className="flex items-start space-x-3">
+                          <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-500 mb-1">Admin Notes</p>
+                            <div className="bg-gray-50 border border-gray-200 p-3 rounded-lg">
+                              <p className="text-gray-700 text-sm whitespace-pre-line">
+                                {state.viewingUser.manualVerificationRequest.adminNotes}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-2">
+                          <p className="text-sm font-medium text-gray-500">Category:</p>
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                            state.viewingUser.manualVerificationRequest?.rejectionCategory === 'retry'
+                              ? 'bg-orange-100 text-orange-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {state.viewingUser.manualVerificationRequest?.rejectionCategory === 'retry' 
+                              ? 'RETRY ALLOWED' 
+                              : 'BLOCK PERMANENT'
+                            }
+                          </span>
+                        </div>
+                        {state.viewingUser.manualVerificationRequest?.reviewedAt && (
+                          <div className="flex items-center space-x-2">
+                            <p className="text-sm font-medium text-gray-500">Date:</p>
+                            <p className="text-sm text-gray-700">
+                              {new Date(state.viewingUser.manualVerificationRequest.reviewedAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* BATELEC Account */}
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                    <FiLink className="w-5 h-5 text-gray-600 mr-2" />
+                    BATELEC Account
+                  </h3>
+                </div>
+                <div className="p-6">
+                  {state.batelecAccount ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-gray-500">Account Number</p>
+                        <p className="text-gray-900 font-mono font-semibold">{state.batelecAccount.accountNumber}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-gray-500">Customer Name</p>
+                        <p className="text-gray-900 font-medium">{state.batelecAccount.customerName}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-gray-500">Meter Number</p>
+                        <p className="text-gray-900 font-mono">{state.batelecAccount.meterNumber}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-gray-500">Address</p>
+                        <p className="text-gray-900">{state.batelecAccount.address || "N/A"}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-gray-500">Consumer Type</p>
+                        <p className="text-gray-900">{state.batelecAccount.consumerType || "N/A"}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-gray-500">Latest Reading</p>
+                        <p className="text-gray-900 font-semibold">
+                          {state.batelecAccount.latestReading?.currentReading || "N/A"} kWh
+                        </p>
+                      </div>
+                    </div>
+                  ) : state.viewingUser.accountNumber ? (
+                    <div className="text-center py-8">
+                      <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <FiAlertTriangle className="w-6 h-6 text-yellow-600" />
+                      </div>
+                      <p className="text-gray-500 text-sm">BATELEC account data not found</p>
+                    </div>
+                  ) : (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <FiLink className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-blue-800 font-medium text-sm">New Consumer</p>
+                          <p className="text-blue-600 text-xs mt-1">
+                            This user needs to be linked to a BATELEC account during approval.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Verification Request */}
               {state.viewingUser.manualVerificationRequest?.requested && (
-                <div className="p-6 rounded-xl border shadow-sm bg-yellow-50 border-yellow-200">
-                  <h3 className="text-lg font-semibold text-yellow-900 mb-2">
-                    Verification Request
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                    <div>
-                      <p className="text-gray-600 font-semibold">Reason</p>
-                      <p className="text-gray-800">{state.viewingUser.manualVerificationRequest.reason}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 font-semibold">Requested</p>
-                      <p className="text-gray-800">{formatDate(state.viewingUser.manualVerificationRequest.requestedAt)}</p>
-                    </div>
-                    {state.viewingUser.manualVerificationRequest.adminNotes && (
-                      <div className="md:col-span-2">
-                        <p className="text-gray-600 font-semibold">Admin Notes</p>
-                        <p className="text-gray-800">{state.viewingUser.manualVerificationRequest.adminNotes}</p>
+                <div className="bg-white rounded-xl border border-yellow-200 shadow-sm overflow-hidden">
+                  <div className="bg-yellow-50 px-6 py-3 border-b border-yellow-200">
+                    <h3 className="text-lg font-semibold text-yellow-900 flex items-center">
+                      <FiAlertTriangle className="w-5 h-5 text-yellow-600 mr-2" />
+                      Verification Request
+                    </h3>
+                  </div>
+                  <div className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-gray-500">Reason</p>
+                        <p className="text-gray-900 font-medium">{state.viewingUser.manualVerificationRequest.reason}</p>
                       </div>
-                    )}
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-gray-500">Requested Date</p>
+                        <p className="text-gray-900 font-medium">{formatDate(state.viewingUser.manualVerificationRequest.requestedAt)}</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1685,6 +1964,7 @@ const AccountLinkingConfirmation = ({ 
         rejectionReason={state.selectedRejectionReason}
         adminNotes={state.rejectionNotes}
       />
+
     </div>
   );
 };
