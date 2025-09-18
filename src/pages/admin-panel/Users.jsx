@@ -1509,7 +1509,7 @@ const AccountLinkingConfirmation = ({ 
                               onChange={() => setState(prev => ({ 
                                 ...prev, 
                                 showDeleteModal: true, 
-                                userToDelete: user._id 
+                                userToDelete: user 
                               }))}
                               className="sr-only peer"
                             />
@@ -1919,7 +1919,7 @@ const AccountLinkingConfirmation = ({ 
           </button>,
           <button
             key="confirm"
-            onClick={() => handleArchiveToggle(state.userToDelete)}
+            onClick={() => handleArchiveToggle(state.userToDelete._id)}
             disabled={state.isDeleting}
             className={`px-4 py-2 text-white rounded-md flex items-center gap-2 ${
               state.activeTab === "active" ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"
@@ -1929,7 +1929,24 @@ const AccountLinkingConfirmation = ({ 
           </button>
         ]}
       >
-        <p>Are you sure you want to {state.activeTab === "active" ? "archive" : "restore"} this user?</p>
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
+            <span className="text-2xl font-bold text-blue-600">
+              {state.userToDelete && (state.userToDelete.fullName || state.userToDelete.name).charAt(0).toUpperCase()}
+            </span>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Are you sure you want to {state.activeTab === "active" ? "archive" : "restore"} this user?
+            </h3>
+            <p className="text-gray-600">
+              <span className="font-medium">{state.userToDelete && (state.userToDelete.fullName || state.userToDelete.name)}</span>
+              {state.userToDelete && state.userToDelete.email && !state.userToDelete.email.startsWith('nullified_') && (
+                <span className="text-gray-500"> ({state.userToDelete.email})</span>
+              )}
+            </p>
+          </div>
+        </div>
       </Modal>
 
       <RejectionModal
