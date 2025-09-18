@@ -1222,8 +1222,6 @@ const AccountLinkingConfirmation = ({ 
         <StatCard title="Pending Review" value={state.statistics.pendingManual} color="text-yellow-600" />
         <StatCard title="Rejected/Review" value={state.statistics.rejectedReview || 0} color="text-orange-600" />
         <StatCard title="Rejected/Final" value={state.statistics.rejectedFinal || 0} color="text-red-600" />
-        <StatCard title="Verified Role" value={state.statistics.verifiedUsers} color="text-green-600" />
-        <StatCard title="Basic Role" value={state.statistics.basicUsers} color="text-blue-600" />
       </div>
 
       {/* Search and Filters */}
