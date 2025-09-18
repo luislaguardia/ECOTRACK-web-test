@@ -1645,7 +1645,7 @@ const AccountLinkingConfirmation = ({ 
                         }
                       </p>
                       <p className="text-blue-200 text-xs mt-1">
-                        Member since {formatDate(state.viewingUser.createdAt)}
+                        Registered since {formatDate(state.viewingUser.createdAt)}
                       </p>
                     </div>
                   </div>
