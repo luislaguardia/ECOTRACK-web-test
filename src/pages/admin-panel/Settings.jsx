@@ -9,6 +9,7 @@ export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState({ text: "", isError: false });
   const [passwordMessage, setPasswordMessage] = useState({ text: "", isError: false });
+  const [validationErrors, setValidationErrors] = useState({ name: "", email: "" });
   const [passwords, setPasswords] = useState({
     currentPassword: "",
     newPassword: "",
@@ -38,12 +39,83 @@ export default function Settings() {
     if (token) fetchProfile();
   }, [token]);
 
+  // Validation functions
+  const validateName = (name) => {
+    if (!name.trim()) {
+      return "Name is required";
+    }
+    if (name.length < 2) {
+      return "Name must be at least 2 characters long";
+    }
+    if (name.length > 50) {
+      return "Name must be less than 50 characters";
+    }
+    // Only allow letters, spaces, hyphens, and apostrophes
+    const nameRegex = /^[a-zA-Z\s\-']+$/;
+    if (!nameRegex.test(name)) {
+      return "Name can only contain letters, spaces, hyphens, and apostrophes";
+    }
+    return "";
+  };
+
+  const validateEmail = (email) => {
+    if (!email.trim()) {
+      return "Email is required";
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return "Please enter a valid email address";
+    }
+    return "";
+  };
+
   const handleProfileChange = (e) => {
-    setAdmin({ ...admin, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    
+    // Special handling for name field to prevent invalid characters
+    if (name === "name") {
+      // Only allow letters, spaces, hyphens, and apostrophes
+      const filteredValue = value.replace(/[^a-zA-Z\s\-']/g, '');
+      setAdmin({ ...admin, [name]: filteredValue });
+      
+      // Validate the filtered value
+      const error = validateName(filteredValue);
+      setValidationErrors(prev => ({ ...prev, name: error }));
+    } else {
+      setAdmin({ ...admin, [name]: value });
+      
+      // Validate email
+      if (name === "email") {
+        const error = validateEmail(value);
+        setValidationErrors(prev => ({ ...prev, email: error }));
+      }
+    }
   };
 
   const handlePasswordChange = (e) => {
     setPasswords({ ...passwords, [e.target.name]: e.target.value });
+  };
+
+  const getPasswordStrength = (password) => {
+    if (!password) return { strength: 0, label: "", color: "" };
+    
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/\d/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
+    
+    const levels = [
+      { strength: 0, label: "Very Weak", color: "bg-red-500" },
+      { strength: 1, label: "Weak", color: "bg-red-400" },
+      { strength: 2, label: "Fair", color: "bg-yellow-500" },
+      { strength: 3, label: "Good", color: "bg-blue-500" },
+      { strength: 4, label: "Strong", color: "bg-green-500" },
+      { strength: 5, label: "Very Strong", color: "bg-green-600" }
+    ];
+    
+    return levels[Math.min(strength, 5)];
   };
 
   const triggerConfirmation = (type) => {
@@ -67,19 +139,57 @@ export default function Settings() {
   };
 
   const submitProfile = async () => {
+    // Validate before submission
+    const nameError = validateName(admin.name);
+    const emailError = validateEmail(admin.email);
+    
+    if (nameError || emailError) {
+      setValidationErrors({ name: nameError, email: emailError });
+      setMessage({ text: "Please fix the validation errors before saving.", isError: true });
+      return;
+    }
+    
     try {
       await axios.put(
         `${BASE_URL}/api/auth/admin/profile`,
-        { name: admin.name, email: admin.email },
+        { name: admin.name.trim(), email: admin.email.trim() },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
       setMessage({ text: "Profile updated successfully.", isError: false });
+      setValidationErrors({ name: "", email: "" }); // Clear validation errors on success
     } catch (err) {
       console.error("Update error:", err);
       setMessage({ text: "Error updating profile.", isError: true });
     }
+  };
+
+  const validatePassword = (password) => {
+    if (!password) {
+      return "Password is required";
+    }
+    if (password.length < 8) {
+      return "Password must be at least 8 characters long";
+    }
+    if (password.length > 128) {
+      return "Password must be less than 128 characters";
+    }
+    // Check for at least one uppercase letter, one lowercase letter, and one number
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    
+    if (!hasUpperCase) {
+      return "Password must contain at least one uppercase letter";
+    }
+    if (!hasLowerCase) {
+      return "Password must contain at least one lowercase letter";
+    }
+    if (!hasNumbers) {
+      return "Password must contain at least one number";
+    }
+    return "";
   };
 
   const submitPassword = async () => {
@@ -89,6 +199,13 @@ export default function Settings() {
 
     if (!currentPassword || !newPassword || !confirmPassword) {
       setPasswordMessage({ text: "All fields are required.", isError: true });
+      return;
+    }
+
+    // Validate new password strength
+    const passwordError = validatePassword(newPassword);
+    if (passwordError) {
+      setPasswordMessage({ text: passwordError, isError: true });
       return;
     }
 
@@ -166,26 +283,46 @@ export default function Settings() {
         className="space-y-4"
       >
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Full Name <span className="text-red-500">*</span>
+          </label>
           <input
             type="text"
             name="name"
             value={admin.name}
             onChange={handleProfileChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-green-600"
+            className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-2 ${
+              validationErrors.name 
+                ? "border-red-300 focus:ring-red-500" 
+                : "border-gray-300 focus:ring-green-600"
+            }`}
+            placeholder="Enter your full name (letters only)"
             required
           />
+          {validationErrors.name && (
+            <p className="text-red-600 text-sm mt-1">{validationErrors.name}</p>
+          )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Email <span className="text-red-500">*</span>
+          </label>
           <input
             type="email"
             name="email"
             value={admin.email}
             onChange={handleProfileChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-green-600"
+            className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-2 ${
+              validationErrors.email 
+                ? "border-red-300 focus:ring-red-500" 
+                : "border-gray-300 focus:ring-green-600"
+            }`}
+            placeholder="Enter your email address"
             required
           />
+          {validationErrors.email && (
+            <p className="text-red-600 text-sm mt-1">{validationErrors.email}</p>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
@@ -235,26 +372,57 @@ export default function Settings() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            New Password <span className="text-red-500">*</span>
+          </label>
           <input
             type="password"
             name="newPassword"
             value={passwords.newPassword}
             onChange={handlePasswordChange}
             className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-green-600"
+            placeholder="Enter new password (min 8 characters)"
             required
           />
+          {passwords.newPassword && (
+            <div className="mt-2">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="flex-1 bg-gray-200 rounded-full h-2">
+                  <div 
+                    className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrength(passwords.newPassword).color}`}
+                    style={{ width: `${(getPasswordStrength(passwords.newPassword).strength / 5) * 100}%` }}
+                  ></div>
+                </div>
+                <span className="text-sm text-gray-600">
+                  {getPasswordStrength(passwords.newPassword).label}
+                </span>
+              </div>
+              <div className="text-xs text-gray-500">
+                Password must contain: uppercase, lowercase, and number
+              </div>
+            </div>
+          )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Confirm New Password <span className="text-red-500">*</span>
+          </label>
           <input
             type="password"
             name="confirmPassword"
             value={passwords.confirmPassword}
             onChange={handlePasswordChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-green-600"
+            className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-2 ${
+              passwords.confirmPassword && passwords.newPassword !== passwords.confirmPassword
+                ? "border-red-300 focus:ring-red-500" 
+                : "border-gray-300 focus:ring-green-600"
+            }`}
+            placeholder="Confirm your new password"
             required
           />
+          {passwords.confirmPassword && passwords.newPassword !== passwords.confirmPassword && (
+            <p className="text-red-600 text-sm mt-1">Passwords do not match</p>
+          )}
         </div>
         <button
           type="submit"

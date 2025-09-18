@@ -271,9 +271,15 @@ const Dashboard = () => {
       const token = localStorage.getItem("token");
       const res = await axios.get(`${BASE_URL}/api/users`, {
         headers: { Authorization: `Bearer ${token}` },
-        params: { limit: 1000 }
+        params: { 
+          limit: 1000,
+          filterTab: 'all', // Get all users regardless of verification status
+          page: 1 // Start from first page
+        }
       });
-      setAllUsers(res.data.users || res.data);
+      const users = res.data.users || res.data;
+      setAllUsers(users);
+      console.log(`Fetched ${users.length} users for export (filterTab: all)`);
     } catch (err) {
       console.error("Error fetching all users:", err);
       setExportError("Failed to load full user list for export.");

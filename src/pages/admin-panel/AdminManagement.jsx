@@ -366,10 +366,26 @@ const saveEdit = async (id) => {
               Confirm {adminToToggle?.isArchived ? "Activation" : "Deactivation"}
             </div>
             <div className="p-6">
-              <p className="text-gray-700 mb-4">
-                Are you sure you want to {adminToToggle?.isArchived ? "activate" : "deactivate"} this admin account?
-              </p>
-              <div className="flex justify-end gap-4">
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
+                  <span className="text-2xl font-bold text-blue-600">
+                    {adminToToggle && adminToToggle.name.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Are you sure you want to {adminToToggle?.isArchived ? "activate" : "deactivate"} this admin account?
+                  </h3>
+                  <p className="text-gray-600">
+                    <span className="font-medium">{adminToToggle && adminToToggle.name}</span>
+                    <span className="text-gray-500"> ({adminToToggle && adminToToggle.email})</span>
+                  </p>
+                  {/* <p className="text-sm text-gray-500 mt-1">
+                    Role: <span className="font-medium capitalize">{adminToToggle && adminToToggle.role}</span>
+                  </p> */}
+                </div>
+              </div>
+              <div className="flex justify-end gap-4 mt-6">
                 <button
                   onClick={() => setShowConfirmToggle(false)}
                   className="px-6 py-2 border rounded text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2  focus:ring-green-500"
@@ -379,7 +395,11 @@ const saveEdit = async (id) => {
                 <button
                   onClick={handleToggleStatus}
                   disabled={togglingId === adminToToggle?._id}
-                  className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 focus:outline-none focus:ring-2  focus:ring-green-500 disabled:opacity-50"
+                  className={`px-6 py-2 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 ${
+                    adminToToggle?.isArchived 
+                      ? "bg-green-600 hover:bg-green-700" 
+                      : "bg-red-600 hover:bg-red-700"
+                  }`}
                 >
                   {togglingId === adminToToggle?._id ? "Processing..." : "Confirm"}
                 </button>
