@@ -406,16 +406,43 @@ const exportPDF = async () => {
       doc.setFontSize(16);
       doc.text(exportConfig.header || "Dashboard Visual Overview", 14, 40);
       
-      // Add description below the header with measured line height
+      // Add description below the header with proper text wrapping and page break handling
       doc.setFontSize(12);
-      const descriptionLines = doc.splitTextToSize(exportConfig.description || "User Statistics Summary", contentWidth - 10);
-      const descriptionLineHeight = 5.5;
+      const descriptionText = exportConfig.description || "User Statistics Summary";
+      const descriptionLines = doc.splitTextToSize(descriptionText, contentWidth - 20); // More margin for better readability
+      const descriptionLineHeight = 6; // Increased line height for better readability
       const descriptionStartY = 50;
+      const maxDescriptionHeight = 40; // Maximum height for description before forcing new page
+      
       let currentDescY = descriptionStartY;
-      descriptionLines.forEach((line) => {
-        doc.text(line, 14, currentDescY);
-        currentDescY += descriptionLineHeight;
-      });
+      let descriptionFitsOnPage = true;
+      
+      // Check if description fits on current page
+      const requiredHeight = descriptionLines.length * descriptionLineHeight;
+      if (currentDescY + requiredHeight > pageHeight - 20) {
+        descriptionFitsOnPage = false;
+      }
+      
+      if (descriptionFitsOnPage) {
+        // Add description on current page
+        descriptionLines.forEach((line) => {
+          doc.text(line, 14, currentDescY);
+          currentDescY += descriptionLineHeight;
+        });
+      } else {
+        // Add new page for description if it doesn't fit
+        doc.addPage();
+        currentDescY = 20; // Start from top of new page
+        descriptionLines.forEach((line) => {
+          // Check if we need another page break
+          if (currentDescY > pageHeight - 20) {
+            doc.addPage();
+            currentDescY = 20;
+          }
+          doc.text(line, 14, currentDescY);
+          currentDescY += descriptionLineHeight;
+        });
+      }
       
       const img = new Image();
       img.src = dashboardScreenshot;
