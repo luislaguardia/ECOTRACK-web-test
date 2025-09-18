@@ -30,7 +30,7 @@ const HomePageNavBar = () => {
             className={`px-4 lg:px-8 py-3 lg:py-4 ${
               isAdmin ? "text-black" : "text-gray-400"
             } font-bold border-l border-gray-200 text-sm lg:text-base`}
-            onClick={() => navigate("/admin")}
+            onClick={() => navigate("/login")}
           >
             For Admins
           </button>
