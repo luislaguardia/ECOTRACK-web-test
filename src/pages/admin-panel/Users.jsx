@@ -60,7 +60,6 @@ const Users = () => {
         filterTab: state.activeTab,
         ...(state.search && { search: state.search }),
         ...(state.verificationFilter && state.activeTab !== 'pending' && state.activeTab !== 'rejected' && state.activeTab !== 'active' && { verificationStatus: state.verificationFilter }),
-        ...(state.activeTab === 'active' && { verificationStatuses: 'auto_verified,manually_verified' }), // Send both statuses for active tab using verificationStatuses parameter
         ...(state.userTypeFilter && { userType: state.userTypeFilter }),
         ...(state.selectedBarangay && { barangay: state.selectedBarangay }),
       });
@@ -204,36 +203,37 @@ const Users = () => {
     }
   };
 
-  const handleRejectUser = async () => {
-  try {
-    setState(prev => ({ ...prev, isUpdating: true }));
-    const token = localStorage.getItem("token");
-    const { selectedRejectionReason, rejectionNotes } = state;
-    const reasonData = rejectionReasons.find(r => r.value === selectedRejectionReason);
-    
-    await axios.post(`${BASE_URL}/api/users/verify-user/${state.verificationAction.user._id}`, {
-      action: 'reject',
-      adminNotes: rejectionNotes,
-      rejectionReason: selectedRejectionReason,
-      rejectionMessage: reasonData?.defaultMessage || ''
-    }, { headers: { Authorization: `Bearer ${token}` } });
-    
-    fetchUsers();
-    fetchUserStatistics();
-    
-    setState(prev => ({
-      ...prev,
-      isUpdating: false,
-      showConfirmRejectionModal: false,
-      verificationAction: null,
-      selectedRejectionReason: '',
-      rejectionNotes: ''
-    }));
-  } catch (err) {
-    console.error("Rejection failed:", err);
-    alert("Rejection failed: " + (err.response?.data?.message || err.message));
-    setState(prev => ({ ...prev, isUpdating: false }));
-  }
+  const handleRejectUser = async () => {
+  try {
+    setState(prev => ({ ...prev, isUpdating: true }));
+    const token = localStorage.getItem("token");
+    const { selectedRejectionReason, rejectionNotes } = state;
+    const reasonData = rejectionReasons.find(r => r.value === selectedRejectionReason);
+    
+    await axios.post(`${BASE_URL}/api/users/verify-user/${state.verificationAction.user._id}`, {
+      action: 'reject',
+      adminNotes: rejectionNotes,
+      rejectionReason: selectedRejectionReason,
+      rejectionMessage: reasonData?.defaultMessage || '',
+      rejectionCategory: reasonData?.category || 'block' // Send category to backend
+    }, { headers: { Authorization: `Bearer ${token}` } });
+    
+    fetchUsers();
+    fetchUserStatistics();
+    
+    setState(prev => ({
+      ...prev,
+      isUpdating: false,
+      showConfirmRejectionModal: false,
+      verificationAction: null,
+      selectedRejectionReason: '',
+      rejectionNotes: ''
+    }));
+  } catch (err) {
+    console.error("Rejection failed:", err);
+    alert("Rejection failed: " + (err.response?.data?.message || err.message));
+    setState(prev => ({ ...prev, isUpdating: false }));
+  }
 };
 
   // Reusable Components
@@ -245,20 +245,22 @@ const StatCard = ({ title, value, color = "text-gray-800" }) => (
 );
 
 const StatusBadge = ({ status }) => {
-  const configs = {
-    auto_verified: { color: "text-green-600 bg-green-100", text: "Auto Verified" },
-    manually_verified: { color: "text-green-600 bg-green-100", text: "Manually Verified" },
-    pending_manual: { color: "text-yellow-600 bg-yellow-100", text: "Pending Review" },
-    rejected: { color: "text-red-600 bg-red-100", text: "Rejected" },
-    unverified: { color: "text-gray-600 bg-gray-100", text: "Unverified" }
-  };
-  
-  const config = configs[status] || configs.unverified;
-  return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
-      {config.text}
-    </span>
-  );
+  const configs = {
+    auto_verified: { color: "text-green-600 bg-green-100", text: "Auto Verified" },
+    manually_verified: { color: "text-green-600 bg-green-100", text: "Manually Verified" },
+    pending_manual: { color: "text-yellow-600 bg-yellow-100", text: "Pending Review" },
+    rejected_review: { color: "text-orange-600 bg-orange-100", text: "Rejected/Review" },
+    rejected_final: { color: "text-red-600 bg-red-100", text: "Rejected/Final" },
+    rejected: { color: "text-red-600 bg-red-100", text: "Rejected" }, // Legacy support
+    unverified: { color: "text-gray-600 bg-gray-100", text: "Unverified" } // Legacy support
+  };
+  
+  const config = configs[status] || { color: "text-gray-600 bg-gray-100", text: "Unknown" };
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
+      {config.text}
+    </span>
+  );
 };
 
 const FilterSelect = ({ value, onChange, options, placeholder, className = "" }) => (
@@ -313,106 +315,148 @@ return (
   );
 };
 
-// Rejection reasons with default messages
+// Rejection reasons with default messages - Updated with RETRY and BLOCK categories
 const rejectionReasons = [
-{
-value: 'invalid_receipt',
-label: 'Invalid Receipt Number',
-defaultMessage: `Your Ecotrack account creation request has been rejected because the receipt number you provided is not valid or cannot be found in our system.
+  // CATEGORY 1: RETRY ALLOWED
+  {
+    value: 'api_connection_failed',
+    label: 'API Connection Failed (RETRY)',
+    category: 'retry',
+    defaultMessage: `Your Ecotrack account creation request has been rejected due to a temporary system issue during verification.
+
 To resolve this issue:
-1. Double-check your receipt number for any typing errors
-2. Ensure you are using the receipt number from your electrical installation payment receipt.
-          3. Contact BATELEC customer service if you believe this is an error
-          4. Once you have the correct receipt number, you may submit a new account creation request`
-  },
-  {
-    value: 'receipt_used',
-    label: 'Receipt Already Used',
-    defaultMessage: `Your BATELEC account creation request has been rejected because the receipt number you provided is already associated with another account.
+1. Wait 30 minutes before trying again
+2. Ensure your internet connection is stable
+3. Double-check all information is entered correctly
+4. Contact customer service if the problem persists
+5. Once resolved, you may submit a new account creation request`
+  },
+  {
+    value: 'system_timeout',
+    label: 'System Timeout (RETRY)',
+    category: 'retry',
+    defaultMessage: `Your Ecotrack account creation request has been rejected because the verification process timed out.
 
-          To resolve this issue:
-          1. Check if you already have an existing BATELEC app account
-          2. If you forgot your account details, use the "Forgot Password" option instead
-          3. If someone else may have used your receipt, contact BATELEC customer service immediately
-          4. Do not create multiple accounts with the same installation receipt`
-  },
-  {
-    value: 'incomplete_details',
-    label: 'Incomplete Personal Details',
-    defaultMessage: `Your BATELEC account creation request has been rejected because some required personal information is missing or incomplete.
+To resolve this issue:
+1. Try again during off-peak hours (early morning or late evening)
+2. Ensure you have a stable internet connection
+3. Complete the registration form quickly to avoid timeout
+4. Contact customer service if timeouts continue
+5. You may submit a new account creation request immediately`
+  },
+  {
+    value: 'information_format_error',
+    label: 'Information Format Error (RETRY)',
+    category: 'retry',
+    defaultMessage: `Your Ecotrack account creation request has been rejected because some information needs to be corrected.
 
-          To resolve this issue:
-          1. Review all required fields in the registration form
-          2. Ensure your full legal name, barangay, and valid contact information are provided
-          3. Double-check that no fields are left blank
-          4. Submit a new account creation request with all required information completed`
-  },
-  {
-    value: 'installation_not_confirmed',
-    label: 'Installation Not Confirmed in System',
-    defaultMessage: `Your BATELEC account creation request has been rejected because your electrical installation cannot be confirmed in our system.
+To resolve this issue:
+1. Double-check your name spelling matches your utility bill exactly
+2. Remove any special characters or numbers from name fields
+3. Ensure your middle name is entered correctly (leave blank if none)
+4. Verify all required fields are properly filled
+5. Once corrected, you may submit a new account creation request`
+  },
+  {
+    value: 'phone_verification_required',
+    label: 'Phone Number Verification Required (RETRY)',
+    category: 'retry',
+    defaultMessage: `Your Ecotrack account creation request has been rejected because your phone number could not be verified.
 
-          To resolve this issue:
-          1. Contact BATELEC customer service to verify your installation status
-          2. Provide your receipt number and installation address for verification
-          3. Wait for confirmation that your installation is properly recorded in our system
-          4. Once confirmed, submit a new account creation request`
-  },
-  {
-    value: 'unreadable_receipt',
-    label: 'Unreadable Receipt Image',
-    defaultMessage: `Your BATELEC account creation request has been rejected because the receipt image you uploaded is unclear, blurry, or damaged.
+To resolve this issue:
+1. Ensure you are using the same phone number registered with your BATELEC account
+2. Verify the phone number is currently active and belongs to you
+3. Make sure this phone number hasn't been used for another Ecotrack account
+4. Contact BATELEC customer service to verify your registered phone number
+5. Once verified, you may submit a new account creation request`
+  },
+  {
+    value: 'address_format_issue',
+    label: 'Address Format Issue (RETRY)',
+    category: 'retry',
+    defaultMessage: `Your Ecotrack account creation request has been rejected because your address information could not be verified.
 
-          To resolve this issue:
-          1. Take a new, clear photo of your receipt in good lighting
-          2. Ensure all text and numbers are clearly visible
-          3. Use a clean background when photographing the receipt
-          4. Submit a new account creation request with the clearer image`
-  },
-  {
-    value: 'information_mismatch',
-    label: 'Information Mismatch with Installation Records',
-    defaultMessage: `Your BATELEC account creation request has been rejected because the personal information you provided does not match our installation records.
+To resolve this issue:
+1. Verify you selected the correct barangay from the dropdown
+2. Ensure you are selecting the barangay where your utility service is located
+3. Check your utility bill for the exact barangay listed
+4. Contact BATELEC customer service if you're unsure of your service barangay
+5. Once verified, you may submit a new account creation request`
+  },
 
-          To resolve this issue:
-          1. Verify that your name, address, and contact details exactly match your installation records
-          2. Check for spelling errors or outdated information
-          3. If your information has changed since installation, contact BATELEC customer service first to update your records
-          4. Submit a new account creation request with the correct information`
-  },
-  {
-    value: 'service_not_activated',
-    label: 'Electrical Service Not Yet Activated',
-    defaultMessage: `Your BATELEC account creation request has been rejected because your electrical service installation is not yet fully activated in our system.
+  // CATEGORY 2: PERMANENT REJECTION (BLOCK)
+  {
+    value: 'no_customer_record',
+    label: 'No Customer Record Found (BLOCK)',
+    category: 'block',
+    defaultMessage: `Your Ecotrack account creation request has been rejected after verification review.
 
-          To resolve this issue:
-          1. Wait for your electrical service to be completely activated (this may take a few business days after installation)
-          2. Contact BATELEC customer service to confirm your service activation status
-          3. Once your service is fully active, submit a new account creation request
-          4. You will receive a confirmation when your service is ready for app registration`
-  },
-  {
-    value: 'duplicate_application',
-    label: 'Duplicate Application Found',
-    defaultMessage: `Your BATELEC account creation request has been rejected because we found an existing application or account associated with your information.
+This email address is no longer eligible for account creation. If you believe this is an error, please contact BATELEC customer service directly with your reference ID: [REF_ID]
 
-          To resolve this issue:
-          1. Check if you already have a BATELEC app account by trying to log in
-          2. If you forgot your password, use the "Forgot Password" option to reset it
-          3. If you have a pending application, wait for its processing instead of submitting new ones
-          4. Contact BATELEC customer service if you need assistance accessing your existing account`
-  },
-  {
-    value: 'other',
-    label: 'Other',
-    defaultMessage: `Your BATELEC account creation request has been rejected. Please review the additional comments below for specific details about the rejection.
+For assistance, visit your nearest BATELEC office or call their customer service hotline.`
+  },
+  {
+    value: 'account_creation_denied',
+    label: 'Account Creation Denied (BLOCK)',
+    category: 'block',
+    defaultMessage: `Your Ecotrack account creation request has been rejected as the provided information could not be verified.
 
-          To resolve this issue:
-          1. Carefully read the specific rejection reason provided
-          2. Address all mentioned issues before resubmitting
-          3. Contact BATELEC customer service if you need clarification
-          4. Submit a new account creation request once all issues are resolved`
-  }
+This email address is no longer eligible for account creation. If you are a BATELEC customer and believe this is an error, please contact BATELEC customer service with your reference ID: [REF_ID]
+
+Please bring a valid ID and your latest utility bill when visiting BATELEC offices.`
+  },
+  {
+    value: 'invalid_registration_attempt',
+    label: 'Invalid Registration Attempt (BLOCK)',
+    category: 'block',
+    defaultMessage: `Your Ecotrack account creation request has been rejected due to security verification failure.
+
+This email address has been blocked from future registrations. If you believe this is an error, please contact BATELEC customer service directly with your reference ID: [REF_ID]
+
+For assistance, please visit your nearest BATELEC office with proper identification.`
+  },
+  {
+    value: 'terms_of_service_violation',
+    label: 'Terms of Service Violation (BLOCK)',
+    category: 'block',
+    defaultMessage: `Your Ecotrack account creation request has been rejected due to a policy violation.
+
+This email address is no longer eligible for account creation. If you believe this is an error or need clarification, please contact customer service with your reference ID: [REF_ID]
+
+Please review the Terms of Service before contacting support.`
+  },
+  {
+    value: 'duplicate_account_violation',
+    label: 'Duplicate Account Violation (BLOCK)',
+    category: 'block',
+    defaultMessage: `Your Ecotrack account creation request has been rejected because an account with this information already exists.
+
+This email address is no longer eligible for new account creation. If you forgot your login credentials, use the "Forgot Password" feature or contact customer service with your reference ID: [REF_ID]
+
+If you believe you don't have an existing account, please contact BATELEC customer service directly.`
+  },
+  {
+    value: 'suspicious_activity_detected',
+    label: 'Suspicious Activity Detected (BLOCK)',
+    category: 'block',
+    defaultMessage: `Your Ecotrack account creation request has been rejected due to security concerns.
+
+This email address has been permanently blocked from account creation. If you believe this is an error, please contact BATELEC customer service in person with your reference ID: [REF_ID]
+
+Please bring valid identification when visiting BATELEC offices.`
+  },
+  {
+    value: 'admin_rejection_reason',
+    label: 'Admin Rejection Reason (BLOCK)',
+    category: 'block',
+    defaultMessage: `Your BATELEC account creation request has been rejected. Please review the additional comments below for specific details about the rejection.
+
+To resolve this issue:
+1. Carefully read the specific rejection reason provided
+2. Address all mentioned issues before resubmitting
+3. Contact BATELEC customer service if you need clarification
+4. Submit a new account creation request once all issues are resolved`
+  }
 ];
 
 // Rejection Modal Reason Options
@@ -471,7 +515,7 @@ const RejectionModal = ({ show, onClose, user, onContinue }) => {
           <h3 className="font-semibold text-gray-800 mb-1">User Information</h3>
           <div className="grid grid-cols-2 gap-x-1 gap-y-1 text-sm">
             <div><span className="font-medium">Name:</span> {user.fullName || user.name}</div>
-            <div><span className="font-medium">Email:</span> {user.email}</div>
+            <div><span className="font-medium">Email:</span> {user.email && !user.email.startsWith('nullified_') ? user.email : <span className="text-orange-600 italic">Email Removed (RETRY)</span>}</div>
             <div><span className="font-medium">Reference ID:</span> {user.referenceId}</div>
             <div><span className="font-medium">Consumer Type:</span> 
               <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
@@ -494,29 +538,38 @@ const RejectionModal = ({ show, onClose, user, onContinue }) => {
             <h3 className="text-red-600 font-semibold">Rejection Details</h3>
           </div>
 
-          {/* Rejection Reason */}
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-medium mb-2">
-              Reason for Rejection <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <select
-                value={selectedReason}
-                onChange={(e) => setSelectedReason(e.target.value)}
-                className="w-full shadow-sm border border-gray-500 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 font-inter py-2 px-4 cursor-pointer appearance-none pr-8"
-              >
-                <option value="">Select a reason...</option>
-                {rejectionReasons.map((reason) => (
-                  <option key={reason.value} value={reason.value}>
-                    {reason.label}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-                <FaChevronDown className="text-gray-500" />
-              </div>
-            </div>
-          </div>
+          {/* Rejection Reason */}
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-medium mb-2">
+              Reason for Rejection <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <select
+                value={selectedReason}
+                onChange={(e) => setSelectedReason(e.target.value)}
+                className="w-full shadow-sm border border-gray-500 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 font-inter py-2 px-4 cursor-pointer appearance-none pr-8"
+              >
+                <option value="">Select a reason...</option>
+                <optgroup label="🔄 RETRY ALLOWED - User can register again">
+                  {rejectionReasons.filter(reason => reason.category === 'retry').map((reason) => (
+                    <option key={reason.value} value={reason.value}>
+                      {reason.label}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="🚫 BLOCK PERMANENT - User cannot register again">
+                  {rejectionReasons.filter(reason => reason.category === 'block').map((reason) => (
+                    <option key={reason.value} value={reason.value}>
+                      {reason.label}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+              <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                <FaChevronDown className="text-gray-500" />
+              </div>
+            </div>
+          </div>
 
           {/* Default Email Message */}
           {selectedReason && (
@@ -597,8 +650,10 @@ const ConfirmRejectionModal = ({ 
     day: 'numeric'
   });
 
-  // Find the rejection reason label
-  const reasonLabel = rejectionReasons.find(r => r.value === rejectionReason)?.label || rejectionReason;
+  // Find the rejection reason data
+  const reasonData = rejectionReasons.find(r => r.value === rejectionReason);
+  const reasonLabel = reasonData?.label || rejectionReason;
+  const reasonCategory = reasonData?.category || 'block';
 
   return (
     <Modal
@@ -658,30 +713,43 @@ const ConfirmRejectionModal = ({ 
         <div className="bg-gray-50 border border-gray-200 rounded p-4 text-left">
           <h4 className="font-semibold text-gray-800 mb-3">Request Details:</h4>
           <div className="space-y-1 text-sm">
-            <div><span className="font-medium">User:</span> {user.fullName || user.name} ({user.email})</div>
+            <div><span className="font-medium">User:</span> {user.fullName || user.name} ({user.email && !user.email.startsWith('nullified_') ? user.email : 'Email Removed (RETRY)'})</div>
             <div><span className="font-medium">Account:</span> {user.accountNumber || "N/A"}</div>
             <div><span className="font-medium">Date:</span> {currentDate}</div>
           </div>
         </div>
 
-        {/* Rejection Reason */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded p-4 text-left">
-          <div className="text-sm">
-            <div className="mb-2">
-              <span className="font-medium">Rejection Reason:</span> {reasonLabel}
-            </div>
-            {adminNotes && (
-              <div>
-                <span className="font-medium">Custom Message:</span> {adminNotes}
-              </div>
-            )}
-          </div>
-        </div>
+        {/* Rejection Reason */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded p-4 text-left">
+          <div className="text-sm">
+            <div className="mb-2">
+              <span className="font-medium">Rejection Reason:</span> {reasonLabel}
+            </div>
+            <div className="mb-2">
+              <span className="font-medium">Category:</span> 
+              <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
+                reasonCategory === 'retry' 
+                  ? 'bg-blue-100 text-blue-800' 
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                {reasonCategory === 'retry' ? '🔄 RETRY ALLOWED' : '🚫 BLOCK PERMANENT'}
+              </span>
+            </div>
+            {adminNotes && (
+              <div>
+                <span className="font-medium">Custom Message:</span> {adminNotes}
+              </div>
+            )}
+          </div>
+        </div>
 
-        {/* Final Notice */}
-        <p className="text-sm text-gray-600">
-          The user will be notified via email and will not be able to resubmit this request.
-        </p>
+        {/* Final Notice */}
+        <p className="text-sm text-gray-600">
+          {reasonCategory === 'retry' 
+            ? "The user will be notified via email and can resubmit their request after addressing the issues."
+            : "The user will be notified via email and will be permanently blocked from future registrations."
+          }
+        </p>
       </div>
     </Modal>
   );
@@ -790,7 +858,7 @@ const AccountLinkingModal = ({ 
               </div>
               <div>
                 <span className="text-gray-600">Email:</span> 
-                <span className="ml-2 text-gray-900">{user.email}</span>
+                <span className="ml-2 text-gray-900">{user.email && !user.email.startsWith('nullified_') ? user.email : <span className="text-orange-600 italic">Email Removed (RETRY)</span>}</span>
               </div>
               <div>
                 <span className="text-gray-600">Consumer Type:</span>
@@ -1028,7 +1096,7 @@ const AccountLinkingConfirmation = ({ 
               {user.fullName || user.name}
             </div>
             <div className="text-sm text-gray-600">
-              {user.email}
+              {user.email && !user.email.startsWith('nullified_') ? user.email : <span className="text-orange-600 italic">Email Removed (RETRY)</span>}
             </div>
             {isNewConsumer && accountData && (
               <div className="text-sm text-gray-900 font-medium">
@@ -1115,7 +1183,7 @@ const AccountLinkingConfirmation = ({ 
   useEffect(() => {
     fetchUsers();
     fetchUserStatistics();
-  }, [state.currentPage, state.search, state.verificationFilter, state.userTypeFilter, state.activeTab]);
+  }, [state.currentPage, state.search, state.verificationFilter, state.userTypeFilter, state.selectedBarangay, state.activeTab]);
 
   // Format date
   const formatDate = (dateString) => {
@@ -1130,8 +1198,9 @@ const AccountLinkingConfirmation = ({ 
     { value: "auto_verified", label: "Auto Verified" },
     { value: "manually_verified", label: "Manually Verified" },
     { value: "pending_manual", label: "Pending Review" },
-    { value: "unverified", label: "Unverified" },
-    { value: "rejected", label: "Rejected" }
+    { value: "rejected_review", label: "Rejected/Review" },
+    { value: "rejected_final", label: "Rejected/Final" },
+    { value: "rejected", label: "Rejected" } // Legacy support
   ];
 
   const typeOptions = [
@@ -1151,8 +1220,8 @@ const AccountLinkingConfirmation = ({ 
         <StatCard title="Auto Verified" value={state.statistics.autoVerified} color="text-green-600" />
         <StatCard title="Manually Verified" value={state.statistics.manuallyVerified} color="text-blue-600" />
         <StatCard title="Pending Review" value={state.statistics.pendingManual} color="text-yellow-600" />
-        <StatCard title="Unverified" value={state.statistics.unverified} color="text-gray-600" />
-        <StatCard title="Rejected" value={state.statistics.rejected} color="text-red-600" />
+        <StatCard title="Rejected/Review" value={state.statistics.rejectedReview || 0} color="text-orange-600" />
+        <StatCard title="Rejected/Final" value={state.statistics.rejectedFinal || 0} color="text-red-600" />
         <StatCard title="Verified Role" value={state.statistics.verifiedUsers} color="text-green-600" />
         <StatCard title="Basic Role" value={state.statistics.basicUsers} color="text-blue-600" />
       </div>
@@ -1191,13 +1260,13 @@ const AccountLinkingConfirmation = ({ 
                       : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
-                  {tab} ({
-                    tab === 'all' ? state.statistics.totalUsers :
-                    tab === 'active' ? (state.statistics.autoVerified + state.statistics.manuallyVerified) :
-                    tab === 'archived' ? state.statistics.archivedUsers || 0 :
-                    tab === 'pending' ? state.statistics.pendingManual :
-                    state.statistics.rejected
-                  })
+             {tab} ({
+               tab === 'all' ? state.statistics.totalUsers :
+               tab === 'active' ? (state.statistics.autoVerified + state.statistics.manuallyVerified) :
+               tab === 'archived' ? state.statistics.archivedUsers || 0 :
+               tab === 'pending' ? state.statistics.pendingManual :
+               (state.statistics.rejectedReview || 0) + (state.statistics.rejectedFinal || 0)
+             })
                 </button>
               ))}
             </div>
@@ -1260,7 +1329,11 @@ const AccountLinkingConfirmation = ({ 
                   <tr key={user._id} className="hover:bg-gray-50 align-middle">
                     <td className="px-3 py-4 text-sm">{((state.currentPage - 1) * usersPerPage) + index + 1}</td>
                     <td className="px-3 py-4 text-sm font-medium">{user.fullName || user.name}</td>
-                    <td className="px-3 py-4 text-sm text-gray-600">{user.email}</td>
+                    <td className="px-3 py-4 text-sm text-gray-600">
+                      {user.email && !user.email.startsWith('nullified_') ? user.email : (
+                        <span className="text-orange-600 italic">Email Removed (RETRY)</span>
+                      )}
+                    </td>
                     <td className="px-3 py-4 text-sm">{user.accountNumber || "N/A"}</td>
                     <td className="px-3 py-4">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
