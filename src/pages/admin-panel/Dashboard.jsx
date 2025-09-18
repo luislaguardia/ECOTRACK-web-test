@@ -353,7 +353,7 @@ const Dashboard = () => {
 
     const userData = [
       [],
-      [exportConfig.description || "Detailed User List"],
+      ["Detailed User List"],
       ["UserID", "Name", "Email", "Account Number", "Verification Status", "User Role", "Created At"],
       ...allUsers.map((u) => [
         u._id || "N/A",
@@ -517,7 +517,7 @@ const exportPDF = async () => {
     if (allUsers && allUsers.length > 0) {
       doc.addPage();
       doc.setFontSize(16);
-      doc.text(exportConfig.description || "Detailed User List", 14, 20);
+      doc.text("Detailed User List", 14, 20);
 
       const tableData = allUsers.map((u) => [
         u._id?.substring(0, 8) || "N/A",
