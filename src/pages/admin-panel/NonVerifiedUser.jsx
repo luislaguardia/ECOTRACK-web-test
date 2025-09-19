@@ -275,6 +275,7 @@ const NonVerifiedUser = () => {
               <tr>
                 <th className="px-6 py-3 text-left font-bold text-gray-500">Account No.</th>
                 <th className="px-6 py-3 text-left font-bold text-gray-500">Customer Name</th>
+                <th className="px-6 py-3 text-left font-bold text-gray-500">Barangay</th>
                 <th className="px-6 py-3 text-left font-bold text-gray-500">Meter No.</th>
                 <th className="px-6 py-3 text-left font-bold text-gray-500">Previous kWh</th>
                 <th className="px-6 py-3 text-left font-bold text-gray-500">Current kWh</th>
@@ -300,6 +301,7 @@ const NonVerifiedUser = () => {
                         )}
                       </div>
                     </td>
+                    <td className="px-6 py-4">{account.barangay || account.address || '-'}</td>
                     <td className="px-6 py-4">{account.meterNumber || '-'}</td>
                     <td className="px-6 py-4">
                       {account.latestReading?.previousReading || '-'}
