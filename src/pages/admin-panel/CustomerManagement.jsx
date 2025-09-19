@@ -232,16 +232,6 @@ const CustomerManagement = () => {
           <h2 className="text-3xl font-semibold text-gray-800">
             Customer Management ({filtered.length})
           </h2>
-          <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-            <span className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              {filtered.filter(account => account.registeredUserId).length} Registered
-            </span>
-            <span className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-              {filtered.filter(account => !account.registeredUserId).length} Not Registered
-            </span>
-          </div>
         </div>
         
         {/* Refresh Button */}
@@ -346,36 +336,10 @@ const CustomerManagement = () => {
                 filtered.map((account) => (
                   <tr key={account._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 font-medium">
-                      <div className="flex items-center gap-2">
-                        <span>{account.accountNumber || '-'}</span>
-                        <div className="relative group">
-                          {account.registeredUserId ? (
-                            <>
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
-                                Registered in EcoTrack
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
-                                Not registered
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </div>
+                      {account.accountNumber || '-'}
                     </td>
                     <td className="px-6 py-4">
-                      <div>
-                        <div className="font-medium">{account.customerName || '-'}</div>
-                        {account.registeredUserId && (
-                          <div className="text-xs text-gray-500">
-                            Registered to: {account.registeredUserId.name}
-                          </div>
-                        )}
-                      </div>
+                      {account.customerName || '-'}
                     </td>
                     <td className="px-6 py-4">{account.barangay || account.address || '-'}</td>
                     <td className="px-6 py-4">{account.meterNumber || '-'}</td>
@@ -423,19 +387,6 @@ const CustomerManagement = () => {
         </div>
       )}
 
-      {/* Registration Status Legend */}
-      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-        <div className="flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span className="text-gray-700">Registered in EcoTrack</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-            <span className="text-gray-700">Not registered</span>
-          </div>
-        </div>
-      </div>
 
       {/* Upload Modal */}
       {isModalOpen && (
