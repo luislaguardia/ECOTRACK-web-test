@@ -5,58 +5,12 @@ import { BASE_URL } from "../../config";
 
 const CustomerManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [batelecAccounts, setBatelecAccounts] = useState([
-    {
-      _id: "1",
-      accountNumber: "ACC001",
-      customerName: "John Doe",
-      barangay: "Poblacion",
-      meterNumber: "MTR001",
-      latestReading: {
-        previousReading: "1500",
-        currentReading: "1650",
-        totalMonthlyKwh: "150",
-        readingDate: "2025-01-15",
-        trackingPeriod: "January 2025"
-      },
-      consumerType: "residential"
-    },
-    {
-      _id: "2", 
-      accountNumber: "ACC002",
-      customerName: "Jane Smith",
-      barangay: "Barangay 1",
-      meterNumber: "MTR002",
-      latestReading: {
-        previousReading: "2300",
-        currentReading: "2480",
-        totalMonthlyKwh: "180",
-        readingDate: "2025-01-16",
-        trackingPeriod: "January 2025"
-      },
-      consumerType: "commercial"
-    },
-    {
-      _id: "3",
-      accountNumber: "ACC003", 
-      customerName: "Robert Johnson",
-      barangay: "Barangay 2",
-      meterNumber: "MTR003",
-      latestReading: {
-        previousReading: "890",
-        currentReading: "1020",
-        totalMonthlyKwh: "130",
-        readingDate: "2025-01-17",
-        trackingPeriod: "January 2025"
-      },
-      consumerType: "residential"
-    }
-  ]);
+  const [batelecAccounts, setBatelecAccounts] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isDataLoading, setIsDataLoading] = useState(false);
+  const [isDataLoading, setIsDataLoading] = useState(true);
   const [uploadStatus, setUploadStatus] = useState("");
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState(""); // 'success' or 'error'
@@ -83,10 +37,8 @@ const CustomerManagement = () => {
   };
 
   useEffect(() => {
-    // Initialize filtered data with sample data
-    setFiltered(batelecAccounts);
-    // fetchBatelecAccounts();
-  }, [batelecAccounts]);
+    fetchBatelecAccounts();
+  }, []);
 
   // Filter data based on search term
   useEffect(() => {
