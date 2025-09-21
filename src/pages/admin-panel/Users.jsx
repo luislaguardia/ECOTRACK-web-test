@@ -144,9 +144,9 @@ const Users = () => {
     const rejectionReasons = {
       // CATEGORY 1: RETRY ALLOWED - Technical/Format Issues
       'api_connection_failed': {
-        title: 'API Connection Failed',
+        title: 'Internet Connection Timeout',
         category: 'retry',
-        message: `Your Ecotrack account creation request has been rejected due to a temporary system issue during verification.
+        message: `Your Ecotrack account creation request has been rejected due to an internet connection timeout during verification.
 
 To resolve this issue:
 1. Wait 30 minutes before trying again
@@ -178,18 +178,6 @@ To resolve this issue:
 3. Ensure your middle name is entered correctly (leave blank if none)
 4. Verify all required fields are properly filled
 5. Once corrected, you may submit a new account creation request`
-      },
-      'phone_verification_required': {
-        title: 'Phone Number Verification Required',
-        category: 'retry',
-        message: `Your Ecotrack account creation request has been rejected because your phone number could not be verified.
-
-To resolve this issue:
-1. Ensure you are using the same phone number registered with your BATELEC account
-2. Verify the phone number is currently active and belongs to you
-3. Make sure this phone number hasn't been used for another Ecotrack account
-4. Contact BATELEC customer service to verify your registered phone number
-5. Once verified, you may submit a new account creation request`
       },
       'address_format_issue': {
         title: 'Address Format Issue',
@@ -468,9 +456,9 @@ const rejectionReasons = [
   // CATEGORY 1: RETRY ALLOWED
   {
     value: 'api_connection_failed',
-    label: 'API Connection Failed (RETRY)',
+    label: 'Internet Connection Timeout (RETRY)',
     category: 'retry',
-    defaultMessage: `Your Ecotrack account creation request has been rejected due to a temporary system issue during verification.
+    defaultMessage: `Your Ecotrack account creation request has been rejected due to an internet connection timeout during verification.
 
 To resolve this issue:
 1. Wait 30 minutes before trying again
@@ -504,19 +492,6 @@ To resolve this issue:
 3. Ensure your middle name is entered correctly (leave blank if none)
 4. Verify all required fields are properly filled
 5. Once corrected, you may submit a new account creation request`
-  },
-  {
-    value: 'phone_verification_required',
-    label: 'Phone Number Verification Required (RETRY)',
-    category: 'retry',
-    defaultMessage: `Your Ecotrack account creation request has been rejected because your phone number could not be verified.
-
-To resolve this issue:
-1. Ensure you are using the same phone number registered with your BATELEC account
-2. Verify the phone number is currently active and belongs to you
-3. Make sure this phone number hasn't been used for another Ecotrack account
-4. Contact BATELEC customer service to verify your registered phone number
-5. Once verified, you may submit a new account creation request`
   },
   {
     value: 'address_format_issue',
@@ -663,7 +638,7 @@ const RejectionModal = ({ show, onClose, user, onContinue }) => {
           <h3 className="font-semibold text-gray-800 mb-1">User Information</h3>
           <div className="grid grid-cols-2 gap-x-1 gap-y-1 text-sm">
             <div><span className="font-medium">Name:</span> {user.fullName || user.name}</div>
-            <div><span className="font-medium">Email:</span> {user.email && !user.email.startsWith('nullified_') ? user.email : <span className="text-orange-600 italic">Email Removed (RETRY)</span>}</div>
+            <div><span className="font-medium">Email:</span> {user.email && !user.email.startsWith('nullified_') ? user.email : <span className="text-orange-600 italic">Email Removed</span>}</div>
             <div><span className="font-medium">Reference ID:</span> {user.referenceId}</div>
             <div><span className="font-medium">Consumer Type:</span> 
               <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
@@ -861,7 +836,7 @@ const ConfirmRejectionModal = ({ 
         <div className="bg-gray-50 border border-gray-200 rounded p-4 text-left">
           <h4 className="font-semibold text-gray-800 mb-3">Request Details:</h4>
           <div className="space-y-1 text-sm">
-            <div><span className="font-medium">User:</span> {user.fullName || user.name} ({user.email && !user.email.startsWith('nullified_') ? user.email : 'Email Removed (RETRY)'})</div>
+            <div><span className="font-medium">User:</span> {user.fullName || user.name} ({user.email && !user.email.startsWith('nullified_') ? user.email : 'Email Removed'})</div>
             <div><span className="font-medium">Account:</span> {user.accountNumber || "N/A"}</div>
             <div><span className="font-medium">Date:</span> {currentDate}</div>
           </div>
@@ -1008,7 +983,7 @@ const AccountLinkingModal = ({ 
               </div>
               <div>
                 <span className="text-gray-600">Email:</span> 
-                <span className="ml-2 text-gray-900">{user.email && !user.email.startsWith('nullified_') ? user.email : <span className="text-orange-600 italic">Email Removed (RETRY)</span>}</span>
+                <span className="ml-2 text-gray-900">{user.email && !user.email.startsWith('nullified_') ? user.email : <span className="text-orange-600 italic">Email Removed</span>}</span>
               </div>
               <div>
                 <span className="text-gray-600">Consumer Type:</span>
@@ -1246,7 +1221,7 @@ const AccountLinkingConfirmation = ({ 
               {user.fullName || user.name}
             </div>
             <div className="text-sm text-gray-600">
-              {user.email && !user.email.startsWith('nullified_') ? user.email : <span className="text-orange-600 italic">Email Removed (RETRY)</span>}
+              {user.email && !user.email.startsWith('nullified_') ? user.email : <span className="text-orange-600 italic">Email Removed</span>}
             </div>
             {isNewConsumer && accountData && (
               <div className="text-sm text-gray-900 font-medium">
@@ -1479,7 +1454,7 @@ const AccountLinkingConfirmation = ({ 
                     <td className="px-3 py-4 text-sm font-medium">{user.fullName || user.name}</td>
                     <td className="px-3 py-4 text-sm text-gray-600">
                       {user.email && !user.email.startsWith('nullified_') ? user.email : (
-                        <span className="text-orange-600 italic">Email Removed (RETRY)</span>
+                        <span className="text-orange-600 italic">Email Removed</span>
                       )}
                     </td>
                     <td className="px-3 py-4 text-sm">{user.accountNumber || "N/A"}</td>
@@ -1644,7 +1619,7 @@ const AccountLinkingConfirmation = ({ 
                       <p className="text-blue-100 text-sm">
                         {state.viewingUser.email && !state.viewingUser.email.startsWith('nullified_') 
                           ? state.viewingUser.email 
-                          : 'Email Removed (RETRY)'
+                          : 'Email Removed'
                         }
                       </p>
                       <p className="text-blue-200 text-xs mt-1">
