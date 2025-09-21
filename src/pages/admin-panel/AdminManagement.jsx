@@ -15,10 +15,12 @@ export default function AdminManagement() {
   const [togglingId, setTogglingId] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [editValues, setEditValues] = useState({ name: "", email: "" });
+  const [editErrors, setEditErrors] = useState({ name: "", email: "" }); // Validation errors for edit form
   const [showConfirmToggle, setShowConfirmToggle] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [newAdmin, setNewAdmin] = useState({ name: "", email: "" });
+  const [newAdminErrors, setNewAdminErrors] = useState({ name: "", email: "" }); // Validation errors for create form
   const [createError, setCreateError] = useState(""); // Specific error for create modal
   const token = localStorage.getItem("token");
 
@@ -58,6 +60,83 @@ export default function AdminManagement() {
     }
   }, [createError]);
 
+  // Validation functions
+  const validateFullName = (name) => {
+    const trimmedName = name.trim();
+    
+    if (!trimmedName) {
+      return "Full name is required";
+    }
+    
+    if (trimmedName.length < 2) {
+      return "Full name must be at least 2 characters long";
+    }
+    
+    if (trimmedName.length > 50) {
+      return "Full name must be less than 50 characters";
+    }
+    
+    // Check for single letters (no single character words)
+    const words = trimmedName.split(/\s+/);
+    if (words.some(word => word.length === 1)) {
+      return "Full name cannot contain single letters";
+    }
+    
+    // Check for numbers
+    if (/\d/.test(trimmedName)) {
+      return "Full name cannot contain numbers";
+    }
+    
+    // Check for special characters (allow only letters, spaces, hyphens, and apostrophes)
+    if (!/^[a-zA-Z\s\-']+$/.test(trimmedName)) {
+      return "Full name can only contain letters, spaces, hyphens, and apostrophes";
+    }
+    
+    // Check for consecutive spaces
+    if (/\s{2,}/.test(trimmedName)) {
+      return "Full name cannot contain consecutive spaces";
+    }
+    
+    // Check for leading/trailing spaces (should be handled by trim, but just in case)
+    if (name !== trimmedName) {
+      return "Full name cannot have leading or trailing spaces";
+    }
+    
+    return "";
+  };
+
+  const validateEmail = (email, excludeId = null) => {
+    const trimmedEmail = email.trim();
+    
+    if (!trimmedEmail) {
+      return "Email is required";
+    }
+    
+    // Basic email format validation
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      return "Please enter a valid email address";
+    }
+    
+    // Check for duplicate emails (exclude current admin if editing)
+    const isEmailTaken = admins.some(
+      (admin) =>
+        admin.email.toLowerCase() === trimmedEmail.toLowerCase() && 
+        admin._id !== excludeId
+    );
+    
+    if (isEmailTaken) {
+      return "Email is already in use by another admin";
+    }
+    
+    // Check email length
+    if (trimmedEmail.length > 100) {
+      return "Email must be less than 100 characters";
+    }
+    
+    return "";
+  };
+
   const showMessage = (msg, type = "success") => {
     setMessage(msg);
     setMessageType(type);
@@ -82,40 +161,27 @@ export default function AdminManagement() {
   const startEdit = (admin) => {
     setEditingId(admin._id);
     setEditValues({ name: admin.name, email: admin.email });
+    setEditErrors({ name: "", email: "" }); // Clear any previous errors
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setEditValues({ name: "", email: "" });
+    setEditErrors({ name: "", email: "" }); // Clear any previous errors
   };
 
 const saveEdit = async (id) => {
   const { name, email } = editValues;
 
-  // Local frontend validations
-  if (!name.trim()) {
-    showMessage("Name is required.", "error");
-    return;
-  }
+  // Validate using the new validation functions
+  const nameError = validateFullName(name);
+  const emailError = validateEmail(email, id);
 
-  if (!email.trim()) {
-    showMessage("Email is required.", "error");
-    return;
-  }
+  // Set validation errors
+  setEditErrors({ name: nameError, email: emailError });
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email.trim())) {
-    showMessage("Invalid email format.", "error");
-    return;
-  }
-
-  // Check if the email is already used by another admin (exclude self)
-  const isEmailTaken = admins.some(
-    (admin) =>
-      admin.email.toLowerCase() === email.toLowerCase() && admin._id !== id
-  );
-  if (isEmailTaken) {
-    showMessage("Email is already in use by another admin.", "error");
+  // If there are validation errors, don't proceed
+  if (nameError || emailError) {
     return;
   }
 
@@ -163,6 +229,19 @@ const saveEdit = async (id) => {
     setIsAdding(true);
     setCreateError(""); // Clear previous errors
     
+    // Validate using the new validation functions
+    const nameError = validateFullName(newAdmin.name);
+    const emailError = validateEmail(newAdmin.email);
+
+    // Set validation errors
+    setNewAdminErrors({ name: nameError, email: emailError });
+
+    // If there are validation errors, don't proceed
+    if (nameError || emailError) {
+      setIsAdding(false);
+      return;
+    }
+    
     try {
       await axios.post(`${BASE_URL}/api/auth/admin/create`, newAdmin, {
         headers: { Authorization: `Bearer ${token}` },
@@ -170,6 +249,7 @@ const saveEdit = async (id) => {
       showMessage("Admin created successfully and credentials sent via email.", "success");
       setShowModal(false);
       setNewAdmin({ name: "", email: "" });
+      setNewAdminErrors({ name: "", email: "" }); // Clear validation errors
       fetchAdmins();
     } catch (err) {
       console.error("Create error:", err);
@@ -183,7 +263,41 @@ const saveEdit = async (id) => {
   const handleModalClose = () => {
     setShowModal(false);
     setNewAdmin({ name: "", email: "" });
+    setNewAdminErrors({ name: "", email: "" }); // Clear validation errors
     setCreateError(""); // Clear errors when closing modal
+  };
+
+  // Real-time validation handlers
+  const handleNewAdminNameChange = (value) => {
+    setNewAdmin({ ...newAdmin, name: value });
+    // Clear error when user starts typing
+    if (newAdminErrors.name) {
+      setNewAdminErrors({ ...newAdminErrors, name: "" });
+    }
+  };
+
+  const handleNewAdminEmailChange = (value) => {
+    setNewAdmin({ ...newAdmin, email: value });
+    // Clear error when user starts typing
+    if (newAdminErrors.email) {
+      setNewAdminErrors({ ...newAdminErrors, email: "" });
+    }
+  };
+
+  const handleEditNameChange = (value) => {
+    setEditValues({ ...editValues, name: value });
+    // Clear error when user starts typing
+    if (editErrors.name) {
+      setEditErrors({ ...editErrors, name: "" });
+    }
+  };
+
+  const handleEditEmailChange = (value) => {
+    setEditValues({ ...editValues, email: value });
+    // Clear error when user starts typing
+    if (editErrors.email) {
+      setEditErrors({ ...editErrors, email: "" });
+    }
   };
 
   return (
@@ -286,22 +400,40 @@ const saveEdit = async (id) => {
                   <td className="px-6 py-4">{index + 1}</td>
                   <td className="px-6 py-4">
                     {editingId === admin._id ? (
-                      <input
-                        value={editValues.name}
-                        onChange={(e) => setEditValues({ ...editValues, name: e.target.value })}
-                        className="border px-2 py-1 rounded w-full focus:outline-none focus:ring-2  focus:ring-green-500"
-                      />
+                      <div>
+                        <input
+                          value={editValues.name}
+                          onChange={(e) => handleEditNameChange(e.target.value)}
+                          className={`border px-2 py-1 rounded w-full focus:outline-none focus:ring-2 ${
+                            editErrors.name 
+                              ? 'border-red-500 focus:ring-red-500' 
+                              : 'border-gray-300 focus:ring-green-500'
+                          }`}
+                        />
+                        {editErrors.name && (
+                          <p className="text-red-500 text-xs mt-1">{editErrors.name}</p>
+                        )}
+                      </div>
                     ) : (
                       admin.name
                     )}
                   </td>
                   <td className="px-6 py-4">
                     {editingId === admin._id ? (
-                      <input
-                        value={editValues.email}
-                        onChange={(e) => setEditValues({ ...editValues, email: e.target.value })}
-                        className="border px-2 py-1 rounded w-full focus:outline-none focus:ring-2  focus:ring-green-500"
-                      />
+                      <div>
+                        <input
+                          value={editValues.email}
+                          onChange={(e) => handleEditEmailChange(e.target.value)}
+                          className={`border px-2 py-1 rounded w-full focus:outline-none focus:ring-2 ${
+                            editErrors.email 
+                              ? 'border-red-500 focus:ring-red-500' 
+                              : 'border-gray-300 focus:ring-green-500'
+                          }`}
+                        />
+                        {editErrors.email && (
+                          <p className="text-red-500 text-xs mt-1">{editErrors.email}</p>
+                        )}
+                      </div>
                     ) : (
                       admin.email
                     )}
@@ -314,7 +446,8 @@ const saveEdit = async (id) => {
                       <div className="flex justify-center gap-2">
                         <button
                           onClick={() => saveEdit(admin._id)}
-                          className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                          className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 disabled:opacity-50"
+                          disabled={editErrors.name || editErrors.email || !editValues.name.trim() || !editValues.email.trim()}
                         >
                           Save
                         </button>
@@ -431,24 +564,46 @@ const saveEdit = async (id) => {
             )}
 
             <form onSubmit={createAdmin} className="space-y-4">
-              <input
-                type="text"
-                placeholder="Full Name"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2  focus:ring-green-500"
-                value={newAdmin.name}
-                onChange={(e) => setNewAdmin({ ...newAdmin, name: e.target.value })}
-                required
-                disabled={isAdding}
-              />
-              <input
-                type="email"
-                placeholder="Email"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2  focus:ring-green-500"
-                value={newAdmin.email}
-                onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
-                required
-                disabled={isAdding}
-              />
+              <div>
+                <input
+                  type="text"
+                  placeholder="Full Name"
+                  className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                    newAdminErrors.name 
+                      ? 'border-red-500 focus:ring-red-500' 
+                      : 'border-gray-300 focus:ring-green-500'
+                  }`}
+                  value={newAdmin.name}
+                  onChange={(e) => handleNewAdminNameChange(e.target.value)}
+                  required
+                  disabled={isAdding}
+                />
+                {newAdminErrors.name ? (
+                  <p className="text-red-500 text-xs mt-1">{newAdminErrors.name}</p>
+                ) : (
+                  <p className="text-gray-500 text-xs mt-1">Enter full name (letters, spaces, hyphens, and apostrophes only)</p>
+                )}
+              </div>
+              <div>
+                <input
+                  type="email"
+                  placeholder="Email"
+                  className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                    newAdminErrors.email 
+                      ? 'border-red-500 focus:ring-red-500' 
+                      : 'border-gray-300 focus:ring-green-500'
+                  }`}
+                  value={newAdmin.email}
+                  onChange={(e) => handleNewAdminEmailChange(e.target.value)}
+                  required
+                  disabled={isAdding}
+                />
+                {newAdminErrors.email ? (
+                  <p className="text-red-500 text-xs mt-1">{newAdminErrors.email}</p>
+                ) : (
+                  <p className="text-gray-500 text-xs mt-1">Enter a valid email address</p>
+                )}
+              </div>
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
@@ -461,7 +616,7 @@ const saveEdit = async (id) => {
                 <button
                   type="submit"
                   className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md focus:outline-none focus:ring-2  focus:ring-green-500 disabled:opacity-50"
-                  disabled={isAdding}
+                  disabled={isAdding || newAdminErrors.name || newAdminErrors.email || !newAdmin.name.trim() || !newAdmin.email.trim()}
                 >
                   {isAdding ? "Creating..." : "Create"}
                 </button>
