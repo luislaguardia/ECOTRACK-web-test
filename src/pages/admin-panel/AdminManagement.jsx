@@ -76,12 +76,6 @@ export default function AdminManagement() {
       return "Full name must be less than 50 characters";
     }
     
-    // Check for single letters (no single character words)
-    const words = trimmedName.split(/\s+/);
-    if (words.some(word => word.length === 1)) {
-      return "Full name cannot contain single letters";
-    }
-    
     // Check for numbers
     if (/\d/.test(trimmedName)) {
       return "Full name cannot contain numbers";
@@ -100,6 +94,46 @@ export default function AdminManagement() {
     // Check for leading/trailing spaces (should be handled by trim, but just in case)
     if (name !== trimmedName) {
       return "Full name cannot have leading or trailing spaces";
+    }
+    
+    // Split into words and validate each word
+    const words = trimmedName.split(/\s+/).filter(word => word.length > 0);
+    
+    // Must have at least 2 words (First Name + Last Name)
+    if (words.length < 2) {
+      return "Please enter both first and last name";
+    }
+    
+    // Each word must be at least 2 characters long
+    if (words.some(word => word.length < 2)) {
+      return "Each name part must be at least 2 characters long";
+    }
+    
+    // Each word must start with a capital letter (best practice for names)
+    if (words.some(word => !/^[A-Z]/.test(word))) {
+      return "Each name part should start with a capital letter";
+    }
+    
+    // Check for common invalid patterns
+    const invalidPatterns = [
+      /^[A-Z]{1}$/, // Single capital letter
+      /^[A-Z]{2}$/, // Two capital letters (like "AB")
+      /^[A-Za-z]{1,2}$/, // 1-2 letter words
+    ];
+    
+    if (words.some(word => invalidPatterns.some(pattern => pattern.test(word)))) {
+      return "Please enter a proper name (minimum 3 characters per name part)";
+    }
+    
+    // Check for repeated characters (like "AAA" or "John John")
+    if (words.some(word => /(.)\1{2,}/.test(word))) {
+      return "Name contains invalid repeated characters";
+    }
+    
+    // Check for common test/invalid names
+    const invalidNames = ['test', 'admin', 'user', 'demo', 'sample', 'example', 'temp', 'temporary'];
+    if (words.some(word => invalidNames.includes(word.toLowerCase()))) {
+      return "Please enter a real name, not a placeholder";
     }
     
     return "";
@@ -267,9 +301,19 @@ const saveEdit = async (id) => {
     setCreateError(""); // Clear errors when closing modal
   };
 
+  // Helper function to format names properly
+  const formatName = (name) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   // Real-time validation handlers
   const handleNewAdminNameChange = (value) => {
-    setNewAdmin({ ...newAdmin, name: value });
+    // Auto-format the name as user types
+    const formattedValue = formatName(value);
+    setNewAdmin({ ...newAdmin, name: formattedValue });
     // Clear error when user starts typing
     if (newAdminErrors.name) {
       setNewAdminErrors({ ...newAdminErrors, name: "" });
@@ -285,7 +329,9 @@ const saveEdit = async (id) => {
   };
 
   const handleEditNameChange = (value) => {
-    setEditValues({ ...editValues, name: value });
+    // Auto-format the name as user types
+    const formattedValue = formatName(value);
+    setEditValues({ ...editValues, name: formattedValue });
     // Clear error when user starts typing
     if (editErrors.name) {
       setEditErrors({ ...editErrors, name: "" });
@@ -581,7 +627,7 @@ const saveEdit = async (id) => {
                 {newAdminErrors.name ? (
                   <p className="text-red-500 text-xs mt-1">{newAdminErrors.name}</p>
                 ) : (
-                  <p className="text-gray-500 text-xs mt-1">Enter full name (letters, spaces, hyphens, and apostrophes only)</p>
+                  <p className="text-gray-500 text-xs mt-1">Enter first and last name (minimum 3 characters each, proper capitalization)</p>
                 )}
               </div>
               <div>

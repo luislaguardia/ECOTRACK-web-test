@@ -10,6 +10,7 @@ export default function Settings() {
   const [message, setMessage] = useState({ text: "", isError: false });
   const [passwordMessage, setPasswordMessage] = useState({ text: "", isError: false });
   const [validationErrors, setValidationErrors] = useState({ name: "", email: "" });
+  const [passwordErrors, setPasswordErrors] = useState({ newPassword: "", confirmPassword: "" });
   const [passwords, setPasswords] = useState({
     currentPassword: "",
     newPassword: "",
@@ -93,7 +94,25 @@ export default function Settings() {
   };
 
   const handlePasswordChange = (e) => {
-    setPasswords({ ...passwords, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setPasswords({ ...passwords, [name]: value });
+    
+    // Real-time validation
+    if (name === "newPassword") {
+      const error = validatePassword(value, passwords.currentPassword);
+      setPasswordErrors(prev => ({ ...prev, newPassword: error }));
+    } else if (name === "confirmPassword") {
+      const error = passwords.newPassword && value !== passwords.newPassword 
+        ? "Passwords do not match" 
+        : "";
+      setPasswordErrors(prev => ({ ...prev, confirmPassword: error }));
+    } else if (name === "currentPassword") {
+      // Re-validate new password when current password changes
+      if (passwords.newPassword) {
+        const error = validatePassword(passwords.newPassword, value);
+        setPasswordErrors(prev => ({ ...prev, newPassword: error }));
+      }
+    }
   };
 
   const getPasswordStrength = (password) => {
@@ -165,20 +184,26 @@ export default function Settings() {
     }
   };
 
-  const validatePassword = (password) => {
-    if (!password) {
+  const validatePassword = (newPassword, currentPassword = "") => {
+    if (!newPassword) {
       return "Password is required";
     }
-    if (password.length < 8) {
+    if (newPassword.length < 8) {
       return "Password must be at least 8 characters long";
     }
-    if (password.length > 128) {
+    if (newPassword.length > 128) {
       return "Password must be less than 128 characters";
     }
+    
+    // Check if new password is the same as current password
+    if (currentPassword && newPassword === currentPassword) {
+      return "New password cannot be the same as your current password";
+    }
+    
     // Check for at least one uppercase letter, one lowercase letter, and one number
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasLowerCase = /[a-z]/.test(password);
-    const hasNumbers = /\d/.test(password);
+    const hasUpperCase = /[A-Z]/.test(newPassword);
+    const hasLowerCase = /[a-z]/.test(newPassword);
+    const hasNumbers = /\d/.test(newPassword);
     
     if (!hasUpperCase) {
       return "Password must contain at least one uppercase letter";
@@ -202,8 +227,8 @@ export default function Settings() {
       return;
     }
 
-    // Validate new password strength
-    const passwordError = validatePassword(newPassword);
+    // Validate new password strength and check against current password
+    const passwordError = validatePassword(newPassword, currentPassword);
     if (passwordError) {
       setPasswordMessage({ text: passwordError, isError: true });
       return;
@@ -233,6 +258,7 @@ export default function Settings() {
       });
 
       setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setPasswordErrors({ newPassword: "", confirmPassword: "" }); // Clear validation errors
     } catch (err) {
       const errorMsg =
         err.response?.data?.message || "Failed to change password.";
@@ -380,10 +406,17 @@ export default function Settings() {
             name="newPassword"
             value={passwords.newPassword}
             onChange={handlePasswordChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-green-600"
+            className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-2 ${
+              passwordErrors.newPassword 
+                ? "border-red-300 focus:ring-red-500" 
+                : "border-gray-300 focus:ring-green-600"
+            }`}
             placeholder="Enter new password (min 8 characters)"
             required
           />
+          {passwordErrors.newPassword && (
+            <p className="text-red-600 text-sm mt-1">{passwordErrors.newPassword}</p>
+          )}
           {passwords.newPassword && (
             <div className="mt-2">
               <div className="flex items-center gap-2 mb-1">
@@ -413,20 +446,21 @@ export default function Settings() {
             value={passwords.confirmPassword}
             onChange={handlePasswordChange}
             className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-2 ${
-              passwords.confirmPassword && passwords.newPassword !== passwords.confirmPassword
+              passwordErrors.confirmPassword
                 ? "border-red-300 focus:ring-red-500" 
                 : "border-gray-300 focus:ring-green-600"
             }`}
             placeholder="Confirm your new password"
             required
           />
-          {passwords.confirmPassword && passwords.newPassword !== passwords.confirmPassword && (
-            <p className="text-red-600 text-sm mt-1">Passwords do not match</p>
+          {passwordErrors.confirmPassword && (
+            <p className="text-red-600 text-sm mt-1">{passwordErrors.confirmPassword}</p>
           )}
         </div>
         <button
           type="submit"
-          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md"
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={passwordErrors.newPassword || passwordErrors.confirmPassword || !passwords.currentPassword || !passwords.newPassword || !passwords.confirmPassword}
         >
           Update Password
         </button>
