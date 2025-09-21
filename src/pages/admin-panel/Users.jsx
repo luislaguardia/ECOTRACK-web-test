@@ -652,7 +652,7 @@ const RejectionModal = ({ show, onClose, user, onContinue }) => {
           <h3 className="font-semibold text-gray-800 mb-1">User Information</h3>
           <div className="grid grid-cols-2 gap-x-1 gap-y-1 text-sm">
             <div><span className="font-medium">Name:</span> {(user.fullName && user.fullName !== 'null') || (user.name && user.name !== 'null') ? (user.fullName || user.name) : "-"}</div>
-            <div><span className="font-medium">Email:</span> {user.email && !user.email.startsWith('nullified_') ? user.email : <span className="text-orange-600 italic">Email Removed</span>}</div>
+            <div><span className="font-medium">Email:</span> {user.email && !user.email.startsWith('nullified_') ? user.email : "-"}</div>
             <div><span className="font-medium">Reference ID:</span> {user.referenceId}</div>
             <div><span className="font-medium">Consumer Type:</span> 
               <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
@@ -850,8 +850,8 @@ const ConfirmRejectionModal = ({ 
         <div className="bg-gray-50 border border-gray-200 rounded p-4 text-left">
           <h4 className="font-semibold text-gray-800 mb-3">Request Details:</h4>
           <div className="space-y-1 text-sm">
-            <div><span className="font-medium">User:</span> {(user.fullName && user.fullName !== 'null') || (user.name && user.name !== 'null') ? (user.fullName || user.name) : "-"} ({user.email && !user.email.startsWith('nullified_') ? user.email : 'Email Removed'})</div>
-            <div><span className="font-medium">Account:</span> {user.accountNumber && user.accountNumber !== 'null' ? user.accountNumber : "N/A"}</div>
+            <div><span className="font-medium">User:</span> {(user.fullName && user.fullName !== 'null') || (user.name && user.name !== 'null') ? (user.fullName || user.name) : "-"} ({user.email && !user.email.startsWith('nullified_') ? user.email : '-'})</div>
+            <div><span className="font-medium">Account:</span> {user.accountNumber && user.accountNumber !== 'null' ? user.accountNumber : "-"}</div>
             <div><span className="font-medium">Date:</span> {currentDate}</div>
           </div>
         </div>
@@ -997,7 +997,7 @@ const AccountLinkingModal = ({ 
               </div>
               <div>
                 <span className="text-gray-600">Email:</span> 
-                <span className="ml-2 text-gray-900">{user.email && !user.email.startsWith('nullified_') ? user.email : <span className="text-orange-600 italic">Email Removed</span>}</span>
+                <span className="ml-2 text-gray-900">{user.email && !user.email.startsWith('nullified_') ? user.email : "-"}</span>
               </div>
               <div>
                 <span className="text-gray-600">Consumer Type:</span>
@@ -1082,7 +1082,7 @@ const AccountLinkingModal = ({ 
                             />
                           </div>
                           <div className="col-span-4 text-gray-900">{account.customerName}</div>
-                          <div className="col-span-2 text-gray-600">{account.barangay || 'N/A'}</div>
+                          <div className="col-span-2 text-gray-600">{account.barangay || '-'}</div>
                           <div className="col-span-3 text-gray-900">{account.accountNumber}</div>
                           <div className="col-span-2 text-gray-600">{account.meterNumber}</div>
                         </label>
@@ -1235,7 +1235,7 @@ const AccountLinkingConfirmation = ({ 
               {(user.fullName && user.fullName !== 'null') || (user.name && user.name !== 'null') ? (user.fullName || user.name) : "-"}
             </div>
             <div className="text-sm text-gray-600">
-              {user.email && !user.email.startsWith('nullified_') ? user.email : <span className="text-orange-600 italic">Email Removed</span>}
+              {user.email && !user.email.startsWith('nullified_') ? user.email : "-"}
             </div>
             {isNewConsumer && accountData && (
               <div className="text-sm text-gray-900 font-medium">
@@ -1287,7 +1287,7 @@ const AccountLinkingConfirmation = ({ 
               </div>
               <div>
                 <span className="text-blue-600">Barangay:</span>
-                <div className="text-blue-900 font-medium">{accountData.barangay || 'N/A'}</div>
+                <div className="text-blue-900 font-medium">{accountData.barangay || '-'}</div>
               </div>
             </div>
           </div>
@@ -1523,11 +1523,9 @@ const AccountLinkingConfirmation = ({ 
                     <td className="px-3 py-4 text-sm">{((state.currentPage - 1) * usersPerPage) + index + 1}</td>
                     <td className="px-3 py-4 text-sm font-medium">{(user.fullName && user.fullName !== 'null') || (user.name && user.name !== 'null') ? (user.fullName || user.name) : "-"}</td>
                     <td className="px-3 py-4 text-sm text-gray-600">
-                      {user.email && !user.email.startsWith('nullified_') ? user.email : (
-                        <span className="text-orange-600 italic">Email Removed</span>
-                      )}
+                      {user.email && !user.email.startsWith('nullified_') ? user.email : "-"}
                     </td>
-                    <td className="px-3 py-4 text-sm">{user.accountNumber && user.accountNumber !== 'null' ? user.accountNumber : "N/A"}</td>
+                    <td className="px-3 py-4 text-sm">{user.accountNumber && user.accountNumber !== 'null' ? user.accountNumber : "-"}</td>
                     <td className="px-3 py-4">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         user.accountNumber ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
@@ -1679,17 +1677,19 @@ const AccountLinkingConfirmation = ({ 
                   <div className="flex items-center space-x-4">
                     <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
                       <span className="text-2xl font-bold text-white">
-                        {(state.viewingUser.fullName || state.viewingUser.name).charAt(0).toUpperCase()}
+                        {((state.viewingUser.fullName && state.viewingUser.fullName !== 'null') || (state.viewingUser.name && state.viewingUser.name !== 'null')) ? 
+                          (state.viewingUser.fullName || state.viewingUser.name).charAt(0).toUpperCase() : '-'}
                       </span>
                     </div>
                     <div>
                       <h2 className="text-2xl font-bold text-white">
-                        {state.viewingUser.fullName || state.viewingUser.name}
+                        {((state.viewingUser.fullName && state.viewingUser.fullName !== 'null') || (state.viewingUser.name && state.viewingUser.name !== 'null')) ? 
+                          (state.viewingUser.fullName || state.viewingUser.name) : '-'}
                       </h2>
                       <p className="text-blue-100 text-sm">
                         {state.viewingUser.email && !state.viewingUser.email.startsWith('nullified_') 
                           ? state.viewingUser.email 
-                          : 'Email Removed'
+                          : '-'
                         }
                       </p>
                       <p className="text-blue-200 text-xs mt-1">
@@ -1735,7 +1735,7 @@ const AccountLinkingConfirmation = ({ 
                     <div>
                       <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Reference ID</p>
                       <p className="text-sm font-semibold text-gray-900 mt-1 font-mono">
-                        {state.viewingUser.referenceId || "N/A"}
+                        {state.viewingUser.referenceId || "-"}
                       </p>
                     </div>
                     <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -1863,16 +1863,16 @@ const AccountLinkingConfirmation = ({ 
                       </div>
                       <div className="space-y-1">
                         <p className="text-sm font-medium text-gray-500">Address</p>
-                        <p className="text-gray-900">{state.batelecAccount.address || "N/A"}</p>
+                        <p className="text-gray-900">{state.batelecAccount.address || "-"}</p>
                       </div>
                       <div className="space-y-1">
                         <p className="text-sm font-medium text-gray-500">Consumer Type</p>
-                        <p className="text-gray-900">{state.batelecAccount.consumerType || "N/A"}</p>
+                        <p className="text-gray-900">{state.batelecAccount.consumerType || "-"}</p>
                       </div>
                       <div className="space-y-1">
                         <p className="text-sm font-medium text-gray-500">Latest Reading</p>
                         <p className="text-gray-900 font-semibold">
-                          {state.batelecAccount.latestReading?.currentReading || "N/A"} kWh
+                          {state.batelecAccount.latestReading?.currentReading || "-"} kWh
                         </p>
                       </div>
                     </div>
@@ -1980,7 +1980,8 @@ const AccountLinkingConfirmation = ({ 
         <div className="text-center space-y-4">
           <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
             <span className="text-2xl font-bold text-blue-600">
-              {state.userToDelete && (state.userToDelete.fullName || state.userToDelete.name).charAt(0).toUpperCase()}
+              {state.userToDelete && ((state.userToDelete.fullName && state.userToDelete.fullName !== 'null') || (state.userToDelete.name && state.userToDelete.name !== 'null')) ? 
+                (state.userToDelete.fullName || state.userToDelete.name).charAt(0).toUpperCase() : '-'}
             </span>
           </div>
           <div>
