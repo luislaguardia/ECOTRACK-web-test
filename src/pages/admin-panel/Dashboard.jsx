@@ -831,376 +831,441 @@ const addAISummary = (doc, contentWidth, pageHeight) => {
             >
               {exportType === "csv" ? (
                 // Simple CSV Modal
-                <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-                  <div className="bg-green-600 py-3 px-6 rounded-t-lg">
-                    <h3 className="text-lg font-semibold text-white">Export CSV</h3>
-                  </div>
-                  <div className="p-6">
-                    <div className="space-y-4">
-                      {/* Configuration Section */}
-                      <div>
-                        <h4 className="text-sm font-semibold text-blue-600 uppercase tracking-wide mb-3">CONFIGURATION</h4>
-                        
-                        {/* Date Range */}
-                        <div className="space-y-2">
-                          <div>
-                            <input
-                              type="date"
-                              value={exportConfig.dateFrom}
-                              onChange={(e) => setExportConfig(prev => ({ ...prev, dateFrom: e.target.value }))}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-                              placeholder="mm/dd/yyyy"
-                            />
-                          </div>
-                          <div className="text-center text-xs text-gray-500">to</div>
-                          <div>
-                            <input
-                              type="date"
-                              value={exportConfig.dateTo}
-                              onChange={(e) => setExportConfig(prev => ({ ...prev, dateTo: e.target.value }))}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-                              placeholder="mm/dd/yyyy"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Title */}
-                        <div className="mt-4">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                          <input
-                            type="text"
-                            value={exportConfig.title}
-                            onChange={(e) => setExportConfig(prev => ({ ...prev, title: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-                            placeholder="Enter Title"
-                          />
-                        </div>
-
-                        {/* Header */}
-                        <div className="mt-4">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Header</label>
-                          <input
-                            type="text"
-                            value={exportConfig.header}
-                            onChange={(e) => setExportConfig(prev => ({ ...prev, header: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-                            placeholder="Enter Header"
-                          />
-                        </div>
-
-                        {/* Description */}
-                        <div className="mt-4">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                          <textarea
-                            value={exportConfig.description}
-                            onChange={(e) => setExportConfig(prev => ({ ...prev, description: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-                            placeholder="Enter Description"
-                            rows={3}
-                          />
-                        </div>
-                      </div>
-
-                      {/* File Name */}
-                      <div className="mt-6">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          File Name
-                        </label>
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl"> {/* Increased width */}
+              <div className="bg-green-600 py-3 px-6 rounded-t-lg">
+                <h3 className="text-lg font-semibold text-white">Export CSV</h3>
+              </div>
+              <div className="p-6">
+                <div className="space-y-4">
+                  {/* Configuration Section */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-blue-600 uppercase tracking-wide mb-3">CONFIGURATION</h4>
+                    
+                    {/* Date Range - Now in one line */}
+                    <div className="flex gap-3 items-end mb-4">
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
                         <input
-                          type="text"
-                          value={fileName}
-                          onChange={(e) => setFileName(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                          placeholder="Enter file name"
+                          type="date"
+                          value={exportConfig.dateFrom}
+                          onChange={(e) => setExportConfig(prev => ({ ...prev, dateFrom: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                          placeholder="mm/dd/yyyy"
                         />
-                        <p className="text-xs text-gray-500 mt-1">
-                          File will be saved as: {fileName}.{exportType}
-                        </p>
                       </div>
-
-                      <p className="text-gray-700 mt-4">
-                        Export format: <strong>{exportType?.toUpperCase()}</strong>
-                      </p>
+                      <div className="px-2 pb-2">
+                        <span className="text-xs text-gray-500">to</span>
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+                        <input
+                          type="date"
+                          value={exportConfig.dateTo}
+                          onChange={(e) => setExportConfig(prev => ({ ...prev, dateTo: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                          placeholder="mm/dd/yyyy"
+                        />
+                      </div>
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex justify-end gap-2 mt-8 pt-4 border-t border-gray-200">
-                      <button
-                        onClick={() => setShowExportModal(false)}
-                        className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-100 shadow-sm"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={performExport}
-                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 shadow-sm"
-                      >
-                        Export
-                      </button>
+                    {/* Title */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                      <input
+                        type="text"
+                        value={exportConfig.title}
+                        onChange={(e) => setExportConfig(prev => ({ ...prev, title: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                        placeholder="Enter Title"
+                      />
+                    </div>
+
+                    {/* Header */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Header</label>
+                      <input
+                        type="text"
+                        value={exportConfig.header}
+                        onChange={(e) => setExportConfig(prev => ({ ...prev, header: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                        placeholder="Enter Header"
+                      />
+                    </div>
+
+                    {/* Description */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                      <textarea
+                        value={exportConfig.description}
+                        onChange={(e) => setExportConfig(prev => ({ ...prev, description: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                        placeholder="Enter Description"
+                        rows={3}
+                      />
                     </div>
                   </div>
+
+                  {/* File Name */}
+                  <div className="mt-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      File Name
+                    </label>
+                    <input
+                      type="text"
+                      value={fileName}
+                      onChange={(e) => setFileName(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="Enter file name"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      File will be saved as: {fileName}.{exportType}
+                    </p>
+                  </div>
+
+                  <p className="text-gray-700 mt-4">
+                    Export format: <strong>{exportType?.toUpperCase()}</strong>
+                  </p>
                 </div>
-              ) : (
-                // PDF Modal with Preview
-<div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex">
-  {/* Left Panel - Configuration */}
-  <div className="w-1/3 border-r border-gray-200">
-    <div className="bg-green-600 py-3 px-6">
-      <h3 className="text-lg font-semibold text-white">Export Dashboard Data</h3>
-    </div>
-    <div className="p-6 overflow-y-auto max-h-[calc(90vh-60px)]">
-      <div className="space-y-4">
-        {/* Configuration Section */}
-        <div>
-          <h4 className="text-sm font-semibold text-blue-600 uppercase tracking-wide mb-3">CONFIGURATION</h4>
-          
-          {/* Date Range */}
-          <div className="space-y-2">
-            <div>
-              <input
-                type="date"
-                value={exportConfig.dateFrom}
-                onChange={(e) => setExportConfig(prev => ({ ...prev, dateFrom: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-                placeholder="mm/dd/yyyy"
-              />
-            </div>
-            <div className="text-center text-xs text-gray-500">to</div>
-            <div>
-              <input
-                type="date"
-                value={exportConfig.dateTo}
-                onChange={(e) => setExportConfig(prev => ({ ...prev, dateTo: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-                placeholder="mm/dd/yyyy"
-              />
-            </div>
-          </div>
 
-          {/* Title */}
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-            <input
-              type="text"
-              value={exportConfig.title}
-              onChange={(e) => setExportConfig(prev => ({ ...prev, title: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-              placeholder="Enter Title"
-            />
-          </div>
-
-          {/* Header */}
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Header</label>
-            <input
-              type="text"
-              value={exportConfig.header}
-              onChange={(e) => setExportConfig(prev => ({ ...prev, header: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-              placeholder="Enter Header"
-            />
-          </div>
-
-          {/* Description */}
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea
-              value={exportConfig.description}
-              onChange={(e) => setExportConfig(prev => ({ ...prev, description: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-              placeholder="Enter Description"
-              rows={3}
-            />
-          </div>
-        </div>
-
-        {/* File Name */}
-        <div className="mt-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            File Name
-          </label>
-          <input
-            type="text"
-            value={fileName}
-            onChange={(e) => setFileName(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-            placeholder="Enter file name"
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            File will be saved as: {fileName}.{exportType}
-          </p>
-        </div>
-
-        <p className="text-gray-700 mt-4">
-          Export format: <strong>{exportType?.toUpperCase()}</strong>
-        </p>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex justify-end gap-2 mt-8 pt-4 border-t border-gray-200">
-        <button
-          onClick={() => setShowExportModal(false)}
-          className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-100 shadow-sm"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={performExport}
-          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 shadow-sm"
-          disabled={isExportingPDF}
-        >
-          {isExportingPDF ? (
-            <div className="flex items-center">
-              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
-              Exporting... ({exportProgress}%)
-            </div>
-          ) : (
-            "Export"
-          )}
-        </button>
-      </div>
-    </div>
-  </div>
-
-  {/* Right Panel - Preview */}
-  <div className="flex-1">
-    <div className="bg-green-600 py-3 px-6 border-b border-green-600 flex items-center justify-between">
-      <h4 className="text-lg font-semibold text-white">Preview</h4>
-      <div className="flex items-center gap-3">
-        <label className="flex items-center gap-2 text-sm text-gray-800">
-          <input
-            type="checkbox"
-            checked={isAISummaryEnabled}
-            onChange={(e) => {
-              setIsAISummaryEnabled(e.target.checked);
-              if (e.target.checked && !aiSummary && !isSummarizing) {
-                fetchAISummary();
-              }
-            }}
-          />
-          <span>Include AI summary</span>
-        </label>
-        {isSummarizing && (
-          <span className="text-xs text-gray-600">Generating summary…</span>
-        )}
-        {summaryError && (
-          <button className="text-xs text-red-600 underline" onClick={fetchAISummary}>Retry</button>
-        )}
-      </div>
-    </div>
-    <div className="p-6 overflow-y-auto max-h-[calc(90vh-60px)]">
-      {/* A4 Page Container */}
-      <div className="bg-white border border-gray-300 shadow-lg mx-auto" style={{ width: '210mm', height: '297mm', padding: '20mm' }}>
-        {/* Page 1 - Title and Dashboard Overview */}
-        <div className="h-full flex flex-col">
-          {/* Title and Date */}
-          <div className="text-center mb-6">
-            <h1 className="text-xl font-bold text-gray-800 mb-2">
-              {exportConfig.title || "Batelec I Nasugbu Dashboard Report"}
-            </h1>
-            <p className="text-sm text-gray-600">
-              {exportConfig.dateFrom && exportConfig.dateTo 
-                ? `${formatDate(exportConfig.dateFrom)} to ${formatDate(exportConfig.dateTo)}`
-                : `Generated on: ${new Date().toLocaleDateString()}`
-              }
-            </p>
-          </div>
-
-          {/* Header and Description */}
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold text-gray-700 mb-3">
-              {exportConfig.header || "Dashboard Overview"}
-            </h2>
-            <p className="text-sm text-gray-700 leading-relaxed mb-4">
-              {exportConfig.description}
-            </p>
-            
-            {/* Dashboard Screenshot Preview */}
-            {dashboardScreenshot ? (
-              <div className="mb-4" style={{ maxHeight: '120mm', overflow: 'hidden' }}>
-                <img 
-                  src={dashboardScreenshot} 
-                  alt="Dashboard Preview" 
-                  className="w-full h-auto"
-                  style={{ objectFit: 'contain' }}
-                />
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-2 mt-8 pt-4 border-t border-gray-200">
+                  <button
+                    onClick={() => setShowExportModal(false)}
+                    className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-100 shadow-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={performExport}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 shadow-sm"
+                  >
+                    Export
+                  </button>
+                </div>
               </div>
-            ) : (
-              <div className="border border-gray-200 bg-gray-100 p-8 mb-4 text-center">
-                <div className="text-gray-500">Dashboard visual will appear here</div>
-              </div>
-            )}
-          </div>
-
-          {/* Statistics Table Preview */}
-          <div className="flex-grow">
-            <h3 className="text-base font-semibold text-gray-700 mb-3">
-              User Statistics Summary
-            </h3>
-            <div className="border border-gray-200 rounded overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-green-600 text-white">
-                    <th className="px-3 py-2 text-left">KPI</th>
-                    <th className="px-3 py-2 text-left">Count</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    ["Total Users", userStats.totalUsers],
-                    ["Verified Users", userStats.verifiedUsers],
-                    ["Auto Verified", userStats.autoVerified],
-                    ["Manual Verified", userStats.manuallyVerified],
-                    ["Pending Verification", userStats.pendingManual],
-                    ["Unverified Users", userStats.unverified],
-                    ["Rejected Users", userStats.rejected],
-                    ["Basic Users", userStats.basicUsers],
-                    ["News Posts", totalNews],
-                  ].map(([metric, value], index) => (
-                    <tr key={metric} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
-                      <td className="px-3 py-2 border-b border-gray-200">{metric}</td>
-                      <td className="px-3 py-2 border-b border-gray-200">{value}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
-          </div>
+             ) : (
+                      // PDF Modal with Preview
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
+                      <div className="bg-green-600 py-3 px-6">
+                    <h3 className="text-lg font-semibold text-white">Export Dashboard Data</h3>
+                  </div>
+                      <div className="flex">
+                        {/* Left Panel - Configuration */}
+                        <div className="w-1/3 border-r border-gray-200">
+                        <div className="p-6 overflow-y-auto max-h-[calc(90vh-60px)]">
+                          <div className="space-y-4">
+                            {/* Configuration Section */}
+                            <div>
+                              <h4 className="text-sm font-semibold text-blue-600 uppercase tracking-wide mb-3">CONFIGURATION</h4>
+                              
+                              {/* Date Range - Compact inline layout */}
+                              <div className="flex gap-2 items-center mb-4">
+                                <input
+                                  type="date"
+                                  value={exportConfig.dateFrom}
+                                  onChange={(e) => setExportConfig(prev => ({ ...prev, dateFrom: e.target.value }))}
+                                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                                />
+                                <span className="text-xs text-gray-500">to</span>
+                                <input
+                                  type="date"
+                                  value={exportConfig.dateTo}
+                                  onChange={(e) => setExportConfig(prev => ({ ...prev, dateTo: e.target.value }))}
+                                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                                />
+                              </div>
 
-          {/* Optional AI Summary Preview */}
-          {isAISummaryEnabled && (
-            <div className="mt-6">
-              <h3 className="text-base font-semibold text-gray-700 mb-3">AI Summary</h3>
-              <div className="border border-gray-200 rounded p-3 bg-gray-50 text-sm whitespace-pre-wrap">
-                {isSummarizing ? (
-                  <span className="text-gray-600">Generating summary…</span>
-                ) : aiSummary ? (
-                  aiSummary
-                ) : summaryError ? (
-                  <span className="text-red-600">{summaryError}</span>
-                ) : (
-                  <span className="text-gray-500">Enable to include an AI-generated overview.</span>
+                              {/* Title */}
+                              <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                                <input
+                                  type="text"
+                                  value={exportConfig.title}
+                                  onChange={(e) => setExportConfig(prev => ({ ...prev, title: e.target.value }))}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                                  placeholder="Enter Title"
+                                />
+                              </div>
+
+                              {/* Header */}
+                              <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Header</label>
+                                <input
+                                  type="text"
+                                  value={exportConfig.header}
+                                  onChange={(e) => setExportConfig(prev => ({ ...prev, header: e.target.value }))}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                                  placeholder="Enter Header"
+                                />
+                              </div>
+
+                              {/* Description */}
+                              <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                <textarea
+                                  value={exportConfig.description}
+                                  onChange={(e) => setExportConfig(prev => ({ ...prev, description: e.target.value }))}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                                  placeholder="Enter Description"
+                                  rows={3}
+                                />
+                              </div>
+
+                              {/* Include AI Summary - Position below description */}
+                              <div className="mb-4">
+                                <label className="flex items-center gap-2 text-sm">
+                                  <input
+                                    type="checkbox"
+                                    checked={isAISummaryEnabled}
+                                    onChange={(e) => {
+                                      setIsAISummaryEnabled(e.target.checked);
+                                      if (e.target.checked && !aiSummary && !isSummarizing) {
+                                        fetchAISummary();
+                                      }
+                                    }}
+                                    className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                                  />
+                                  <span className="text-gray-700">Include AI Summary</span>
+                                </label>
+                                {isSummarizing && (
+                                  <div className="text-xs text-gray-500 mt-1 ml-6">Generating summary...</div>
+                                )}
+                                {summaryError && (
+                                  <div className="text-xs text-red-500 mt-1 ml-6">
+                                    Failed to generate summary. 
+                                    <button onClick={fetchAISummary} className="underline ml-1">Retry</button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* File Name */}
+                            <div className="mt-6">
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                File Name
+                              </label>
+                              <input
+                                type="text"
+                                value={fileName}
+                                onChange={(e) => setFileName(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                                placeholder="Enter file name"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">
+                                File will be saved as: {fileName}.{exportType}
+                              </p>
+                            </div>
+
+                            <p className="text-gray-700 mt-4">
+                              Export format: <strong>{exportType?.toUpperCase()}</strong>
+                            </p>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex justify-end gap-2 mt-8 pt-4 border-t border-gray-200">
+                            <button
+                              onClick={() => setShowExportModal(false)}
+                              className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-100 shadow-sm"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={performExport}
+                              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 shadow-sm"
+                              disabled={isExportingPDF}
+                            >
+                              {isExportingPDF ? (
+                                <div className="flex items-center">
+                                  <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
+                                  Exporting... ({exportProgress}%)
+                                </div>
+                              ) : (
+                                "Export"
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                    {/* Right Panel - Preview */}
+                    <div className="flex-1">
+                      <div className="p-6 overflow-y-auto max-h-[calc(90vh-60px)]">
+                        <div className="mb-4">
+                          <h5 className="text-sm font-medium text-gray-700">Preview</h5>
+                        </div>
+                        
+                        {/* Page 1 - Title and Dashboard Overview */}
+                        <div className="bg-white border border-gray-300 shadow-lg mx-auto mb-6" style={{ width: '210mm', height: '297mm', padding: '20mm' }}>
+                          <div className="h-full flex flex-col">
+                            {/* Title and Date */}
+                            <div className="text-center mb-6">
+                              <h1 className="text-xl font-bold text-gray-800 mb-2">
+                                {exportConfig.title || "Batelec I Nasugbu Dashboard Report"}
+                              </h1>
+                              <p className="text-sm text-gray-600">
+                                {exportConfig.dateFrom && exportConfig.dateTo 
+                                  ? `${formatDate(exportConfig.dateFrom)} to ${formatDate(exportConfig.dateTo)}`
+                                  : `Generated on: ${new Date().toLocaleDateString()}`
+                                }
+                              </p>
+                            </div>
+
+                            {/* Header and Description */}
+                            <div className="mb-4">
+                              <h2 className="text-lg font-semibold text-gray-700 mb-3">
+                                {exportConfig.header || "Dashboard Overview"}
+                              </h2>
+                              <p className="text-sm text-gray-700 leading-relaxed mb-4">
+                                {exportConfig.description}
+                              </p>
+                              
+                              {/* Dashboard Screenshot Preview */}
+                              {dashboardScreenshot ? (
+                                <div className="mb-4" style={{ maxHeight: '120mm', overflow: 'hidden' }}>
+                                  <img 
+                                    src={dashboardScreenshot} 
+                                    alt="Dashboard Preview" 
+                                    className="w-full h-auto"
+                                    style={{ objectFit: 'contain' }}
+                                  />
+                                </div>
+                              ) : (
+                                <div className="border border-gray-200 bg-gray-100 p-8 mb-4 text-center">
+                                  <div className="text-gray-500">Dashboard visual will appear here</div>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Page Number */}
+                            <div className="text-center text-xs text-gray-500 mt-auto">
+                              Page 1 of {isAISummaryEnabled ? Math.ceil(allUsers.length / 15) + 4 : Math.ceil(allUsers.length / 15) + 3}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* AI Summary Page Preview - Only show if enabled (Page 2) */}
+                        {isAISummaryEnabled && (
+                          <div className="bg-white border border-gray-300 shadow-lg mx-auto mb-6" style={{ width: '210mm', height: '297mm', padding: '20mm' }}>
+                            <div className="h-full flex flex-col">
+                              <h2 className="text-lg font-semibold text-gray-700 mb-4">AI Summary</h2>
+                              <div className="flex-grow">
+                                {isSummarizing ? (
+                                  <div className="flex items-center justify-center h-32">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-600 mr-3"></div>
+                                    <span className="text-gray-600">Generating AI summary...</span>
+                                  </div>
+                                ) : aiSummary ? (
+                                  <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                    {aiSummary}
+                                  </div>
+                                ) : summaryError ? (
+                                  <div className="bg-red-50 border border-red-200 rounded p-4">
+                                    <span className="text-red-600">Failed to generate AI summary</span>
+                                  </div>
+                                ) : (
+                                  <div className="bg-gray-50 border border-gray-200 rounded p-4">
+                                    <span className="text-gray-500">AI summary will be generated when enabled</span>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Page Number */}
+                              <div className="text-center text-xs text-gray-500 mt-4">
+                                Page 2 of {Math.ceil(allUsers.length / 15) + 4}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Statistics Table Preview (Page 2 or 3 depending on AI summary) */}
+                        <div className="bg-white border border-gray-300 shadow-lg mx-auto mb-6" style={{ width: '210mm', height: '297mm', padding: '20mm' }}>
+                          <div className="h-full flex flex-col">
+                            <h3 className="text-base font-semibold text-gray-700 mb-3">
+                              User Statistics Summary
+                            </h3>
+                            <div className="flex-grow">
+                              <div className="border border-gray-200 rounded overflow-hidden">
+                                <table className="w-full text-sm">
+                                  <thead>
+                                    <tr className="bg-green-600 text-white">
+                                      <th className="px-3 py-2 text-left">KPI</th>
+                                      <th className="px-3 py-2 text-left">Count</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {[
+                                      ["Total Users", userStats.totalUsers],
+                                      ["Verified Users", userStats.verifiedUsers],
+                                      ["Auto Verified", userStats.autoVerified],
+                                      ["Manual Verified", userStats.manuallyVerified],
+                                      ["Pending Verification", userStats.pendingManual],
+                                      ["Unverified Users", userStats.unverified],
+                                      ["Rejected Users", userStats.rejected],
+                                      ["Basic Users", userStats.basicUsers],
+                                      ["News Posts", totalNews],
+                                    ].map(([metric, value], index) => (
+                                      <tr key={metric} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+                                        <td className="px-3 py-2 border-b border-gray-200">{metric}</td>
+                                        <td className="px-3 py-2 border-b border-gray-200">{value}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                            
+                            {/* Page Number */}
+                            <div className="text-center text-xs text-gray-500 mt-4">
+                              Page {isAISummaryEnabled ? 3 : 2} of {isAISummaryEnabled ? Math.ceil(allUsers.length / 15) + 4 : Math.ceil(allUsers.length / 15) + 3}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Device Distribution Breakdown Preview (Page 4) */}
+                        <div className="bg-white border border-gray-300 shadow-lg mx-auto mb-6" style={{ width: '210mm', height: '297mm', padding: '20mm' }}>
+                          <div className="h-full flex flex-col">
+                            <h3 className="text-base font-semibold text-gray-700 mb-3">
+                              Device Distribution Breakdown
+                            </h3>
+                            <div className="flex-grow">
+                              <div className="border border-gray-200 rounded overflow-hidden">
+                                <table className="w-full text-sm">
+                                  <thead>
+                                    <tr className="bg-green-600 text-white">
+                                      <th className="px-3 py-2 text-left">Appliance</th>
+                                      <th className="px-3 py-2 text-left">Count</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {fullDeviceList.map((device, index) => (
+                                      <tr key={device.name} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+                                        <td className="px-3 py-2 border-b border-gray-200">{device.name}</td>
+                                        <td className="px-3 py-2 border-b border-gray-200">{device.value}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                            
+                            {/* Page Number */}
+                            <div className="text-center text-xs text-gray-500 mt-4">
+                              Page {isAISummaryEnabled ? 4 : 3} of {isAISummaryEnabled ? Math.ceil(allUsers.length / 15) + 4 : Math.ceil(allUsers.length / 15) + 3}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                     </div>
+                    </div>
+                  </div>
                 )}
               </div>
-            </div>
-          )}
-
-          {/* Page Number */}
-          <div className="text-center text-xs text-gray-500 mt-4">
-            Page 1 of {Math.ceil(allUsers.length / 15) + 1}
-          </div>
-        </div>
+            )}
+          </>
+        )}
       </div>
-    </div>
-  </div>
-</div>
-              )}
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
-};
+    );
+  };
 
-export default Dashboard;
+  export default Dashboard;
