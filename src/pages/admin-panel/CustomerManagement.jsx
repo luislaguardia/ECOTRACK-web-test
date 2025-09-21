@@ -309,104 +309,114 @@ const CustomerManagement = () => {
           </div>
         </div>
       ) : (
-        /* Table */
-       <div
-            className={`overflow-x-auto bg-white rounded-lg shadow border border-gray-200 ${
-              filtered.length > 10 ? "max-h-[600px] overflow-y-auto" : ""
-            }`}
-            style={{ width: "1075px", maxWidth: "100%" }}
+        /* Flexible Width Table Structure */
+        <div className="flex justify-start w-full">
+          <div 
+            className="bg-white rounded-lg shadow border border-gray-200 flex-grow" 
+            style={{ 
+              minWidth: "1075px", 
+              maxWidth: "calc(100vw - 200px)", // Accounts for sidebar space
+              width: "max(1075px, 70vw)" // Grows with viewport when zoomed out
+            }}
           >
-                  <div className="w-[1075px] overflow-hidden bg-white rounded-lg shadow border border-gray-200">
-                    <div className="overflow-x-auto bg-white rounded-lg shadow border border-gray-200">
-                      <table className="w-full text-sm min-w-[1070px]">
-                        <colgroup>
-                          <col className="w-[120px]" />
-                          <col className="w-[150px]" />
-                          <col className="w-[120px]" />
-                          <col className="w-[100px]" />
-                          <col className="w-[120px]" />
-                          <col className="w-[120px]" />
-                          <col className="w-[100px]" />
-                          <col className="w-[120px]" />
-                          <col className="w-[130px]" />
-                          <col className="w-[140px]" />
-                        </colgroup>
-                        <thead className="bg-[#F5F5F5] border-b border-gray-200">
-                          <tr>
-                            <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap">Account No.</th>
-                            <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap">Customer Name</th>
-                            <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap">Barangay</th>
-                            <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap">Meter No.</th>
-                            <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap">Previous kWh</th>
-                            <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap">Current kWh</th>
-                            <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap">Total kWh</th>
-                            <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap">Reading Date</th>
-                            <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap">Consumer Type</th>
-                            <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap">Tracking Period</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                          {filtered.length > 0 ? (
-                            filtered.map((account) => (
-                              <tr key={account._id} className="hover:bg-gray-50">
-                                <td className="px-4 py-4 font-medium whitespace-nowrap">
-                                  {account.accountNumber || '-'}
-                                </td>
-                                <td className="px-4 py-4 whitespace-nowrap">
-                                  {account.customerName || '-'}
-                                </td>
-                                <td className="px-4 py-4 whitespace-nowrap">{account.barangay || account.address || '-'}</td>
-                                <td className="px-4 py-4 whitespace-nowrap">{account.meterNumber || '-'}</td>
-                                <td className="px-4 py-4 whitespace-nowrap">
-                                  {account.latestReading?.previousReading || '-'}
-                                </td>
-                                <td className="px-4 py-4 whitespace-nowrap">
-                                  {account.latestReading?.currentReading || '-'}
-                                </td>
-                                <td className="px-4 py-4 whitespace-nowrap">
-                                  {account.latestReading?.totalMonthlyKwh || '-'}
-                                </td>
-                                <td className="px-4 py-4 whitespace-nowrap">
-                                  {formatDate(account.latestReading?.readingDate)}
-                                </td>
-                                <td className="px-4 py-4 whitespace-nowrap capitalize">
-                                  {account.consumerType || 'residential'}
-                                </td>
-                                <td className="px-4 py-4 whitespace-nowrap">
-                                  {account.latestReading?.trackingPeriod || '-'}
-                                </td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr>
-                              <td colSpan="10" className="px-6 py-12 text-center">
-                                {batelecAccounts.length === 0 ? (
-                                  <div className="flex flex-col items-center">
-                                    <FiFile className="h-12 w-12 text-gray-300 mb-4" />
-                                    <p className="text-lg font-medium text-gray-400 mb-2">No BATELEC accounts available</p>
-                                    <p className="text-sm text-gray-400">Upload a CSV file to get started</p>
-                                  </div>
-                                ) : (
-                                  <p className="text-gray-500">No results found for your search</p>
-                                )}
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                  </div>
-                )}
-          {/* Horizontal scroll indicator */}
-            <div className="flex justify-center mt-2">
-              <div className="flex items-center text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                <FiArrowRight className="mr-1 animate-pulse" />
-                Scroll horizontally to view all columns
-                <FiArrowLeft className="ml-1 animate-pulse" />
-              </div>
+            <div className={`overflow-auto ${filtered.length > 10 ? "max-h-[600px]" : ""}`}>
+              <table className="w-full text-sm table-auto" style={{ minWidth: "1070px" }}>
+                <colgroup>
+                  <col style={{ minWidth: "120px", width: "12%" }} />
+                  <col style={{ minWidth: "150px", width: "15%" }} />
+                  <col style={{ minWidth: "120px", width: "12%" }} />
+                  <col style={{ minWidth: "100px", width: "10%" }} />
+                  <col style={{ minWidth: "120px", width: "12%" }} />
+                  <col style={{ minWidth: "120px", width: "12%" }} />
+                  <col style={{ minWidth: "100px", width: "10%" }} />
+                  <col style={{ minWidth: "120px", width: "12%" }} />
+                  <col style={{ minWidth: "130px", width: "13%" }} />
+                  <col style={{ minWidth: "140px", width: "14%" }} />
+                </colgroup>
+                <thead className="bg-[#F5F5F5] border-b border-gray-200 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-3 py-3 text-left font-bold text-gray-500 whitespace-nowrap">Account No.</th>
+                    <th className="px-3 py-3 text-left font-bold text-gray-500 whitespace-nowrap">Customer Name</th>
+                    <th className="px-3 py-3 text-left font-bold text-gray-500 whitespace-nowrap">Barangay</th>
+                    <th className="px-3 py-3 text-left font-bold text-gray-500 whitespace-nowrap">Meter No.</th>
+                    <th className="px-3 py-3 text-left font-bold text-gray-500 whitespace-nowrap">Previous kWh</th>
+                    <th className="px-3 py-3 text-left font-bold text-gray-500 whitespace-nowrap">Current kWh</th>
+                    <th className="px-3 py-3 text-left font-bold text-gray-500 whitespace-nowrap">Total kWh</th>
+                    <th className="px-3 py-3 text-left font-bold text-gray-500 whitespace-nowrap">Reading Date</th>
+                    <th className="px-3 py-3 text-left font-bold text-gray-500 whitespace-nowrap">Consumer Type</th>
+                    <th className="px-3 py-3 text-left font-bold text-gray-500 whitespace-nowrap">Tracking Period</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filtered.length > 0 ? (
+                    filtered.map((account) => (
+                      <tr key={account._id} className="hover:bg-gray-50">
+                        <td className="px-4 py-4 font-medium whitespace-nowrap">
+                          {account.accountNumber || '-'}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          {account.customerName || '-'}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">{account.barangay || account.address || '-'}</td>
+                        <td className="px-4 py-4 whitespace-nowrap">{account.meterNumber || '-'}</td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          {account.latestReading?.previousReading !== undefined 
+                            ? Number(account.latestReading.previousReading)
+                            : '-'}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          {account.latestReading?.currentReading !== undefined 
+                            ? Number(account.latestReading.currentReading)
+                            : '-'}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          {account.latestReading?.totalMonthlyKwh !== undefined 
+                            ? Number(account.latestReading.totalMonthlyKwh).toFixed(2) 
+                            : '-'}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          {formatDate(account.latestReading?.readingDate)}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap capitalize">
+                          {account.consumerType || 'residential'}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          {account.latestReading?.trackingPeriod || '-'}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="10" className="px-6 py-12 text-center">
+                        {batelecAccounts.length === 0 ? (
+                          <div className="flex flex-col items-center">
+                            <FiFile className="h-12 w-12 text-gray-300 mb-4" />
+                            <p className="text-lg font-medium text-gray-400 mb-2">No BATELEC accounts available</p>
+                            <p className="text-sm text-gray-400">Upload a CSV file to get started</p>
+                          </div>
+                        ) : (
+                          <p className="text-gray-500">No results found for your search</p>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
+          </div>
+        </div>
+      )}
 
+      <div>
+        {/* Horizontal scroll indicator */}
+        <div className="flex justify-center mt-2">
+          <div className="flex items-center text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+            <FiArrowRight className="mr-1 animate-pulse" />
+            Scroll horizontally to view all columns
+            <FiArrowLeft className="ml-1 animate-pulse" />
+          </div>
+        </div>
+      </div>
 
       {/* Upload Modal */}
       {isModalOpen && (

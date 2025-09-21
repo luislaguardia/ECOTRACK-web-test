@@ -1026,7 +1026,7 @@ const addAISummary = (doc, contentWidth, pageHeight) => {
                                     }}
                                     className="rounded border-gray-300 text-green-600 focus:ring-green-500"
                                   />
-                                  <span className="text-gray-700">Include AI Summary</span>
+                                  <span className="text-gray-700">Include Summary (AI Generated)</span>
                                 </label>
                                 {isSummarizing && (
                                   <div className="text-xs text-gray-500 mt-1 ml-6">Generating summary...</div>
@@ -1148,7 +1148,7 @@ const addAISummary = (doc, contentWidth, pageHeight) => {
                         {isAISummaryEnabled && (
                           <div className="bg-white border border-gray-300 shadow-lg mx-auto mb-6" style={{ width: '210mm', height: '297mm', padding: '20mm' }}>
                             <div className="h-full flex flex-col">
-                              <h2 className="text-lg font-semibold text-gray-700 mb-4">AI Summary</h2>
+                              <h2 className="text-lg font-semibold text-gray-700 mb-4">Summary</h2>
                               <div className="flex-grow">
                                 {isSummarizing ? (
                                   <div className="flex items-center justify-center h-32">
