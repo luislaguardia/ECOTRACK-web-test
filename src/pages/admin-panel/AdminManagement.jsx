@@ -431,7 +431,7 @@ const saveEdit = async (id) => {
           }`}
         >
           <table className="min-w-full text-sm table-fixed">
-            <thead className="bg-[#F5F5F5] border-b border-gray-200">
+            <thead className="bg-[#F5F5F5] border-b border-gray-200 sticky top-0 z-10">
               <tr>
                 <th className="px-6 py-3 text-left font-bold text-gray-500">#</th>
                 <th className="px-6 py-3 text-left font-bold text-gray-500">Username</th>

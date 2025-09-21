@@ -162,10 +162,10 @@ const VerifiedUser = () => {
                 filteredUsers.map((user) => (
                   <tr key={user._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">{user.accountNumber || "-"}</td>
-                    <td className="px-6 py-4">{user.name || "-"}</td>
+                    <td className="px-6 py-4">{user.name && user.name !== 'null' ? user.name : "-"}</td>
                     <td className="px-6 py-4">{user.username || "-"}</td>
-                    <td className="px-6 py-4">{user.barangay || "-"}</td>
-                    <td className="px-6 py-4">{user.phone || "-"}</td>
+                    <td className="px-6 py-4">{user.barangay && user.barangay !== 'null' ? user.barangay : "-"}</td>
+                    <td className="px-6 py-4">{user.phone && user.phone !== 'null' ? user.phone : "-"}</td>
                     <td className="px-6 py-4">{user.email || "-"}</td>
                     <td className="px-6 py-4">{formatDate(user.createdAt)}</td>
                     <td className="px-6 py-4">{getVerificationBadge(user)}</td>

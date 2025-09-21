@@ -23,6 +23,8 @@ const Users = () => {
     verificationFilter: "",
     userTypeFilter: "",
     selectedBarangay: "",
+    rejectionFilter: "", // For filtering Rejected/Final vs Review users
+    activeFilter: "", // For filtering Manually Verified vs Auto Verified users
     
     // Modal states
     showViewModal: false,
@@ -62,6 +64,15 @@ const Users = () => {
         ...(state.verificationFilter && state.activeTab !== 'pending' && state.activeTab !== 'rejected' && state.activeTab !== 'active' && { verificationStatus: state.verificationFilter }),
         ...(state.userTypeFilter && { userType: state.userTypeFilter }),
         ...(state.selectedBarangay && { barangay: state.selectedBarangay }),
+        ...(state.rejectionFilter && state.activeTab === 'rejected' && { verificationStatus: state.rejectionFilter }),
+        ...(state.activeFilter && state.activeTab === 'active' && { verificationStatus: state.activeFilter }),
+      });
+
+      // Debug logging
+      console.log('🔍 Frontend API call params:', {
+        activeTab: state.activeTab,
+        rejectionFilter: state.rejectionFilter,
+        verificationStatus: state.rejectionFilter && state.activeTab === 'rejected' ? state.rejectionFilter : undefined
       });
 
       const res = await axios.get(`${BASE_URL}/api/users?${params.toString()}`, {
@@ -637,7 +648,7 @@ const RejectionModal = ({ show, onClose, user, onContinue }) => {
         <div className="bg-gray-50 p-4 mb-4 rounded-md border border-gray-200">
           <h3 className="font-semibold text-gray-800 mb-1">User Information</h3>
           <div className="grid grid-cols-2 gap-x-1 gap-y-1 text-sm">
-            <div><span className="font-medium">Name:</span> {user.fullName || user.name || "-"}</div>
+            <div><span className="font-medium">Name:</span> {(user.fullName && user.fullName !== 'null') || (user.name && user.name !== 'null') ? (user.fullName || user.name) : "-"}</div>
             <div><span className="font-medium">Email:</span> {user.email && !user.email.startsWith('nullified_') ? user.email : <span className="text-orange-600 italic">Email Removed</span>}</div>
             <div><span className="font-medium">Reference ID:</span> {user.referenceId}</div>
             <div><span className="font-medium">Consumer Type:</span> 
@@ -836,8 +847,8 @@ const ConfirmRejectionModal = ({ 
         <div className="bg-gray-50 border border-gray-200 rounded p-4 text-left">
           <h4 className="font-semibold text-gray-800 mb-3">Request Details:</h4>
           <div className="space-y-1 text-sm">
-            <div><span className="font-medium">User:</span> {user.fullName || user.name || "-"} ({user.email && !user.email.startsWith('nullified_') ? user.email : 'Email Removed'})</div>
-            <div><span className="font-medium">Account:</span> {user.accountNumber || "N/A"}</div>
+            <div><span className="font-medium">User:</span> {(user.fullName && user.fullName !== 'null') || (user.name && user.name !== 'null') ? (user.fullName || user.name) : "-"} ({user.email && !user.email.startsWith('nullified_') ? user.email : 'Email Removed'})</div>
+            <div><span className="font-medium">Account:</span> {user.accountNumber && user.accountNumber !== 'null' ? user.accountNumber : "N/A"}</div>
             <div><span className="font-medium">Date:</span> {currentDate}</div>
           </div>
         </div>
@@ -975,7 +986,7 @@ const AccountLinkingModal = ({ 
             <div className="grid grid-cols-2 gap-x-1 gap-y-1 text-sm">
               <div>
                 <span className="text-gray-600">Name:</span> 
-                <span className="ml-2 text-gray-900">{user.fullName || user.name || "-"}</span>
+                <span className="ml-2 text-gray-900">{(user.fullName && user.fullName !== 'null') || (user.name && user.name !== 'null') ? (user.fullName || user.name) : "-"}</span>
               </div>
               <div>
                 <span className="text-gray-600">Reference ID:</span> 
@@ -994,7 +1005,7 @@ const AccountLinkingModal = ({ 
               {user.barangay && (
                 <div>
                   <span className="text-gray-600">Barangay:</span> 
-                  <span className="ml-2 text-gray-900">{user.barangay || "-"}</span>
+                  <span className="ml-2 text-gray-900">{user.barangay && user.barangay !== 'null' ? user.barangay : "-"}</span>
                 </div>
               )}
               {user.requestedDate && (
@@ -1089,7 +1100,7 @@ const AccountLinkingModal = ({ 
                     <span className="font-medium">Account Selected</span>
                   </div>
                   <div className="text-sm text-green-700 mt-1">
-                    This account will be linked to {user.fullName || user.name || "-"}'s profile upon approval.
+                    This account will be linked to {(user.fullName && user.fullName !== 'null') || (user.name && user.name !== 'null') ? (user.fullName || user.name) : "-"}'s profile upon approval.
                   </div>
                 </div>
               )}
@@ -1218,7 +1229,7 @@ const AccountLinkingConfirmation = ({ 
 
 
             <div className="font-semibold text-lg text-gray-600 mb-1">
-              {user.fullName || user.name || "-"}
+              {(user.fullName && user.fullName !== 'null') || (user.name && user.name !== 'null') ? (user.fullName || user.name) : "-"}
             </div>
             <div className="text-sm text-gray-600">
               {user.email && !user.email.startsWith('nullified_') ? user.email : <span className="text-orange-600 italic">Email Removed</span>}
@@ -1308,7 +1319,7 @@ const AccountLinkingConfirmation = ({ 
   useEffect(() => {
     fetchUsers();
     fetchUserStatistics();
-  }, [state.currentPage, state.search, state.verificationFilter, state.userTypeFilter, state.selectedBarangay, state.activeTab]);
+  }, [state.currentPage, state.search, state.verificationFilter, state.userTypeFilter, state.selectedBarangay, state.activeTab, state.rejectionFilter, state.activeFilter]);
 
   // Format date
   const formatDate = (dateString) => {
@@ -1331,6 +1342,16 @@ const AccountLinkingConfirmation = ({ 
   const typeOptions = [
     { value: "new", label: "New" },
     { value: "existing", label: "Existing" }
+  ];
+
+  const rejectionOptions = [
+    { value: "rejected_final", label: "Rejected/Final" },
+    { value: "rejected_review", label: "Rejected/Review" }
+  ];
+
+  const activeOptions = [
+    { value: "manually_verified", label: "Manually Verified" },
+    { value: "auto_verified", label: "Auto Verified" }
   ];
 
   const barangayOptions = barangaysInNasugbu.map(b => ({ value: b, label: b }));
@@ -1375,7 +1396,11 @@ const AccountLinkingConfirmation = ({ 
                     activeTab: tab, 
                     currentPage: 1,
                     // Clear verification filter when switching to active tab since it only shows verified users
-                    verificationFilter: tab === 'active' ? '' : prev.verificationFilter
+                    verificationFilter: tab === 'active' ? '' : prev.verificationFilter,
+                    // Clear rejection filter when switching away from rejected tab
+                    rejectionFilter: tab === 'rejected' ? prev.rejectionFilter : '',
+                    // Clear active filter when switching away from active tab
+                    activeFilter: tab === 'active' ? prev.activeFilter : ''
                   }))}
                   className={`px-6 py-2 capitalize ${
                     state.activeTab === tab 
@@ -1412,6 +1437,34 @@ const AccountLinkingConfirmation = ({ 
                   className="min-w-[140px]"
                 />
               </>
+            )}
+
+            {/* Show rejection filter only on rejected tab */}
+            {state.activeTab === 'rejected' && (
+              <FilterSelect
+                value={state.rejectionFilter}
+                onChange={(value) => {
+                  console.log('🔍 Rejection filter changed to:', value);
+                  setState(prev => ({ ...prev, rejectionFilter: value, currentPage: 1 }));
+                }}
+                options={rejectionOptions}
+                placeholder="All Rejected Users"
+                className="min-w-[180px]"
+              />
+            )}
+
+            {/* Show active filter only on active tab */}
+            {state.activeTab === 'active' && (
+              <FilterSelect
+                value={state.activeFilter}
+                onChange={(value) => {
+                  console.log('🔍 Active filter changed to:', value);
+                  setState(prev => ({ ...prev, activeFilter: value, currentPage: 1 }));
+                }}
+                options={activeOptions}
+                placeholder="All Active Users"
+                className="min-w-[180px]"
+              />
             )}
           </div>
 
@@ -1451,13 +1504,13 @@ const AccountLinkingConfirmation = ({ 
                 {state.users.length > 0 ? state.users.map((user, index) => (
                   <tr key={user._id} className="hover:bg-gray-50 align-middle">
                     <td className="px-3 py-4 text-sm">{((state.currentPage - 1) * usersPerPage) + index + 1}</td>
-                    <td className="px-3 py-4 text-sm font-medium">{user.fullName || user.name || "-"}</td>
+                    <td className="px-3 py-4 text-sm font-medium">{(user.fullName && user.fullName !== 'null') || (user.name && user.name !== 'null') ? (user.fullName || user.name) : "-"}</td>
                     <td className="px-3 py-4 text-sm text-gray-600">
                       {user.email && !user.email.startsWith('nullified_') ? user.email : (
                         <span className="text-orange-600 italic">Email Removed</span>
                       )}
                     </td>
-                    <td className="px-3 py-4 text-sm">{user.accountNumber || "N/A"}</td>
+                    <td className="px-3 py-4 text-sm">{user.accountNumber && user.accountNumber !== 'null' ? user.accountNumber : "N/A"}</td>
                     <td className="px-3 py-4">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         user.accountNumber ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
@@ -1465,7 +1518,7 @@ const AccountLinkingConfirmation = ({ 
                         {user.accountNumber ? 'Existing' : 'New'}
                       </span>
                     </td>
-                    <td className="px-3 py-4 text-sm">{user.barangay || "-"}</td>
+                    <td className="px-3 py-4 text-sm">{user.barangay && user.barangay !== 'null' ? user.barangay : "-"}</td>
                     <td className="px-3 py-4">
                       <StatusBadge status={user.verificationStatus} />
                     </td>
@@ -1918,7 +1971,7 @@ const AccountLinkingConfirmation = ({ 
               Are you sure you want to {state.activeTab === "active" ? "archive" : "restore"} this user?
             </h3>
             <p className="text-gray-600">
-              <span className="font-medium">{state.userToDelete && (state.userToDelete.fullName || state.userToDelete.name)}</span>
+              <span className="font-medium">{state.userToDelete && ((state.userToDelete.fullName && state.userToDelete.fullName !== 'null') || (state.userToDelete.name && state.userToDelete.name !== 'null')) ? (state.userToDelete.fullName || state.userToDelete.name) : "-"}</span>
               {state.userToDelete && state.userToDelete.email && !state.userToDelete.email.startsWith('nullified_') && (
                 <span className="text-gray-500"> ({state.userToDelete.email})</span>
               )}

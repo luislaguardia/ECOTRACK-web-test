@@ -87,7 +87,7 @@ const UserDetails = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6 font-inter text-[15px] text-gray-700">
             <div>
               <p className="text-sm font-medium text-gray-500 mb-1">Name</p>
-              <p className="text-lg font-semibold text-gray-800">{user.name}</p>
+              <p className="text-lg font-semibold text-gray-800">{user.name && user.name !== 'null' ? user.name : "-"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500 mb-1">Email</p>
@@ -95,11 +95,11 @@ const UserDetails = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500 mb-1">Phone</p>
-              <p className="text-lg font-semibold text-gray-800">{user.phone || "N/A"}</p>
+              <p className="text-lg font-semibold text-gray-800">{user.phone && user.phone !== 'null' ? user.phone : "N/A"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500 mb-1">Barangay</p>
-              <p className="text-lg font-semibold text-gray-800">{user.barangay || "N/A"}</p>
+              <p className="text-lg font-semibold text-gray-800">{user.barangay && user.barangay !== 'null' ? user.barangay : "N/A"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500 mb-1">Status</p>
