@@ -112,22 +112,23 @@ const Users = () => {
     }
   };
 
-  const fetchBatelecAccounts = async () => {
-    try {
-      setState(prev => ({ ...prev, isLoadingAccounts: true }));
-      const token = localStorage.getItem("token");
-      const res = await axios.get(`${BASE_URL}/api/batelec/accounts`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setState(prev => ({
-        ...prev,
-        batelecAccounts: res.data || [],
-        isLoadingAccounts: false
-      }));
-    } catch (err) {
-      console.error("Error fetching BATELEC accounts:", err);
-      setState(prev => ({ ...prev, batelecAccounts: [], isLoadingAccounts: false }));
-    }
+  const fetchBatelecAccounts = async () => {
+    try {
+      setState(prev => ({ ...prev, isLoadingAccounts: true }));
+      const token = localStorage.getItem("token");
+      // Only fetch unlinked accounts for account linking modal
+      const res = await axios.get(`${BASE_URL}/api/batelec/accounts?unlinkedOnly=true`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setState(prev => ({
+        ...prev,
+        batelecAccounts: res.data || [],
+        isLoadingAccounts: false
+      }));
+    } catch (err) {
+      console.error("Error fetching BATELEC accounts:", err);
+      setState(prev => ({ ...prev, batelecAccounts: [], isLoadingAccounts: false }));
+    }
   };
 
   // Helper functions
@@ -918,19 +919,21 @@ const AccountLinkingModal = ({ 
   const [filteredAccounts, setFilteredAccounts] = useState([]);
   const [showConfirmation, setShowConfirmation] = useState(false);
 
-  useEffect(() => {
-    const filtered = batelecAccounts.filter(account => 
-      !account.isRegistered && (
-        account.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        account.accountNumber?.includes(searchQuery) ||
-        account.meterNumber?.includes(searchQuery)
-      ) && (
-        !selectedBarangay || 
-        (account.barangay && account.barangay.toLowerCase() === selectedBarangay.toLowerCase())
-      )
-    );
-    setFilteredAccounts(filtered);
-  }, [searchQuery, selectedBarangay, batelecAccounts]);
+  useEffect(() => {
+    // Since we're now fetching only unlinked accounts from the backend,
+    // we only need to filter by search query and barangay
+    const filtered = batelecAccounts.filter(account => 
+      (
+        account.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        account.accountNumber?.includes(searchQuery) ||
+        account.meterNumber?.includes(searchQuery)
+      ) && (
+        !selectedBarangay || 
+        (account.barangay && account.barangay.toLowerCase() === selectedBarangay.toLowerCase())
+      )
+    );
+    setFilteredAccounts(filtered);
+  }, [searchQuery, selectedBarangay, batelecAccounts]);
 
   const handleApproveClick = () => {
     if (!selectedAccount && user && !user.accountNumber) return;
