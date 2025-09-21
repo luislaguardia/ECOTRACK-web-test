@@ -182,10 +182,11 @@ const AuditLogs = () => {
                 </div>
              </div>
              <div className="p-4 bg-white border rounded-lg shadow-sm">
-                <h4 className="font-semibold text-slate-800 mb-4 border-b pb-2 flex items-center gap-2"><Briefcase className="w-5 h-5 text-green-500"/>Target Resource</h4>
+                <h4 className="font-semibold text-slate-800 mb-4 border-b pb-2 flex items-center gap-2"><Briefcase className="w-5 h-5 text-green-500"/>Target Module</h4>
                 <div className="space-y-2">
-                    {renderLogField('Type', log.target?.model)}
-                    {renderLogField('Name / ID', log.target?.displayText || log.target?.id)}
+                    {renderLogField('Module', log.target?.model || 'Unknown')}
+                    {renderLogField('Target Name', log.target?.displayText || 'N/A')}
+                    {renderLogField('Target ID', log.target?.id || 'N/A')}
                 </div>
              </div>
              <div className="p-4 bg-white border rounded-lg shadow-sm">
@@ -308,7 +309,9 @@ const AuditLogs = () => {
                     <ActionBadge action={log.action} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                    {log.target?.displayText || log.target?.model}
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {log.target?.model || 'Unknown'}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
                     <button
