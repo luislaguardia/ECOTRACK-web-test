@@ -1419,8 +1419,8 @@ const AccountLinkingConfirmation = ({ 
               ))}
             </div>
 
-            {/* Only show these filters when NOT on the pending/rejected/active tabs */}
-            {state.activeTab !== 'pending' && state.activeTab !== 'rejected' && state.activeTab !== 'active' && (
+            {/* Only show these filters when NOT on the pending/rejected/active/inactive tabs */}
+            {state.activeTab !== 'pending' && state.activeTab !== 'rejected' && state.activeTab !== 'active' && state.activeTab !== 'inactive' && (
               <>
                 <FilterSelect
                   value={state.verificationFilter}
