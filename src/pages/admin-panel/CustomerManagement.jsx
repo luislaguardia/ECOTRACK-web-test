@@ -227,7 +227,7 @@ const CustomerManagement = () => {
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] p-6">
-      <div className="flex justify-between items-center mb-5">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-5">
         <div>
           <h2 className="text-3xl font-semibold text-gray-800">
             Customer Management ({filtered.length})
@@ -238,7 +238,7 @@ const CustomerManagement = () => {
         <button
           onClick={fetchBatelecAccounts}
           disabled={isDataLoading}
-          className="flex items-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 self-start sm:self-auto"
         >
           <FiRefreshCw className={`w-4 h-4 ${isDataLoading ? 'animate-spin' : ''}`} />
           Refresh
@@ -275,10 +275,10 @@ const CustomerManagement = () => {
       )}
 
       {/* Search and Upload Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 flex-wrap mb-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 flex-wrap">
           {/* Search Input */}
-          <div className="relative w-full sm:w-[300px] md:w-[400px]">
+          <div className="relative w-full md:w-[400px]">
             <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
             <input
               type="text"
@@ -290,14 +290,13 @@ const CustomerManagement = () => {
           </div>
         </div>
 
-        {/* Right: Upload Button */}
+        {/* Right: Dropbox Button */}
         <button
           onClick={handleDropboxUpload}
-          className="bg-green-600 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg hover:bg-green-700 self-start sm:self-auto flex items-center gap-2 text-sm sm:text-base"
+          className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 self-start md:self-auto flex items-center gap-2"
         >
           <FiUpload className="w-4 h-4" />
-          <span className="hidden sm:inline">Upload CSV</span>
-          <span className="sm:hidden">Upload</span>
+          Upload CSV
         </button>
       </div>
 
