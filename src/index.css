@@ -36,3 +36,34 @@
 
   --color-grayshade: #DFDFDF;
 }
+
+/* Custom scrollbar styles for table */
+.table-scroll-container::-webkit-scrollbar {
+  height: 12px;
+}
+
+.table-scroll-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 6px;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb {
+  background: #9CA3AF;
+  border-radius: 6px;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #6B7280;
+}
+
+.table-scroll-container {
+  scrollbar-width: auto;
+  scrollbar-color: #9CA3AF #f1f1f1;
+  overflow-x: scroll !important;
+}
+
+/* Force scrollbar to always be visible */
+.table-scroll-container::-webkit-scrollbar {
+  height: 12px !important;
+  display: block !important;
+}

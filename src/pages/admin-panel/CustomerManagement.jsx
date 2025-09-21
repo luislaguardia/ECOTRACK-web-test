@@ -5,12 +5,58 @@ import { BASE_URL } from "../../config";
 
 const CustomerManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [batelecAccounts, setBatelecAccounts] = useState([]);
+  const [batelecAccounts, setBatelecAccounts] = useState([
+    {
+      _id: "1",
+      accountNumber: "ACC001",
+      customerName: "John Doe",
+      barangay: "Poblacion",
+      meterNumber: "MTR001",
+      latestReading: {
+        previousReading: "1500",
+        currentReading: "1650",
+        totalMonthlyKwh: "150",
+        readingDate: "2025-01-15",
+        trackingPeriod: "January 2025"
+      },
+      consumerType: "residential"
+    },
+    {
+      _id: "2", 
+      accountNumber: "ACC002",
+      customerName: "Jane Smith",
+      barangay: "Barangay 1",
+      meterNumber: "MTR002",
+      latestReading: {
+        previousReading: "2300",
+        currentReading: "2480",
+        totalMonthlyKwh: "180",
+        readingDate: "2025-01-16",
+        trackingPeriod: "January 2025"
+      },
+      consumerType: "commercial"
+    },
+    {
+      _id: "3",
+      accountNumber: "ACC003", 
+      customerName: "Robert Johnson",
+      barangay: "Barangay 2",
+      meterNumber: "MTR003",
+      latestReading: {
+        previousReading: "890",
+        currentReading: "1020",
+        totalMonthlyKwh: "130",
+        readingDate: "2025-01-17",
+        trackingPeriod: "January 2025"
+      },
+      consumerType: "residential"
+    }
+  ]);
   const [filtered, setFiltered] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isDataLoading, setIsDataLoading] = useState(true);
+  const [isDataLoading, setIsDataLoading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState("");
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState(""); // 'success' or 'error'
@@ -37,8 +83,10 @@ const CustomerManagement = () => {
   };
 
   useEffect(() => {
-    fetchBatelecAccounts();
-  }, []);
+    // Initialize filtered data with sample data
+    setFiltered(batelecAccounts);
+    // fetchBatelecAccounts();
+  }, [batelecAccounts]);
 
   // Filter data based on search term
   useEffect(() => {
@@ -314,10 +362,12 @@ const CustomerManagement = () => {
           <div 
             className={`table-scroll-container overflow-x-scroll ${filtered.length > 10 ? "max-h-[600px] overflow-y-auto" : ""}`} 
             style={{ 
-              WebkitOverflowScrolling: 'touch'
+              WebkitOverflowScrolling: 'touch',
+              width: '100%',
+              maxWidth: '100%'
             }}
           >
-            <table className="w-full text-sm" style={{ minWidth: '1200px' }}>
+            <table className="text-sm" style={{ minWidth: '1400px', width: '1400px' }}>
               <thead className="bg-[#F5F5F5] border-b border-gray-200">
                 <tr>
                   <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap w-[120px]">Account No.</th>
