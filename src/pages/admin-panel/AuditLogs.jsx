@@ -287,6 +287,7 @@ const AuditLogs = () => {
               <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Actor</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Action</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Target</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Target Name</th>
               <th className="px-6 py-3"></th>
             </tr>
           </thead>
@@ -313,6 +314,9 @@ const AuditLogs = () => {
                       {log.target?.model || 'Unknown'}
                     </span>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                    {log.target?.displayText || 'N/A'}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
                     <button
                       onClick={() => setSelectedLog(log)}
@@ -325,7 +329,7 @@ const AuditLogs = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="px-6 py-12 text-center text-slate-500">
+                <td colSpan="6" className="px-6 py-12 text-center text-slate-500">
                   <h3 className="text-lg font-semibold mb-2">No Logs Found</h3>
                   <p>No audit logs were found matching the current filters.</p>
                 </td>

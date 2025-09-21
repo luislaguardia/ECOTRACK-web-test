@@ -22,28 +22,11 @@ export default function AdminManagement() {
   const [newAdmin, setNewAdmin] = useState({ name: "", email: "" });
   const [newAdminErrors, setNewAdminErrors] = useState({ name: "", email: "" }); // Validation errors for create form
   const [createError, setCreateError] = useState(""); // Specific error for create modal
-  const [activityLogs, setActivityLogs] = useState([]);
-  const [isLoadingLogs, setIsLoadingLogs] = useState(false);
   const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchAdmins();
   }, []);
-
-  const fetchActivityLogs = async () => {
-    setIsLoadingLogs(true);
-    try {
-      const response = await axios.get(`${BASE_URL}/api/audit-logs`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setActivityLogs(response.data.logs || []);
-    } catch (error) {
-      console.error("Error fetching activity logs:", error);
-      showMessage("Failed to fetch activity logs.", "error");
-    } finally {
-      setIsLoadingLogs(false);
-    }
-  };
 
   useEffect(() => {
     const isInactiveTab = activeTab === "inactive";
@@ -425,19 +408,6 @@ const saveEdit = async (id) => {
             >
               Inactive
             </button>
-            <button
-              onClick={() => {
-                setActiveTab("activity");
-                fetchActivityLogs();
-              }}
-              className={`px-6 py-2 ${
-                activeTab === "activity"
-                  ? "bg-green-600 text-white"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              Activity Logs
-            </button>
           </div>
         </div>
 
@@ -453,69 +423,6 @@ const saveEdit = async (id) => {
       {isLoading ? (
         <div className="flex justify-center items-center h-[300px]">
           <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-green-600"></div>
-        </div>
-      ) : activeTab === "activity" ? (
-        // Activity Logs Section
-        <div className="bg-white rounded-lg shadow border border-gray-200">
-          {isLoadingLogs ? (
-            <div className="flex justify-center items-center h-[300px]">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-green-600"></div>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead className="bg-[#F5F5F5] border-b border-gray-200 sticky top-0 z-10">
-                  <tr>
-                    <th className="px-6 py-3 text-left font-bold text-gray-500">Admin</th>
-                    <th className="px-6 py-3 text-left font-bold text-gray-500">Action</th>
-                    <th className="px-6 py-3 text-left font-bold text-gray-500">Module</th>
-                    <th className="px-6 py-3 text-left font-bold text-gray-500">Target Name</th>
-                    <th className="px-6 py-3 text-left font-bold text-gray-500">Details</th>
-                    <th className="px-6 py-3 text-left font-bold text-gray-500">Date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {activityLogs.map((log, index) => (
-                    <tr key={log._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {log.admin?.name || 'Unknown Admin'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
-                          log.action.includes('CREATE') || log.action.includes('APPROVE') || log.action.includes('LINK') ? 'bg-green-100 text-green-800' :
-                          log.action.includes('UPDATE') || log.action.includes('UPLOAD') || log.action.includes('RESTORE') ? 'bg-blue-100 text-blue-800' :
-                          log.action.includes('DELETE') || log.action.includes('REJECT') || log.action.includes('ARCHIVE') || log.action.includes('UNLINK') ? 'bg-red-100 text-red-800' :
-                          log.action.includes('RESET') ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-slate-100 text-slate-800'
-                        }`}>
-                          {log.action.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {log.target?.model || 'Unknown'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {log.target?.displayText || 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                        {log.details || 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(log.createdAt).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {activityLogs.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  No activity logs found.
-                </div>
-              )}
-            </div>
-          )}
         </div>
       ) : (
         // Admin Table Section
