@@ -293,131 +293,134 @@ const CustomerManagement = () => {
           </div>
         </div>
       ) : (
-        <>
-          {/* Table Container - Enhanced scrolling */}
-          <div className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
-            {/* Scroll hint for mobile */}
-            <div className="lg:hidden bg-yellow-50 border-b border-yellow-200 px-4 py-2 text-center">
-              <div className="flex items-center justify-center text-xs text-yellow-700">
-                <FiArrowRight className="mr-1 w-3 h-3" />
-                <span>Scroll right to view all columns</span>
-                <FiArrowLeft className="ml-1 w-3 h-3" />
-              </div>
-            </div>
-
-            <div 
-              className="table-scroll-container overflow-x-auto"
-              style={{ 
-                WebkitOverflowScrolling: 'touch',
-                maxHeight: filtered.length > 10 ? '70vh' : 'none'
-              }}
-            >
-              <table className="min-w-full" style={{ minWidth: '1200px' }}>
-                <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
-                  <tr>
-                    <th className="px-3 sm:px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap min-w-[120px]">
-                      Account No.
-                    </th>
-                    <th className="px-3 sm:px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap min-w-[150px]">
-                      Customer Name
-                    </th>
-                    <th className="px-3 sm:px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap min-w-[120px]">
-                      Barangay
-                    </th>
-                    <th className="px-3 sm:px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap min-w-[100px]">
-                      Meter No.
-                    </th>
-                    <th className="px-3 sm:px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap min-w-[100px]">
-                      Previous kWh
-                    </th>
-                    <th className="px-3 sm:px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap min-w-[100px]">
-                      Current kWh
-                    </th>
-                    <th className="px-3 sm:px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap min-w-[90px]">
-                      Total kWh
-                    </th>
-                    <th className="px-3 sm:px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap min-w-[110px]">
-                      Reading Date
-                    </th>
-                    <th className="px-3 sm:px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap min-w-[120px]">
-                      Consumer Type
-                    </th>
-                    <th className="px-3 sm:px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap min-w-[130px]">
-                      Tracking Period
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {filtered.length > 0 ? (
-                    filtered.map((account) => (
-                      <tr key={account._id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-3 sm:px-4 py-3 font-medium whitespace-nowrap text-sm">
-                          {account.accountNumber || '-'}
-                        </td>
-                        <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm">
-                          {account.customerName || '-'}
-                        </td>
-                        <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm">
-                          {account.barangay || account.address || '-'}
-                        </td>
-                        <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm">
-                          {account.meterNumber || '-'}
-                        </td>
-                        <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm">
-                          {account.latestReading?.previousReading || '-'}
-                        </td>
-                        <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm">
-                          {account.latestReading?.currentReading || '-'}
-                        </td>
-                        <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm">
-                          {account.latestReading?.totalMonthlyKwh || '-'}
-                        </td>
-                        <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm">
-                          {formatDate(account.latestReading?.readingDate)}
-                        </td>
-                        <td className="px-3 sm:px-4 py-3 whitespace-nowrap capitalize text-sm">
-                          {account.consumerType || 'residential'}
-                        </td>
-                        <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm">
-                          {account.latestReading?.trackingPeriod || '-'}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="10" className="px-6 py-12 text-center">
-                        {batelecAccounts.length === 0 ? (
-                          <div className="flex flex-col items-center">
-                            <FiFile className="h-16 w-16 text-gray-300 mb-4" />
-                            <p className="text-lg font-medium text-gray-500 mb-2">No BATELEC accounts available</p>
-                            <p className="text-sm text-gray-400">Upload a CSV file to get started</p>
-                          </div>
-                        ) : (
-                          <div className="flex flex-col items-center">
-                            <FiSearch className="h-16 w-16 text-gray-300 mb-4" />
-                            <p className="text-lg font-medium text-gray-500 mb-2">No results found</p>
-                            <p className="text-sm text-gray-400">Try adjusting your search terms</p>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Desktop scroll indicator - only show when there are results */}
-          {filtered.length > 0 && (
-            <div className="hidden lg:flex justify-center mt-3">
-              <div className="flex items-center text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                <FiArrowRight className="mr-1 w-3 h-3" />
-                <span>Use horizontal scroll or arrow keys to navigate table</span>
-                <FiArrowLeft className="ml-1 w-3 h-3" />
-              </div>
-            </div>
-          )}
-        </>
+         <>
+           {/* Material Table Style Container */}
+           <div className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+             {/* Table Title */}
+             <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+               <h3 className="text-lg font-semibold text-gray-800">Customer Management Table</h3>
+             </div>
+             
+             {/* Table Container with Both Scrollbars */}
+             <div 
+               className="table-scroll-container"
+               style={{ 
+                 height: '500px',
+                 overflow: 'auto',
+                 WebkitOverflowScrolling: 'touch'
+               }}
+             >
+               <table className="min-w-full" style={{ minWidth: '1800px', width: '1800px' }}>
+                 <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                   <tr>
+                     <th className="px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap w-[150px] border-r border-gray-200">
+                       Account No.
+                     </th>
+                     <th className="px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap w-[200px] border-r border-gray-200">
+                       Customer Name
+                     </th>
+                     <th className="px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap w-[180px] border-r border-gray-200">
+                       Barangay
+                     </th>
+                     <th className="px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap w-[120px] border-r border-gray-200">
+                       Meter No.
+                     </th>
+                     <th className="px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap w-[140px] border-r border-gray-200">
+                       Previous kWh
+                     </th>
+                     <th className="px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap w-[140px] border-r border-gray-200">
+                       Current kWh
+                     </th>
+                     <th className="px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap w-[120px] border-r border-gray-200">
+                       Total kWh
+                     </th>
+                     <th className="px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap w-[140px] border-r border-gray-200">
+                       Reading Date
+                     </th>
+                     <th className="px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap w-[150px] border-r border-gray-200">
+                       Consumer Type
+                     </th>
+                     <th className="px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap w-[160px]">
+                       Tracking Period
+                     </th>
+                   </tr>
+                 </thead>
+                 <tbody className="divide-y divide-gray-100">
+                   {filtered.length > 0 ? (
+                     filtered.map((account) => (
+                       <tr key={account._id} className="hover:bg-gray-50 transition-colors">
+                         <td className="px-4 py-3 font-medium whitespace-nowrap text-sm border-r border-gray-100 w-[150px]">
+                           {account.accountNumber || '-'}
+                         </td>
+                         <td className="px-4 py-3 whitespace-nowrap text-sm border-r border-gray-100 w-[200px]">
+                           {account.customerName || '-'}
+                         </td>
+                         <td className="px-4 py-3 whitespace-nowrap text-sm border-r border-gray-100 w-[180px]">
+                           {account.barangay || account.address || '-'}
+                         </td>
+                         <td className="px-4 py-3 whitespace-nowrap text-sm border-r border-gray-100 w-[120px]">
+                           {account.meterNumber || '-'}
+                         </td>
+                         <td className="px-4 py-3 whitespace-nowrap text-sm border-r border-gray-100 w-[140px]">
+                           {account.latestReading?.previousReading || '-'}
+                         </td>
+                         <td className="px-4 py-3 whitespace-nowrap text-sm border-r border-gray-100 w-[140px]">
+                           {account.latestReading?.currentReading || '-'}
+                         </td>
+                         <td className="px-4 py-3 whitespace-nowrap text-sm border-r border-gray-100 w-[120px]">
+                           {account.latestReading?.totalMonthlyKwh || '-'}
+                         </td>
+                         <td className="px-4 py-3 whitespace-nowrap text-sm border-r border-gray-100 w-[140px]">
+                           {formatDate(account.latestReading?.readingDate)}
+                         </td>
+                         <td className="px-4 py-3 whitespace-nowrap capitalize text-sm border-r border-gray-100 w-[150px]">
+                           {account.consumerType || 'residential'}
+                         </td>
+                         <td className="px-4 py-3 whitespace-nowrap text-sm w-[160px]">
+                           {account.latestReading?.trackingPeriod || '-'}
+                         </td>
+                       </tr>
+                     ))
+                   ) : (
+                     <tr>
+                       <td colSpan="10" className="px-6 py-12 text-center">
+                         {batelecAccounts.length === 0 ? (
+                           <div className="flex flex-col items-center">
+                             <FiFile className="h-16 w-16 text-gray-300 mb-4" />
+                             <p className="text-lg font-medium text-gray-500 mb-2">No BATELEC accounts available</p>
+                             <p className="text-sm text-gray-400">Upload a CSV file to get started</p>
+                           </div>
+                         ) : (
+                           <div className="flex flex-col items-center">
+                             <FiSearch className="h-16 w-16 text-gray-300 mb-4" />
+                             <p className="text-lg font-medium text-gray-500 mb-2">No results found</p>
+                             <p className="text-sm text-gray-400">Try adjusting your search terms</p>
+                           </div>
+                         )}
+                       </td>
+                     </tr>
+                   )}
+                 </tbody>
+               </table>
+             </div>
+             
+             {/* Pagination/Info Bar */}
+             <div className="px-6 py-3 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
+               <div className="text-sm text-gray-600">
+                 Showing {filtered.length} of {batelecAccounts.length} accounts
+               </div>
+               <div className="flex items-center space-x-2 text-sm text-gray-600">
+                 <span>Rows per page:</span>
+                 <select className="border border-gray-300 rounded px-2 py-1 text-sm">
+                   <option>10</option>
+                   <option>25</option>
+                   <option>50</option>
+                   <option>100</option>
+                 </select>
+               </div>
+             </div>
+           </div>
+         </>
       )}
 
       {/* Upload Modal - Enhanced responsive design */}

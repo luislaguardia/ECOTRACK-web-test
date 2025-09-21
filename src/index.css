@@ -40,7 +40,7 @@
 /* Custom scrollbar styles for table */
 /* Enhanced table scroll container styles */
 .table-scroll-container {
-  overflow-x: auto !important;
+  overflow-x: scroll !important;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
