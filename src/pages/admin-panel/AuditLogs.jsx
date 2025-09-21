@@ -182,11 +182,10 @@ const AuditLogs = () => {
                 </div>
              </div>
              <div className="p-4 bg-white border rounded-lg shadow-sm">
-                <h4 className="font-semibold text-slate-800 mb-4 border-b pb-2 flex items-center gap-2"><Briefcase className="w-5 h-5 text-green-500"/>Target Module</h4>
+                <h4 className="font-semibold text-slate-800 mb-4 border-b pb-2 flex items-center gap-2"><Briefcase className="w-5 h-5 text-green-500"/>Target Resource</h4>
                 <div className="space-y-2">
-                    {renderLogField('Module', log.target?.model || 'Unknown')}
-                    {renderLogField('Target Name', log.target?.displayText || 'N/A')}
-                    {renderLogField('Target ID', log.target?.id || 'N/A')}
+                    {renderLogField('Type', log.target?.model)}
+                    {renderLogField('Name / ID', log.target?.displayText || log.target?.id)}
                 </div>
              </div>
              <div className="p-4 bg-white border rounded-lg shadow-sm">
@@ -278,27 +277,26 @@ const AuditLogs = () => {
         </div>
       </div>
       
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200">
-          <thead className="bg-slate-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Timestamp</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Actor</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Action</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Target</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Target Name</th>
-              <th className="px-6 py-3"></th>
+        <div className="bg-white rounded-lg shadow border border-gray-200">
+          <div className="overflow-x-auto">
+            <table className="min-w-full table-auto">
+              <thead className="bg-[#F5F5F5] border-b border-gray-200">
+                <tr className="text-left align-middle">
+              <th className="px-4 py-3 text-left text-sm font-semibold text-slate-500 uppercase tracking-wider">Timestamp</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-slate-500 uppercase tracking-wider">Actor</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-slate-500 uppercase tracking-wider">Action</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-slate-500 uppercase tracking-wider">Target</th>
+              <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-slate-200">
             {paginatedLogs.length > 0 ? (
               paginatedLogs.map((log) => (
                 <tr key={log._id} className="hover:bg-slate-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-slate-600">
                     {formatTimestamp(log.createdAt)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-800 font-medium">
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-slate-800 font-medium">
                     <div className="flex items-center">
                       <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs mr-3">
                         {log.actor?.email?.substring(0, 2).toUpperCase() || '??'}
@@ -306,18 +304,13 @@ const AuditLogs = () => {
                       {log.actor?.email || 'N/A'}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-slate-600">
                     <ActionBadge action={log.action} />
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {log.target?.model || 'Unknown'}
-                    </span>
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-slate-600">
+                    {log.target?.displayText || log.target?.model}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                    {log.target?.displayText || 'N/A'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
+                  <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-right">
                     <button
                       onClick={() => setSelectedLog(log)}
                       className="text-blue-600 hover:text-blue-800 flex items-center justify-end gap-1 group"
@@ -329,7 +322,7 @@ const AuditLogs = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="px-6 py-12 text-center text-slate-500">
+                <td colSpan="5" className="px-6 py-12 text-center text-slate-500">
                   <h3 className="text-lg font-semibold mb-2">No Logs Found</h3>
                   <p>No audit logs were found matching the current filters.</p>
                 </td>
@@ -338,10 +331,10 @@ const AuditLogs = () => {
           </tbody>
         </table>
 
-        </div>
-        
-        {/* Pagination Section */}
-        {totalPages > 1 && (
+          </div>
+          
+          {/* Pagination Section */}
+          {totalPages > 1 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200">
             <div className="text-sm text-slate-500">
               Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredLogs.length)} of {filteredLogs.length} logs
@@ -392,8 +385,8 @@ const AuditLogs = () => {
               </button>
             </div>
           </div>
-         )}
-      </div>
+           )}
+        </div>
 
       <DetailModal log={selectedLog} onClose={() => setSelectedLog(null)} />
     </div>
