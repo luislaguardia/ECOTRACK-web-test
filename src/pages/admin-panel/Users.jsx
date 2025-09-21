@@ -637,7 +637,7 @@ const RejectionModal = ({ show, onClose, user, onContinue }) => {
         <div className="bg-gray-50 p-4 mb-4 rounded-md border border-gray-200">
           <h3 className="font-semibold text-gray-800 mb-1">User Information</h3>
           <div className="grid grid-cols-2 gap-x-1 gap-y-1 text-sm">
-            <div><span className="font-medium">Name:</span> {user.fullName || user.name}</div>
+            <div><span className="font-medium">Name:</span> {user.fullName || user.name || "—"}</div>
             <div><span className="font-medium">Email:</span> {user.email && !user.email.startsWith('nullified_') ? user.email : <span className="text-orange-600 italic">Email Removed</span>}</div>
             <div><span className="font-medium">Reference ID:</span> {user.referenceId}</div>
             <div><span className="font-medium">Consumer Type:</span> 
@@ -836,7 +836,7 @@ const ConfirmRejectionModal = ({ 
         <div className="bg-gray-50 border border-gray-200 rounded p-4 text-left">
           <h4 className="font-semibold text-gray-800 mb-3">Request Details:</h4>
           <div className="space-y-1 text-sm">
-            <div><span className="font-medium">User:</span> {user.fullName || user.name} ({user.email && !user.email.startsWith('nullified_') ? user.email : 'Email Removed'})</div>
+            <div><span className="font-medium">User:</span> {user.fullName || user.name || "—"} ({user.email && !user.email.startsWith('nullified_') ? user.email : 'Email Removed'})</div>
             <div><span className="font-medium">Account:</span> {user.accountNumber || "N/A"}</div>
             <div><span className="font-medium">Date:</span> {currentDate}</div>
           </div>
@@ -975,7 +975,7 @@ const AccountLinkingModal = ({ 
             <div className="grid grid-cols-2 gap-x-1 gap-y-1 text-sm">
               <div>
                 <span className="text-gray-600">Name:</span> 
-                <span className="ml-2 text-gray-900">{user.fullName || user.name}</span>
+                <span className="ml-2 text-gray-900">{user.fullName || user.name || "—"}</span>
               </div>
               <div>
                 <span className="text-gray-600">Reference ID:</span> 
@@ -994,7 +994,7 @@ const AccountLinkingModal = ({ 
               {user.barangay && (
                 <div>
                   <span className="text-gray-600">Barangay:</span> 
-                  <span className="ml-2 text-gray-900">{user.barangay}</span>
+                  <span className="ml-2 text-gray-900">{user.barangay || "—"}</span>
                 </div>
               )}
               {user.requestedDate && (
@@ -1089,7 +1089,7 @@ const AccountLinkingModal = ({ 
                     <span className="font-medium">Account Selected</span>
                   </div>
                   <div className="text-sm text-green-700 mt-1">
-                    This account will be linked to {user.fullName || user.name}'s profile upon approval.
+                    This account will be linked to {user.fullName || user.name || "—"}'s profile upon approval.
                   </div>
                 </div>
               )}
@@ -1218,7 +1218,7 @@ const AccountLinkingConfirmation = ({ 
 
 
             <div className="font-semibold text-lg text-gray-600 mb-1">
-              {user.fullName || user.name}
+              {user.fullName || user.name || "—"}
             </div>
             <div className="text-sm text-gray-600">
               {user.email && !user.email.startsWith('nullified_') ? user.email : <span className="text-orange-600 italic">Email Removed</span>}
@@ -1451,7 +1451,7 @@ const AccountLinkingConfirmation = ({ 
                 {state.users.length > 0 ? state.users.map((user, index) => (
                   <tr key={user._id} className="hover:bg-gray-50 align-middle">
                     <td className="px-3 py-4 text-sm">{((state.currentPage - 1) * usersPerPage) + index + 1}</td>
-                    <td className="px-3 py-4 text-sm font-medium">{user.fullName || user.name}</td>
+                    <td className="px-3 py-4 text-sm font-medium">{user.fullName || user.name || "—"}</td>
                     <td className="px-3 py-4 text-sm text-gray-600">
                       {user.email && !user.email.startsWith('nullified_') ? user.email : (
                         <span className="text-orange-600 italic">Email Removed</span>
@@ -1465,7 +1465,7 @@ const AccountLinkingConfirmation = ({ 
                         {user.accountNumber ? 'Existing' : 'New'}
                       </span>
                     </td>
-                    <td className="px-3 py-4 text-sm">{user.barangay || "N/A"}</td>
+                    <td className="px-3 py-4 text-sm">{user.barangay || "—"}</td>
                     <td className="px-3 py-4">
                       <StatusBadge status={user.verificationStatus} />
                     </td>
