@@ -181,84 +181,70 @@ const CustomerManagement = () => {
     });
   };
 
-  // Get registration status badge (commented out for future use)
-  /*
-  const getRegistrationBadge = (account) => {
-    if (account.isRegistered && account.registeredUserId) {
-      return (
-        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-          Registered
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
-        Available
-      </span>
-    );
-  };
-  */
-
   const handleDownloadTemplate = () => {
-  const headers = [
-    "accountNumber",
-    "meterNumber",
-    "customerName",
-    "barangay",
-    "contactNumber",
-    "consumerType",
-    "previousReading",
-    "currentReading",
-    "readingDate",
-    "trackingPeriod",
-  ];
+    const headers = [
+      "accountNumber",
+      "meterNumber",
+      "customerName",
+      "barangay",
+      "contactNumber",
+      "consumerType",
+      "previousReading",
+      "currentReading",
+      "readingDate",
+      "trackingPeriod",
+    ];
 
-  const csvContent = headers.join(",") + "\n"; // Just headers for the template
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
+    const csvContent = headers.join(",") + "\n"; // Just headers for the template
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
 
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", "EnergyReadingsCSV_template.csv");
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "EnergyReadingsCSV_template.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] p-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-5">
+    <div className="min-h-screen bg-[#F5F5F5] p-3 sm:p-6">
+      {/* Header Section - Responsive */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4 sm:mb-5">
         <div>
-          <h2 className="text-3xl font-semibold text-gray-800">
-            Customer Management ({filtered.length})
+          <h2 className="text-2xl sm:text-3xl font-semibold text-gray-800">
+            Customer Management
           </h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Total: {filtered.length} {filtered.length === 1 ? 'account' : 'accounts'}
+          </p>
         </div>
         
-        {/* Refresh Button */}
+        {/* Refresh Button - Better positioning on mobile */}
         <button
           onClick={fetchBatelecAccounts}
           disabled={isDataLoading}
-          className="flex items-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 self-start sm:self-auto"
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 w-full sm:w-auto"
         >
           <FiRefreshCw className={`w-4 h-4 ${isDataLoading ? 'animate-spin' : ''}`} />
           Refresh
         </button>
       </div>
 
-      {/* Global Message Display */}
+      {/* Global Message Display - Improved mobile layout */}
       {message && (
-        <div className={`mb-4 p-4 rounded-lg border ${
+        <div className={`mb-4 p-3 sm:p-4 rounded-lg border ${
           messageType === "error" 
             ? "bg-red-50 border-red-200 text-red-800" 
             : "bg-green-50 border-green-200 text-green-800"
         }`}>
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <span>{message}</span>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="text-sm sm:text-base">{message}</span>
               {messageType === "error" && uploadErrors.length > 0 && (
                 <button
                   onClick={() => setShowErrorModal(true)}
-                  className="text-xs bg-red-200 hover:bg-red-300 text-red-800 px-2 py-1 rounded transition-colors"
+                  className="text-xs bg-red-200 hover:bg-red-300 text-red-800 px-2 py-1 rounded transition-colors self-start"
                 >
                   View Details
                 </button>
@@ -266,7 +252,7 @@ const CustomerManagement = () => {
             </div>
             <button 
               onClick={() => {setMessage(""); setMessageType("");}}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-400 hover:text-gray-600 self-end sm:self-auto"
             >
               ×
             </button>
@@ -274,137 +260,175 @@ const CustomerManagement = () => {
         </div>
       )}
 
-      {/* Search and Upload Button */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 flex-wrap mb-4">
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 flex-wrap">
-          {/* Search Input */}
-          <div className="relative w-full md:w-[400px]">
-            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-            <input
-              type="text"
-              placeholder="Search accounts..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="p-2 pl-8 border border-gray-500 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 font-inter w-full"
-            />
-          </div>
+      {/* Search and Upload Section - Enhanced responsive layout */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 sm:gap-4 mb-4">
+        {/* Search Input - Full width on mobile, constrained on desktop */}
+        <div className="relative w-full lg:w-[400px]">
+          <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Search accounts..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="p-3 pl-10 border border-gray-400 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent font-inter w-full text-sm"
+          />
         </div>
 
-        {/* Right: Dropbox Button */}
+        {/* Upload Button */}
         <button
           onClick={handleDropboxUpload}
-          className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 self-start md:self-auto flex items-center gap-2"
+          className="bg-green-600 text-white px-4 sm:px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 w-full lg:w-auto"
         >
           <FiUpload className="w-4 h-4" />
-          Upload CSV
+          <span className="font-medium">Upload CSV</span>
         </button>
       </div>
 
       {/* Loading State */}
       {isDataLoading ? (
-        <div className="flex justify-center items-center h-[300px]">
+        <div className="flex justify-center items-center h-[300px] sm:h-[400px]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-green-600 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading BATELEC accounts...</p>
           </div>
         </div>
       ) : (
-        /* Table */
-        <div className="bg-white rounded-lg shadow border border-gray-200">
-          <div 
-            className={`table-scroll-container overflow-x-scroll ${filtered.length > 10 ? "max-h-[600px] overflow-y-auto" : ""}`} 
-            style={{ 
-              WebkitOverflowScrolling: 'touch',
-              width: '100%',
-              maxWidth: '100%'
-            }}
-          >
-            <table className="text-sm" style={{ minWidth: '1400px', width: '1400px' }}>
-              <thead className="bg-[#F5F5F5] border-b border-gray-200">
-                <tr>
-                  <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap w-[120px]">Account No.</th>
-                  <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap w-[150px]">Customer Name</th>
-                  <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap w-[120px]">Barangay</th>
-                  <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap w-[100px]">Meter No.</th>
-                  <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap w-[120px]">Previous kWh</th>
-                  <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap w-[120px]">Current kWh</th>
-                  <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap w-[100px]">Total kWh</th>
-                  <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap w-[120px]">Reading Date</th>
-                  <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap w-[130px]">Consumer Type</th>
-                  <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap w-[140px]">Tracking Period</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {filtered.length > 0 ? (
-                  filtered.map((account) => (
-                    <tr key={account._id} className="hover:bg-gray-50">
-                      <td className="px-4 py-4 font-medium whitespace-nowrap w-[120px]">
-                        {account.accountNumber || '-'}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap w-[150px]">
-                        {account.customerName || '-'}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap w-[120px]">{account.barangay || account.address || '-'}</td>
-                      <td className="px-4 py-4 whitespace-nowrap w-[100px]">{account.meterNumber || '-'}</td>
-                      <td className="px-4 py-4 whitespace-nowrap w-[120px]">
-                        {account.latestReading?.previousReading || '-'}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap w-[120px]">
-                        {account.latestReading?.currentReading || '-'}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap w-[100px]">
-                        {account.latestReading?.totalMonthlyKwh || '-'}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap w-[120px]">
-                        {formatDate(account.latestReading?.readingDate)}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap capitalize w-[130px]">
-                        {account.consumerType || 'residential'}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap w-[140px]">
-                        {account.latestReading?.trackingPeriod || '-'}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="10" className="px-6 py-12 text-center">
-                      {batelecAccounts.length === 0 ? (
-                        <div className="flex flex-col items-center">
-                          <FiFile className="h-12 w-12 text-gray-300 mb-4" />
-                          <p className="text-lg font-medium text-gray-400 mb-2">No BATELEC accounts available</p>
-                          <p className="text-sm text-gray-400">Upload a CSV file to get started</p>
-                        </div>
-                      ) : (
-                        <p className="text-gray-500">No results found for your search</p>
-                      )}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-          {/* Horizontal scroll indicator */}
-            <div className="flex justify-center mt-2">
-              <div className="flex items-center text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                <FiArrowRight className="mr-1 animate-pulse" />
-                Scroll horizontally to view all columns
-                <FiArrowLeft className="ml-1 animate-pulse" />
+        <>
+          {/* Table Container - Enhanced scrolling */}
+          <div className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+            {/* Scroll hint for mobile */}
+            <div className="lg:hidden bg-yellow-50 border-b border-yellow-200 px-4 py-2 text-center">
+              <div className="flex items-center justify-center text-xs text-yellow-700">
+                <FiArrowRight className="mr-1 w-3 h-3" />
+                <span>Scroll right to view all columns</span>
+                <FiArrowLeft className="ml-1 w-3 h-3" />
               </div>
             </div>
 
+            <div 
+              className="table-scroll-container overflow-x-auto"
+              style={{ 
+                WebkitOverflowScrolling: 'touch',
+                maxHeight: filtered.length > 10 ? '70vh' : 'none'
+              }}
+            >
+              <table className="min-w-full" style={{ minWidth: '1200px' }}>
+                <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-3 sm:px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap min-w-[120px]">
+                      Account No.
+                    </th>
+                    <th className="px-3 sm:px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap min-w-[150px]">
+                      Customer Name
+                    </th>
+                    <th className="px-3 sm:px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap min-w-[120px]">
+                      Barangay
+                    </th>
+                    <th className="px-3 sm:px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap min-w-[100px]">
+                      Meter No.
+                    </th>
+                    <th className="px-3 sm:px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap min-w-[100px]">
+                      Previous kWh
+                    </th>
+                    <th className="px-3 sm:px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap min-w-[100px]">
+                      Current kWh
+                    </th>
+                    <th className="px-3 sm:px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap min-w-[90px]">
+                      Total kWh
+                    </th>
+                    <th className="px-3 sm:px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap min-w-[110px]">
+                      Reading Date
+                    </th>
+                    <th className="px-3 sm:px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap min-w-[120px]">
+                      Consumer Type
+                    </th>
+                    <th className="px-3 sm:px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap min-w-[130px]">
+                      Tracking Period
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filtered.length > 0 ? (
+                    filtered.map((account) => (
+                      <tr key={account._id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-3 sm:px-4 py-3 font-medium whitespace-nowrap text-sm">
+                          {account.accountNumber || '-'}
+                        </td>
+                        <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm">
+                          {account.customerName || '-'}
+                        </td>
+                        <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm">
+                          {account.barangay || account.address || '-'}
+                        </td>
+                        <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm">
+                          {account.meterNumber || '-'}
+                        </td>
+                        <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm">
+                          {account.latestReading?.previousReading || '-'}
+                        </td>
+                        <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm">
+                          {account.latestReading?.currentReading || '-'}
+                        </td>
+                        <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm">
+                          {account.latestReading?.totalMonthlyKwh || '-'}
+                        </td>
+                        <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm">
+                          {formatDate(account.latestReading?.readingDate)}
+                        </td>
+                        <td className="px-3 sm:px-4 py-3 whitespace-nowrap capitalize text-sm">
+                          {account.consumerType || 'residential'}
+                        </td>
+                        <td className="px-3 sm:px-4 py-3 whitespace-nowrap text-sm">
+                          {account.latestReading?.trackingPeriod || '-'}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="10" className="px-6 py-12 text-center">
+                        {batelecAccounts.length === 0 ? (
+                          <div className="flex flex-col items-center">
+                            <FiFile className="h-16 w-16 text-gray-300 mb-4" />
+                            <p className="text-lg font-medium text-gray-500 mb-2">No BATELEC accounts available</p>
+                            <p className="text-sm text-gray-400">Upload a CSV file to get started</p>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center">
+                            <FiSearch className="h-16 w-16 text-gray-300 mb-4" />
+                            <p className="text-lg font-medium text-gray-500 mb-2">No results found</p>
+                            <p className="text-sm text-gray-400">Try adjusting your search terms</p>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-      {/* Upload Modal */}
+          {/* Desktop scroll indicator - only show when there are results */}
+          {filtered.length > 0 && (
+            <div className="hidden lg:flex justify-center mt-3">
+              <div className="flex items-center text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                <FiArrowRight className="mr-1 w-3 h-3" />
+                <span>Use horizontal scroll or arrow keys to navigate table</span>
+                <FiArrowLeft className="ml-1 w-3 h-3" />
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Upload Modal - Enhanced responsive design */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-            <div className="bg-green-600 py-3 px-6 text-white font-semibold rounded-t-lg flex justify-between items-center">
-              <span>Upload Energy Readings CSV</span>
+        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="bg-green-600 py-4 px-6 text-white font-semibold rounded-t-lg flex justify-between items-center">
+              <span className="text-lg">Upload Energy Readings CSV</span>
               <button
                 onClick={handleModalClose}
-                className="text-white hover:text-gray-200 transition-colors"
+                className="text-white hover:text-gray-200 transition-colors p-1"
               >
                 <FiX className="h-5 w-5" />
               </button>
@@ -412,7 +436,7 @@ const CustomerManagement = () => {
 
             <div className="p-6">
               <div
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                className={`border-2 border-dashed rounded-lg p-6 sm:p-8 text-center transition-colors ${
                   isDragOver
                     ? 'border-green-400 bg-green-50'
                     : 'border-gray-300 hover:border-gray-400'
@@ -438,7 +462,7 @@ const CustomerManagement = () => {
                 />
                 <label
                   htmlFor="csv-upload"
-                  className={`inline-block px-4 py-2 rounded-lg cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                  className={`inline-block px-6 py-3 rounded-lg cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 font-medium ${
                     isLoading 
                       ? 'bg-gray-400 text-white cursor-not-allowed' 
                       : 'bg-green-600 hover:bg-green-700 text-white'
@@ -485,7 +509,7 @@ const CustomerManagement = () => {
                 </div>
               )}
 
-             <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                 <div className="text-xs text-gray-600">
                   <p className="mb-2 font-semibold text-gray-700">Expected CSV format:</p>
                   <div className="space-y-1">
@@ -511,18 +535,18 @@ const CustomerManagement = () => {
                   </div>
                 </div>
               </div>
-              <div className="mt-6 flex justify-between items-center gap-3">
-              <button
-                onClick={handleDownloadTemplate}
-                className="w-full px-4 py-2 bg-yellow-500 text-white font-medium rounded-md hover:bg-yellow-600 transition-colors"
-              >
-                Download CSV File Template
-              </button>
-              </div>
-              <div className="mt-4 flex justify-end gap-2">
+
+              <div className="mt-6 space-y-3">
+                <button
+                  onClick={handleDownloadTemplate}
+                  className="w-full px-4 py-3 bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors"
+                >
+                  Download CSV Template
+                </button>
+                
                 <button
                   onClick={handleModalClose}
-                  className="w-full px-4 py-2 bg-gray-400 text-white font-medium rounded-md hover:bg-gray-600 transition-colors"
+                  className="w-full px-4 py-3 bg-gray-500 text-white font-medium rounded-lg hover:bg-gray-600 transition-colors"
                   disabled={isLoading}
                 >
                   Cancel
@@ -533,15 +557,15 @@ const CustomerManagement = () => {
         </div>
       )}
 
-      {/* Error Details Modal */}
+      {/* Error Details Modal - Enhanced responsive design */}
       {showErrorModal && (
-        <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl mx-4 max-h-[80vh] flex flex-col">
-            <div className="bg-red-600 py-3 px-6 text-white font-semibold rounded-t-lg flex justify-between items-center">
-              <span>Upload Errors ({uploadErrors.length} errors)</span>
+        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl mx-4 max-h-[85vh] flex flex-col">
+            <div className="bg-red-600 py-4 px-6 text-white font-semibold rounded-t-lg flex justify-between items-center">
+              <span className="text-lg">Upload Errors ({uploadErrors.length} errors)</span>
               <button
                 onClick={() => setShowErrorModal(false)}
-                className="text-white hover:text-gray-200 transition-colors"
+                className="text-white hover:text-gray-200 transition-colors p-1"
               >
                 <FiX className="h-5 w-5" />
               </button>
@@ -563,7 +587,7 @@ const CustomerManagement = () => {
                           {index + 1}
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm text-gray-800 font-medium">{error}</p>
+                          <p className="text-sm text-gray-800 font-medium break-words">{error}</p>
                         </div>
                       </div>
                     </div>
@@ -582,7 +606,7 @@ const CustomerManagement = () => {
               <div className="mt-4 flex justify-end">
                 <button
                   onClick={() => setShowErrorModal(false)}
-                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                  className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
                 >
                   Close
                 </button>

@@ -38,32 +38,74 @@
 }
 
 /* Custom scrollbar styles for table */
+/* Enhanced table scroll container styles */
+.table-scroll-container {
+  overflow-x: auto !important;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #9CA3AF #f1f1f1;
+  border-radius: 0;
+}
+
+/* Webkit scrollbar styles for better visibility */
 .table-scroll-container::-webkit-scrollbar {
-  height: 12px;
+  height: 14px;
+  width: 14px;
 }
 
 .table-scroll-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 6px;
+  background: #f8f9fa;
+  border-radius: 0;
 }
 
 .table-scroll-container::-webkit-scrollbar-thumb {
-  background: #9CA3AF;
-  border-radius: 6px;
+  background: linear-gradient(135deg, #9CA3AF, #6B7280);
+  border-radius: 7px;
+  border: 2px solid #f8f9fa;
 }
 
 .table-scroll-container::-webkit-scrollbar-thumb:hover {
-  background: #6B7280;
+  background: linear-gradient(135deg, #6B7280, #4B5563);
 }
 
+.table-scroll-container::-webkit-scrollbar-corner {
+  background: #f8f9fa;
+}
+
+/* Force scrollbar visibility on all devices */
 .table-scroll-container {
-  scrollbar-width: auto;
-  scrollbar-color: #9CA3AF #f1f1f1;
-  overflow-x: scroll !important;
+  scrollbar-width: thin !important;
 }
 
-/* Force scrollbar to always be visible */
-.table-scroll-container::-webkit-scrollbar {
-  height: 12px !important;
-  display: block !important;
+/* Smooth scrolling behavior */
+.table-scroll-container {
+  scroll-behavior: smooth;
+}
+
+/* Table cell responsive enhancements */
+@media (max-width: 768px) {
+  .table-scroll-container {
+    height: 14px !important;
+  }
+  
+  .table-scroll-container::-webkit-scrollbar {
+    height: 16px !important;
+  }
+}
+
+/* Table hover effects */
+.table-scroll-container table tbody tr:hover {
+  background-color: #f9fafb;
+  transform: translateZ(0);
+}
+
+/* Sticky header enhancement */
+.table-scroll-container table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #f9fafb;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
 }
