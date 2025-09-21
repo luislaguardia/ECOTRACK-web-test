@@ -66,13 +66,16 @@ const Users = () => {
         ...(state.selectedBarangay && { barangay: state.selectedBarangay }),
         ...(state.rejectionFilter && state.activeTab === 'rejected' && { verificationStatus: state.rejectionFilter }),
         ...(state.activeFilter && state.activeTab === 'active' && { verificationStatus: state.activeFilter }),
+        ...(state.activeFilter && state.activeTab === 'inactive' && { verificationStatus: state.activeFilter }),
       });
 
       // Debug logging
       console.log('🔍 Frontend API call params:', {
         activeTab: state.activeTab,
         rejectionFilter: state.rejectionFilter,
-        verificationStatus: state.rejectionFilter && state.activeTab === 'rejected' ? state.rejectionFilter : undefined
+        activeFilter: state.activeFilter,
+        verificationStatus: state.rejectionFilter && state.activeTab === 'rejected' ? state.rejectionFilter : 
+                           state.activeFilter && (state.activeTab === 'active' || state.activeTab === 'inactive') ? state.activeFilter : undefined
       });
 
       const res = await axios.get(`${BASE_URL}/api/users?${params.toString()}`, {
@@ -1463,6 +1466,20 @@ const AccountLinkingConfirmation = ({ 
                 }}
                 options={activeOptions}
                 placeholder="All Active Users"
+                className="min-w-[180px]"
+              />
+            )}
+
+            {/* Show inactive filter only on inactive tab */}
+            {state.activeTab === 'inactive' && (
+              <FilterSelect
+                value={state.activeFilter}
+                onChange={(value) => {
+                  console.log('🔍 Inactive filter changed to:', value);
+                  setState(prev => ({ ...prev, activeFilter: value, currentPage: 1 }));
+                }}
+                options={activeOptions}
+                placeholder="All Inactive Users"
                 className="min-w-[180px]"
               />
             )}
