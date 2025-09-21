@@ -651,7 +651,11 @@ const RejectionModal = ({ show, onClose, user, onContinue }) => {
         <div className="bg-gray-50 p-4 mb-4 rounded-md border border-gray-200">
           <h3 className="font-semibold text-gray-800 mb-1">User Information</h3>
           <div className="grid grid-cols-2 gap-x-1 gap-y-1 text-sm">
-            <div><span className="font-medium">Name:</span> {(user.fullName && user.fullName !== 'null') || (user.name && user.name !== 'null') ? (user.fullName || user.name) : "-"}</div>
+            <div><span className="font-medium">Name:</span> {(() => {
+              const fullName = user.fullName && user.fullName !== 'null' ? user.fullName : null;
+              const name = user.name && user.name !== 'null' ? user.name : null;
+              return (fullName || name) || "-";
+            })()}</div>
             <div><span className="font-medium">Email:</span> {user.email && !user.email.startsWith('nullified_') ? user.email : "-"}</div>
             <div><span className="font-medium">Reference ID:</span> {user.referenceId}</div>
             <div><span className="font-medium">Consumer Type:</span> 
@@ -850,7 +854,11 @@ const ConfirmRejectionModal = ({ 
         <div className="bg-gray-50 border border-gray-200 rounded p-4 text-left">
           <h4 className="font-semibold text-gray-800 mb-3">Request Details:</h4>
           <div className="space-y-1 text-sm">
-            <div><span className="font-medium">User:</span> {(user.fullName && user.fullName !== 'null') || (user.name && user.name !== 'null') ? (user.fullName || user.name) : "-"} ({user.email && !user.email.startsWith('nullified_') ? user.email : '-'})</div>
+            <div><span className="font-medium">User:</span> {(() => {
+              const fullName = user.fullName && user.fullName !== 'null' ? user.fullName : null;
+              const name = user.name && user.name !== 'null' ? user.name : null;
+              return (fullName || name) || "-";
+            })()} ({user.email && !user.email.startsWith('nullified_') ? user.email : '-'})</div>
             <div><span className="font-medium">Account:</span> {user.accountNumber && user.accountNumber !== 'null' ? user.accountNumber : "-"}</div>
             <div><span className="font-medium">Date:</span> {currentDate}</div>
           </div>
@@ -989,7 +997,11 @@ const AccountLinkingModal = ({ 
             <div className="grid grid-cols-2 gap-x-1 gap-y-1 text-sm">
               <div>
                 <span className="text-gray-600">Name:</span> 
-                <span className="ml-2 text-gray-900">{(user.fullName && user.fullName !== 'null') || (user.name && user.name !== 'null') ? (user.fullName || user.name) : "-"}</span>
+                <span className="ml-2 text-gray-900">{(() => {
+                  const fullName = user.fullName && user.fullName !== 'null' ? user.fullName : null;
+                  const name = user.name && user.name !== 'null' ? user.name : null;
+                  return (fullName || name) || "-";
+                })()}</span>
               </div>
               <div>
                 <span className="text-gray-600">Reference ID:</span> 
@@ -1103,7 +1115,11 @@ const AccountLinkingModal = ({ 
                     <span className="font-medium">Account Selected</span>
                   </div>
                   <div className="text-sm text-green-700 mt-1">
-                    This account will be linked to {(user.fullName && user.fullName !== 'null') || (user.name && user.name !== 'null') ? (user.fullName || user.name) : "-"}'s profile upon approval.
+                    This account will be linked to {(() => {
+        const fullName = user.fullName && user.fullName !== 'null' ? user.fullName : null;
+        const name = user.name && user.name !== 'null' ? user.name : null;
+        return (fullName || name) || "-";
+      })()}'s profile upon approval.
                   </div>
                 </div>
               )}
@@ -1232,7 +1248,11 @@ const AccountLinkingConfirmation = ({ 
 
 
             <div className="font-semibold text-lg text-gray-600 mb-1">
-              {(user.fullName && user.fullName !== 'null') || (user.name && user.name !== 'null') ? (user.fullName || user.name) : "-"}
+              {(() => {
+                const fullName = user.fullName && user.fullName !== 'null' ? user.fullName : null;
+                const name = user.name && user.name !== 'null' ? user.name : null;
+                return (fullName || name) || "-";
+              })()}
             </div>
             <div className="text-sm text-gray-600">
               {user.email && !user.email.startsWith('nullified_') ? user.email : "-"}
@@ -1521,7 +1541,13 @@ const AccountLinkingConfirmation = ({ 
                 {state.users.length > 0 ? state.users.map((user, index) => (
                   <tr key={user._id} className="hover:bg-gray-50 align-middle">
                     <td className="px-3 py-4 text-sm">{((state.currentPage - 1) * usersPerPage) + index + 1}</td>
-                    <td className="px-3 py-4 text-sm font-medium">{(user.fullName && user.fullName !== 'null') || (user.name && user.name !== 'null') ? (user.fullName || user.name) : "-"}</td>
+                    <td className="px-3 py-4 text-sm font-medium">
+                      {(() => {
+                        const fullName = user.fullName && user.fullName !== 'null' ? user.fullName : null;
+                        const name = user.name && user.name !== 'null' ? user.name : null;
+                        return (fullName || name) || "-";
+                      })()}
+                    </td>
                     <td className="px-3 py-4 text-sm text-gray-600">
                       {user.email && !user.email.startsWith('nullified_') ? user.email : "-"}
                     </td>
@@ -1677,14 +1703,21 @@ const AccountLinkingConfirmation = ({ 
                   <div className="flex items-center space-x-4">
                     <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
                       <span className="text-2xl font-bold text-white">
-                        {((state.viewingUser.fullName && state.viewingUser.fullName !== 'null') || (state.viewingUser.name && state.viewingUser.name !== 'null')) ? 
-                          (state.viewingUser.fullName || state.viewingUser.name).charAt(0).toUpperCase() : '-'}
+                        {(() => {
+                          const fullName = state.viewingUser.fullName && state.viewingUser.fullName !== 'null' ? state.viewingUser.fullName : null;
+                          const name = state.viewingUser.name && state.viewingUser.name !== 'null' ? state.viewingUser.name : null;
+                          const displayName = fullName || name;
+                          return displayName ? displayName.charAt(0).toUpperCase() : '-';
+                        })()}
                       </span>
                     </div>
                     <div>
                       <h2 className="text-2xl font-bold text-white">
-                        {((state.viewingUser.fullName && state.viewingUser.fullName !== 'null') || (state.viewingUser.name && state.viewingUser.name !== 'null')) ? 
-                          (state.viewingUser.fullName || state.viewingUser.name) : '-'}
+                        {(() => {
+                          const fullName = state.viewingUser.fullName && state.viewingUser.fullName !== 'null' ? state.viewingUser.fullName : null;
+                          const name = state.viewingUser.name && state.viewingUser.name !== 'null' ? state.viewingUser.name : null;
+                          return (fullName || name) || '-';
+                        })()}
                       </h2>
                       <p className="text-blue-100 text-sm">
                         {state.viewingUser.email && !state.viewingUser.email.startsWith('nullified_') 
@@ -1980,8 +2013,12 @@ const AccountLinkingConfirmation = ({ 
         <div className="text-center space-y-4">
           <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
             <span className="text-2xl font-bold text-blue-600">
-              {state.userToDelete && ((state.userToDelete.fullName && state.userToDelete.fullName !== 'null') || (state.userToDelete.name && state.userToDelete.name !== 'null')) ? 
-                (state.userToDelete.fullName || state.userToDelete.name).charAt(0).toUpperCase() : '-'}
+              {state.userToDelete && (() => {
+                const fullName = state.userToDelete.fullName && state.userToDelete.fullName !== 'null' ? state.userToDelete.fullName : null;
+                const name = state.userToDelete.name && state.userToDelete.name !== 'null' ? state.userToDelete.name : null;
+                const displayName = fullName || name;
+                return displayName ? displayName.charAt(0).toUpperCase() : '-';
+              })()}
             </span>
           </div>
           <div>
