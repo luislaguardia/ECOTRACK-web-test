@@ -15,7 +15,7 @@ const Users = () => {
     search: "",
     currentPage: 1,
     totalPages: 1,
-    activeTab: "all", // ✅ Now can be 'all', 'active', 'archived', 'pending', 'rejected'
+    activeTab: "all", // ✅ Now can be 'all', 'active', 'inactive', 'pending', 'rejected'
     showRejectionModal: false,
     showConfirmRejectionModal: false,
     selectedRejectionReason: '',
@@ -1386,9 +1386,9 @@ const AccountLinkingConfirmation = ({ 
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center md:justify-between">
           {/* Left side: Tabs and other filters */}
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-            {/* All/Active/Archived/Pending/Rejected Button */}
+            {/* All/Active/Inactive/Pending/Rejected Button */}
             <div className="flex border border-gray-300 rounded-md overflow-hidden bg-white shadow-sm">
-              {['all', 'active', 'archived', 'pending', 'rejected'].map(tab => (
+              {['all', 'active', 'inactive', 'pending', 'rejected'].map(tab => (
                 <button
                   key={tab}
                   onClick={() => setState(prev => ({ 
@@ -1411,7 +1411,7 @@ const AccountLinkingConfirmation = ({ 
              {tab} ({
                tab === 'all' ? state.statistics.totalUsers :
                tab === 'active' ? (state.statistics.autoVerified + state.statistics.manuallyVerified) :
-               tab === 'archived' ? state.statistics.archivedUsers || 0 :
+               tab === 'inactive' ? state.statistics.archivedUsers || 0 :
                tab === 'pending' ? state.statistics.pendingManual :
                (state.statistics.rejectedReview || 0) + (state.statistics.rejectedFinal || 0)
              })
@@ -1531,7 +1531,7 @@ const AccountLinkingConfirmation = ({ 
                         >
                           <FiEye className="w-4 h-4" />
                         </button>
-                        {/* Only show archive toggle for active and archived tabs, not for all/pending/rejected */}
+                        {/* Only show archive toggle for active and inactive tabs, not for all/pending/rejected */}
                         {state.activeTab !== 'all' && state.activeTab !== 'pending' && state.activeTab !== 'rejected' && (
                           <label className="relative inline-flex items-center cursor-pointer">
                             <input
