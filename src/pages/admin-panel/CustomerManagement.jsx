@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FiSearch, FiUpload, FiX, FiFile, FiRefreshCw } from "react-icons/fi";
+import { FiSearch, FiUpload, FiX, FiFile, FiRefreshCw, FiArrowRight, FiArrowLeft  } from "react-icons/fi";
 import axios from "axios";
 import { BASE_URL } from "../../config";
 
@@ -275,10 +275,10 @@ const CustomerManagement = () => {
       )}
 
       {/* Search and Upload Button */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 flex-wrap mb-4">
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 flex-wrap">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           {/* Search Input */}
-          <div className="relative w-full md:w-[400px]">
+          <div className="relative w-full sm:w-[300px] md:w-[400px]">
             <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
             <input
               type="text"
@@ -290,13 +290,14 @@ const CustomerManagement = () => {
           </div>
         </div>
 
-        {/* Right: Dropbox Button */}
+        {/* Right: Upload Button */}
         <button
           onClick={handleDropboxUpload}
-          className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 self-start md:self-auto flex items-center gap-2"
+          className="bg-green-600 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg hover:bg-green-700 self-start sm:self-auto flex items-center gap-2 text-sm sm:text-base"
         >
           <FiUpload className="w-4 h-4" />
-          Upload CSV
+          <span className="hidden sm:inline">Upload CSV</span>
+          <span className="sm:hidden">Upload</span>
         </button>
       </div>
 
@@ -310,82 +311,88 @@ const CustomerManagement = () => {
         </div>
       ) : (
         /* Table */
-        <div
-          className={`overflow-x-auto bg-white rounded-lg shadow border border-gray-200 ${
-            filtered.length > 10 ? "max-h-[600px] overflow-y-auto" : ""
-          }`}
-        >
-          <table className="min-w-full text-sm table-fixed">
-            <thead className="bg-[#F5F5F5] border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-3 text-left font-bold text-gray-500">Account No.</th>
-                <th className="px-6 py-3 text-left font-bold text-gray-500">Customer Name</th>
-                <th className="px-6 py-3 text-left font-bold text-gray-500">Barangay</th>
-                <th className="px-6 py-3 text-left font-bold text-gray-500">Meter No.</th>
-                <th className="px-6 py-3 text-left font-bold text-gray-500">Previous kWh</th>
-                <th className="px-6 py-3 text-left font-bold text-gray-500">Current kWh</th>
-                <th className="px-6 py-3 text-left font-bold text-gray-500">Total kWh</th>
-                <th className="px-6 py-3 text-left font-bold text-gray-500">Reading Date</th>
-                <th className="px-6 py-3 text-left font-bold text-gray-500">Consumer Type</th>
-                <th className="px-6 py-3 text-left font-bold text-gray-500">Tracking Period</th>
-                {/* <th className="px-6 py-3 text-left font-bold text-gray-500">Status</th> */}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filtered.length > 0 ? (
-                filtered.map((account) => (
-                  <tr key={account._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 font-medium">
-                      {account.accountNumber || '-'}
-                    </td>
-                    <td className="px-6 py-4">
-                      {account.customerName || '-'}
-                    </td>
-                    <td className="px-6 py-4">{account.barangay || account.address || '-'}</td>
-                    <td className="px-6 py-4">{account.meterNumber || '-'}</td>
-                    <td className="px-6 py-4">
-                      {account.latestReading?.previousReading || '-'}
-                    </td>
-                    <td className="px-6 py-4">
-                      {account.latestReading?.currentReading || '-'}
-                    </td>
-                    <td className="px-6 py-4">
-                      {account.latestReading?.totalMonthlyKwh || '-'}
-                    </td>
-                    <td className="px-6 py-4">
-                      {formatDate(account.latestReading?.readingDate)}
-                    </td>
-                    <td className="px-6 py-4 capitalize">
-                      {account.consumerType || 'residential'}
-                    </td>
-                    <td className="px-6 py-4">
-                      {account.latestReading?.trackingPeriod || '-'}
-                    </td>
-                 
-                    {/* <td className="px-6 py-4">
-                      {getRegistrationBadge(account)}
-                    </td> */}
-                  </tr>
-                ))
-              ) : (
+        <div className="bg-white rounded-lg shadow border border-gray-200">
+          <div 
+            className={`table-scroll-container overflow-x-scroll ${filtered.length > 10 ? "max-h-[600px] overflow-y-auto" : ""}`} 
+            style={{ 
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
+            <table className="w-full text-sm" style={{ minWidth: '1200px' }}>
+              <thead className="bg-[#F5F5F5] border-b border-gray-200">
                 <tr>
-                  <td colSpan="9" className="px-6 py-12 text-center">
-                    {batelecAccounts.length === 0 ? (
-                      <div className="flex flex-col items-center">
-                        <FiFile className="h-12 w-12 text-gray-300 mb-4" />
-                        <p className="text-lg font-medium text-gray-400 mb-2">No BATELEC accounts available</p>
-                        <p className="text-sm text-gray-400">Upload a CSV file to get started</p>
-                      </div>
-                    ) : (
-                      <p className="text-gray-500">No results found for your search</p>
-                    )}
-                  </td>
+                  <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap w-[120px]">Account No.</th>
+                  <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap w-[150px]">Customer Name</th>
+                  <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap w-[120px]">Barangay</th>
+                  <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap w-[100px]">Meter No.</th>
+                  <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap w-[120px]">Previous kWh</th>
+                  <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap w-[120px]">Current kWh</th>
+                  <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap w-[100px]">Total kWh</th>
+                  <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap w-[120px]">Reading Date</th>
+                  <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap w-[130px]">Consumer Type</th>
+                  <th className="px-4 py-3 text-left font-bold text-gray-500 whitespace-nowrap w-[140px]">Tracking Period</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filtered.length > 0 ? (
+                  filtered.map((account) => (
+                    <tr key={account._id} className="hover:bg-gray-50">
+                      <td className="px-4 py-4 font-medium whitespace-nowrap w-[120px]">
+                        {account.accountNumber || '-'}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap w-[150px]">
+                        {account.customerName || '-'}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap w-[120px]">{account.barangay || account.address || '-'}</td>
+                      <td className="px-4 py-4 whitespace-nowrap w-[100px]">{account.meterNumber || '-'}</td>
+                      <td className="px-4 py-4 whitespace-nowrap w-[120px]">
+                        {account.latestReading?.previousReading || '-'}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap w-[120px]">
+                        {account.latestReading?.currentReading || '-'}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap w-[100px]">
+                        {account.latestReading?.totalMonthlyKwh || '-'}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap w-[120px]">
+                        {formatDate(account.latestReading?.readingDate)}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap capitalize w-[130px]">
+                        {account.consumerType || 'residential'}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap w-[140px]">
+                        {account.latestReading?.trackingPeriod || '-'}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="10" className="px-6 py-12 text-center">
+                      {batelecAccounts.length === 0 ? (
+                        <div className="flex flex-col items-center">
+                          <FiFile className="h-12 w-12 text-gray-300 mb-4" />
+                          <p className="text-lg font-medium text-gray-400 mb-2">No BATELEC accounts available</p>
+                          <p className="text-sm text-gray-400">Upload a CSV file to get started</p>
+                        </div>
+                      ) : (
+                        <p className="text-gray-500">No results found for your search</p>
+                      )}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
+          {/* Horizontal scroll indicator */}
+            <div className="flex justify-center mt-2">
+              <div className="flex items-center text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                <FiArrowRight className="mr-1 animate-pulse" />
+                Scroll horizontally to view all columns
+                <FiArrowLeft className="ml-1 animate-pulse" />
+              </div>
+            </div>
 
 
       {/* Upload Modal */}
@@ -477,12 +484,12 @@ const CustomerManagement = () => {
                 </div>
               )}
 
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+             <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                 <div className="text-xs text-gray-600">
                   <p className="mb-2 font-semibold text-gray-700">Expected CSV format:</p>
                   <div className="space-y-1">
-                    <p className="font-mono text-xs bg-white px-2 py-1 rounded border">
-                      accountNumber, customerName, meterNumber, previousReading, currentReading, totalkWh, readingDate, consumerType, trackingPeriod
+                    <p className="font-mono text-xs bg-white px-2 py-1 rounded border overflow-x-auto">
+                      accountNumber, customerName, barangay, contactNumber, meterNumber, previousReading, currentReading, totalkWh, readingDate, consumerType, trackingPeriod
                     </p>
                   </div>
                   <div className="mt-3 space-y-1">
@@ -490,6 +497,8 @@ const CustomerManagement = () => {
                     <ul className="list-disc list-inside space-y-1 text-xs">
                       <li><strong>accountNumber:</strong> BATELEC account number</li>
                       <li><strong>customerName:</strong> Name of the customer</li>
+                      <li><strong>barangay:</strong> Barangay location of the customer</li>
+                      <li><strong>contactNumber:</strong> Customer's contact number</li>
                       <li><strong>meterNumber:</strong> Electricity meter number</li>
                       <li><strong>previousReading:</strong> Previous meter reading</li>
                       <li><strong>currentReading:</strong> Current meter reading</li>
