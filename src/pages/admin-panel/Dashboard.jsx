@@ -122,42 +122,58 @@ const Dashboard = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
-  const updatePreview = async () => {
-    if (exportType === "pdf") {
-      // Generate PDF preview
-      if (dashboardRef.current) {
-        try {
-          const canvas = await html2canvas(dashboardRef.current, {
-            scale: 2,
-            useCORS: true,
-            allowTaint: false,
-            backgroundColor: "#ffffff",
-            scrollX: 0,
-            scrollY: 0,
-            onclone: (clonedDoc) => {
-              const allElements = clonedDoc.querySelectorAll("*");
-              allElements.forEach((el) => {
-                const computed = window.getComputedStyle(el);
-                if (computed.backgroundColor.includes("oklch")) el.style.backgroundColor = "#ffffff";
-                if (computed.color.includes("oklch")) el.style.color = "#000000";
-                if (computed.borderColor.includes("oklch")) el.style.borderColor = "#d1d5db";
-                el.style.transform = "none";
-                el.style.animation = "none";
-                el.style.transition = "none";
-              });
-              clonedDoc.querySelectorAll(".export-button").forEach(el => (el.style.display = "none"));
-            },
-            ignoreElements: (el) => el.closest('.export-modal-container') !== null,
-          });
-          
-          setDashboardScreenshot(canvas.toDataURL("image/jpeg", 0.95));
-        } catch (error) {
-          console.error("Failed to capture preview:", error);
-        }
+const updatePreview = async () => {
+  if (exportType === "pdf") {
+    // Generate PDF preview
+    if (dashboardRef.current) {
+      try {
+        const canvas = await html2canvas(dashboardRef.current, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: false,
+          backgroundColor: "#FFFFFF",
+          scrollX: 0,
+          scrollY: 0,
+          onclone: (clonedDoc) => {
+            const allElements = clonedDoc.querySelectorAll("*");
+            allElements.forEach((el) => {
+              const computed = window.getComputedStyle(el);
+              if (computed.backgroundColor.includes("oklch")) el.style.backgroundColor = "#FFFFFF";
+              if (computed.color.includes("oklch")) el.style.color = "#000000";
+              if (computed.borderColor.includes("oklch")) el.style.borderColor = "#d1d5db";
+              el.style.transform = "none";
+              el.style.animation = "none";
+              el.style.transition = "none";
+            });
+            
+            // Hide the entire dashboard header (which contains both the title and export buttons)
+            clonedDoc.querySelectorAll(".dashboard-header-for-pdf").forEach(el => {
+              el.style.display = "none";
+            });
+          },
+          ignoreElements: (el) => el.closest('.export-modal-container') !== null,
+        });
+        
+        // Create a new canvas with border
+        const borderedCanvas = document.createElement('canvas');
+        borderedCanvas.width = canvas.width + 20; // Add space for border
+        borderedCanvas.height = canvas.height + 20;
+        const ctx = borderedCanvas.getContext('2d');
+        
+        // Add white background
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, borderedCanvas.width, borderedCanvas.height);
+        
+        // Draw the original screenshot inside the border
+        ctx.drawImage(canvas, 10, 10);
+        
+        setDashboardScreenshot(borderedCanvas.toDataURL("image/jpeg", 0.95));
+      } catch (error) {
+        console.error("Failed to capture preview:", error);
       }
     }
-  };
-
+  }
+};
   const fetchAISummary = async () => {
     try {
       setSummaryError(null);
@@ -402,7 +418,7 @@ const exportPDF = async () => {
     const contentWidth = pageWidth - 20;
 
     // Add dashboard screenshot
-    if (dashboardScreenshot) {
+   if (dashboardScreenshot) {
       doc.setFontSize(16);
       doc.text(exportConfig.header || "Dashboard Visual Overview", 14, 40);
       
@@ -603,7 +619,7 @@ const addStatisticsTable = (doc, startY, contentWidth) => {
   autoTable(doc, {
     head: [["KPI", "Count"]],
     body: statsData,
-    startY: startY + 10, // Add some space after the title
+    startY: startY + 10,
     styles: {
       fontSize: 9,
       cellPadding: 2,
@@ -629,9 +645,8 @@ const addStatisticsTable = (doc, startY, contentWidth) => {
 };
 
 const addAISummary = (doc, contentWidth, pageHeight) => {
-  // Calculate how many lines fit per page and cap to 2 pages
-  const approxLineHeight = 6; // mm
-  const availablePerPage = pageHeight - 40; // margins top/bottom
+  const approxLineHeight = 6;
+  const availablePerPage = pageHeight - 40;
   const maxLinesPerPage = Math.max(1, Math.floor(availablePerPage / approxLineHeight));
   const wrapped = doc.splitTextToSize(aiSummary, contentWidth - 6);
   const cappedLines = wrapped.slice(0, maxLinesPerPage * 2);
@@ -640,7 +655,6 @@ const addAISummary = (doc, contentWidth, pageHeight) => {
   doc.setFontSize(16);
   doc.text("AI Summary", 14, 20);
 
-  // Use autoTable for robust text layout and automatic wrapping
   doc.setFontSize(11);
   autoTable(doc, {
     startY: 26,
@@ -1026,7 +1040,7 @@ const addAISummary = (doc, contentWidth, pageHeight) => {
                                     }}
                                     className="rounded border-gray-300 text-green-600 focus:ring-green-500"
                                   />
-                                  <span className="text-gray-700">Include Summary (AI Generated)</span>
+                                  <span className="text-gray-700"> Include Summary (AI Generated)</span>
                                 </label>
                                 {isSummarizing && (
                                   <div className="text-xs text-gray-500 mt-1 ml-6">Generating summary...</div>
