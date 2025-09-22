@@ -44,7 +44,11 @@ const Users = () => {
     // New states for account linking
     showAccountLinkModal: false,
     batelecAccounts: [],
-    isLoadingAccounts: false
+    isLoadingAccounts: false,
+    
+    // Error modal state
+    showErrorModal: false,
+    errorMessage: ''
   });
 
   const usersPerPage = 20;
@@ -134,6 +138,8 @@ const Users = () => {
       const res = await axios.get(`${BASE_URL}/api/batelec/accounts?unlinkedOnly=true`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
+      
       setState(prev => ({
         ...prev,
         batelecAccounts: res.data || [],
@@ -329,11 +335,15 @@ To resolve this issue:
         adminNotes: "",
         isUpdating: false
       }));
-    } catch (err) {
-      console.error("Account linking failed:", err);
-      alert("Account linking failed: " + (err.response?.data?.message || err.message));
-      setState(prev => ({ ...prev, isUpdating: false }));
-    }
+    } catch (err) {
+      console.error("Account linking failed:", err);
+      setState(prev => ({ 
+        ...prev, 
+        isUpdating: false,
+        showErrorModal: true,
+        errorMessage: err.response?.data?.message || err.message || "An unexpected error occurred"
+      }));
+    }
   };
 
   const handleArchiveToggle = async (userId) => {
@@ -345,10 +355,14 @@ To resolve this issue:
       });
       fetchUsers();
       fetchUserStatistics();
-    } catch (err) {
-      console.error("Error toggling archive:", err);
-      alert("Operation failed");
-    } finally {
+    } catch (err) {
+      console.error("Error toggling archive:", err);
+      setState(prev => ({ 
+        ...prev, 
+        showErrorModal: true,
+        errorMessage: "Operation failed: " + (err.response?.data?.message || err.message || "An unexpected error occurred")
+      }));
+    } finally {
       setState(prev => ({ ...prev, isDeleting: false, showDeleteModal: false, userToDelete: null }));
     }
   };
@@ -381,8 +395,12 @@ To resolve this issue:
     }));
   } catch (err) {
     console.error("Rejection failed:", err);
-    alert("Rejection failed: " + (err.response?.data?.message || err.message));
-    setState(prev => ({ ...prev, isUpdating: false }));
+    setState(prev => ({ 
+      ...prev, 
+      isUpdating: false,
+      showErrorModal: true,
+      errorMessage: "Rejection failed: " + (err.response?.data?.message || err.message || "An unexpected error occurred")
+    }));
   }
 };
 
@@ -605,18 +623,18 @@ const RejectionModal = ({ show, onClose, user, onContinue }) => {
     return rejectionReasons.find(reason => reason.value === selectedReason);
   };
 
-  const handleContinue = () => {
-    if (!selectedReason) return;
-    onContinue(selectedReason, adminNotes);
-  };
+  const handleContinue = () => {
+    if (!selectedReason) return;
+    onContinue(selectedReason, adminNotes);
+  };
 
-  if (!show || !user) return null;
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
 
-  const currentDate = new Date().toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+  if (!show || !user) return null;
 
   return (
     <Modal
@@ -787,13 +805,13 @@ const ConfirmRejectionModal = ({ 
   rejectionReason,
   adminNotes 
 }) => {
-  if (!show || !user) return null;
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
 
-  const currentDate = new Date().toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+  if (!show || !user) return null;
 
   // Find the rejection reason data
   const reasonData = rejectionReasons.find(r => r.value === rejectionReason);
@@ -925,9 +943,11 @@ const AccountLinkingModal = ({ 
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   useEffect(() => {
-    // Since we're now fetching only unlinked accounts from the backend,
-    // we only need to filter by search query and barangay
-    const filtered = batelecAccounts.filter(account => 
+    // Filter for unregistered accounts only, then apply search and barangay filters
+    const unregisteredAccounts = batelecAccounts.filter(account => !account.isRegistered);
+    
+    const filtered = unregisteredAccounts.filter(account => 
+      // Apply search filters
       (
         account.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         account.accountNumber?.includes(searchQuery) ||
@@ -937,6 +957,7 @@ const AccountLinkingModal = ({ 
         (account.barangay && account.barangay.toLowerCase() === selectedBarangay.toLowerCase())
       )
     );
+    
     setFilteredAccounts(filtered);
   }, [searchQuery, selectedBarangay, batelecAccounts]);
 
@@ -1911,68 +1932,70 @@ const AccountLinkingConfirmation = ({ 
                 </div>
               )}
 
-              {/* BATELEC Account */}
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                    <FiLink className="w-5 h-5 text-gray-600 mr-2" />
-                    BATELEC Account
-                  </h3>
-                </div>
-                <div className="p-6">
-                  {state.batelecAccount ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium text-gray-500">Account Number</p>
-                        <p className="text-gray-900 font-mono font-semibold">{state.batelecAccount.accountNumber}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium text-gray-500">Customer Name</p>
-                        <p className="text-gray-900 font-medium">{state.batelecAccount.customerName}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium text-gray-500">Meter Number</p>
-                        <p className="text-gray-900 font-mono">{state.batelecAccount.meterNumber}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium text-gray-500">Address</p>
-                        <p className="text-gray-900">{state.batelecAccount.address || "-"}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium text-gray-500">Consumer Type</p>
-                        <p className="text-gray-900">{state.batelecAccount.consumerType || "-"}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium text-gray-500">Latest Reading</p>
-                        <p className="text-gray-900 font-semibold">
-                          {state.batelecAccount.latestReading?.currentReading || "-"} kWh
-                        </p>
-                      </div>
-                    </div>
-                  ) : state.viewingUser.accountNumber ? (
-                    <div className="text-center py-8">
-                      <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <FiAlertTriangle className="w-6 h-6 text-yellow-600" />
-                      </div>
-                      <p className="text-gray-500 text-sm">BATELEC account data not found</p>
-                    </div>
-                  ) : (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <FiLink className="w-4 h-4 text-blue-600" />
+              {/* BATELEC Account - Hide for rejected users */}
+              {!(state.viewingUser.verificationStatus === 'rejected_review' || state.viewingUser.verificationStatus === 'rejected_final') && (
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                  <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                      <FiLink className="w-5 h-5 text-gray-600 mr-2" />
+                      BATELEC Account
+                    </h3>
+                  </div>
+                  <div className="p-6">
+                    {state.batelecAccount ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-gray-500">Account Number</p>
+                          <p className="text-gray-900 font-mono font-semibold">{state.batelecAccount.accountNumber}</p>
                         </div>
-                        <div>
-                          <p className="text-blue-800 font-medium text-sm">New Consumer</p>
-                          <p className="text-blue-600 text-xs mt-1">
-                            This user needs to be linked to a BATELEC account during approval.
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-gray-500">Customer Name</p>
+                          <p className="text-gray-900 font-medium">{state.batelecAccount.customerName}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-gray-500">Meter Number</p>
+                          <p className="text-gray-900 font-mono">{state.batelecAccount.meterNumber}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-gray-500">Address</p>
+                          <p className="text-gray-900">{state.batelecAccount.address || "-"}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-gray-500">Consumer Type</p>
+                          <p className="text-gray-900">{state.batelecAccount.consumerType || "-"}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-gray-500">Latest Reading</p>
+                          <p className="text-gray-900 font-semibold">
+                            {state.batelecAccount.latestReading?.currentReading || "-"} kWh
                           </p>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    ) : state.viewingUser.accountNumber ? (
+                      <div className="text-center py-8">
+                        <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <FiAlertTriangle className="w-6 h-6 text-yellow-600" />
+                        </div>
+                        <p className="text-gray-500 text-sm">BATELEC account data not found</p>
+                      </div>
+                    ) : (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <FiLink className="w-4 h-4 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="text-blue-800 font-medium text-sm">New Consumer</p>
+                            <p className="text-blue-600 text-xs mt-1">
+                              This user needs to be linked to a BATELEC account during approval.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Verification Request */}
               {state.viewingUser.manualVerificationRequest?.requested && (
@@ -2111,6 +2134,46 @@ const AccountLinkingConfirmation = ({ 
         rejectionReason={state.selectedRejectionReason}
         adminNotes={state.rejectionNotes}
       />
+
+      {/* Error Modal */}
+      <Modal
+        show={state.showErrorModal}
+        onClose={() => setState(prev => ({ 
+          ...prev, 
+          showErrorModal: false,
+          errorMessage: ''
+        }))}
+        title="Account Linking Error"
+        actions={[
+          <button
+            key="ok"
+            onClick={() => setState(prev => ({ 
+              ...prev, 
+              showErrorModal: false,
+              errorMessage: ''
+            }))}
+            className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-medium"
+          >
+            OK
+          </button>
+        ]}
+      >
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Account Linking Failed
+            </h3>
+            <p className="text-gray-600">
+              {state.errorMessage}
+            </p>
+          </div>
+        </div>
+      </Modal>
 
     </div>
   );
