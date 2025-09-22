@@ -179,10 +179,31 @@ const News = () => {
       else if (status === "published") setIsPublishing(true);
       else setIsUpdating(true);
 
+      // Handle image upload if it's a base64 data URL
+      let imageUrl = formData.image;
+      if (formData.image.startsWith("data:")) {
+        // Convert base64 to file and upload
+        const response = await fetch(formData.image);
+        const blob = await response.blob();
+        const file = new File([blob], "news-image.png", { type: "image/png" });
+        
+        const formDataUpload = new FormData();
+        formDataUpload.append("image", file);
+        
+        const uploadResponse = await axios.post(`${BASE_URL}/api/news/upload-image`, formDataUpload, {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data"
+          },
+        });
+        
+        imageUrl = uploadResponse.data.imageUrl;
+      }
+
       const data = { 
         title: formData.title,
         content: formData.content,
-        image: formData.image,
+        image: imageUrl,
         category: formData.category,
         status 
       };
