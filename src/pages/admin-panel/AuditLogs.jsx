@@ -184,8 +184,9 @@ const AuditLogs = () => {
              <div className="p-4 bg-white border rounded-lg shadow-sm">
                 <h4 className="font-semibold text-slate-800 mb-4 border-b pb-2 flex items-center gap-2"><Briefcase className="w-5 h-5 text-green-500"/>Target Resource</h4>
                 <div className="space-y-2">
-                    {renderLogField('Type', log.target?.model)}
-                    {renderLogField('Name / ID', log.target?.displayText || log.target?.id)}
+                    {renderLogField('Target Type', log.target?.model || 'Unknown')}
+                    {renderLogField('Target Name', log.target?.displayText || 'N/A')}
+                    {renderLogField('Target ID', log.target?.id || 'N/A')}
                 </div>
              </div>
              <div className="p-4 bg-white border rounded-lg shadow-sm">
@@ -206,7 +207,17 @@ const AuditLogs = () => {
   };
 
   if (isLoading) {
-      return <div className="p-6 text-center text-slate-600">Loading audit logs...</div>;
+      return (
+        <div className="p-6 bg-[#F5F5F5] min-h-screen">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-slate-800">Audit Logs</h1>
+            <p className="text-slate-600 mt-1">Monitor and track all system activities and user actions.</p>
+          </div>
+          <div className="flex justify-center items-center h-[400px]">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-green-600"></div>
+          </div>
+        </div>
+      );
   }
 
   if (error) {
@@ -286,6 +297,7 @@ const AuditLogs = () => {
               <th className="px-4 py-3 text-left text-sm font-semibold text-slate-500 uppercase tracking-wider">Actor</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-slate-500 uppercase tracking-wider">Action</th>
               <th className="px-4 py-3 text-left text-sm font-semibold text-slate-500 uppercase tracking-wider">Target</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-slate-500 uppercase tracking-wider">Target Name</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
@@ -308,7 +320,12 @@ const AuditLogs = () => {
                     <ActionBadge action={log.action} />
                   </td>
                   <td className="px-3 py-4 whitespace-nowrap text-sm text-slate-600">
-                    {log.target?.displayText || log.target?.model}
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {log.target?.model || 'Unknown'}
+                    </span>
+                  </td>
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-slate-600">
+                    {log.target?.displayText || 'N/A'}
                   </td>
                   <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-right">
                     <button
@@ -322,7 +339,7 @@ const AuditLogs = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="px-6 py-12 text-center text-slate-500">
+                <td colSpan="6" className="px-6 py-12 text-center text-slate-500">
                   <h3 className="text-lg font-semibold mb-2">No Logs Found</h3>
                   <p>No audit logs were found matching the current filters.</p>
                 </td>
