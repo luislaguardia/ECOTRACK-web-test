@@ -1452,34 +1452,44 @@ const AccountLinkingConfirmation = ({ 
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
             {/* All/Active/Inactive/Pending/Rejected Button */}
             <div className="flex border border-gray-300 rounded-md overflow-hidden bg-white shadow-sm">
-              {['all', 'active', 'inactive', 'pending', 'rejected'].map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setState(prev => ({ 
-                    ...prev, 
-                    activeTab: tab, 
-                    currentPage: 1,
-                    // Clear verification filter when switching to active tab since it only shows verified users
-                    verificationFilter: tab === 'active' ? '' : prev.verificationFilter,
-                    // Clear rejection filter when switching away from rejected tab
-                    rejectionFilter: tab === 'rejected' ? prev.rejectionFilter : '',
-                    // Clear active filter when switching away from active tab
-                    activeFilter: tab === 'active' ? prev.activeFilter : ''
-                  }))}
-                  className={`px-6 py-2 capitalize ${
-                    state.activeTab === tab 
-                      ? "bg-green-600 text-white hover:bg-green-700" 
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-             {tab} ({
-               tab === 'all' ? state.statistics.totalUsers :
-               tab === 'active' ? (state.statistics.autoVerified + state.statistics.manuallyVerified) :
-               tab === 'inactive' ? state.statistics.archivedUsers || 0 :
-               tab === 'pending' ? state.statistics.pendingManual :
-               (state.statistics.rejectedReview || 0) + (state.statistics.rejectedFinal || 0)
-             })
-                </button>
+              {['all', 'active', 'inactive', 'pending', 'rejected'].map((tab, index) => (
+                <>
+                  <button
+                    key={tab}
+                    onClick={() => setState(prev => ({ 
+                      ...prev, 
+                      activeTab: tab, 
+                      currentPage: 1,
+                      // Clear verification filter when switching to active tab since it only shows verified users
+                      verificationFilter: tab === 'active' ? '' : prev.verificationFilter,
+                      // Clear rejection filter when switching away from rejected tab
+                      rejectionFilter: tab === 'rejected' ? prev.rejectionFilter : '',
+                      // Clear active filter when switching away from active tab
+                      activeFilter: tab === 'active' ? prev.activeFilter : ''
+                    }))}
+                    className={`px-6 py-2 capitalize ${
+                      state.activeTab === tab 
+                        ? "bg-green-600 text-white hover:bg-green-700" 
+                        : "text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+               {tab} ({
+                 tab === 'all' ? state.statistics.totalUsers :
+                 tab === 'active' ? (state.statistics.autoVerified + state.statistics.manuallyVerified) :
+                 tab === 'inactive' ? state.statistics.archivedUsers || 0 :
+                 tab === 'pending' ? state.statistics.pendingManual :
+                 (state.statistics.rejectedReview || 0) + (state.statistics.rejectedFinal || 0)
+               })
+                  </button>
+                  {/* Add separator line between buttons (except after the last one) */}
+                  {index < ['all', 'active', 'inactive', 'pending', 'rejected'].length - 1 && (
+                    <div key={`separator-${index}`} className={`w-px ${
+                      state.activeTab === tab || state.activeTab === ['all', 'active', 'inactive', 'pending', 'rejected'][index + 1]
+                        ? 'bg-green-200' 
+                        : 'bg-gray-200'
+                    }`}></div>
+                  )}
+                </>
               ))}
             </div>
 
