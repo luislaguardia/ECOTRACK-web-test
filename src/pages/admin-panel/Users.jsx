@@ -1468,7 +1468,7 @@ const AccountLinkingConfirmation = ({ 
                   }))}
                   className={`px-6 py-2 capitalize ${
                     state.activeTab === tab 
-                      ? "bg-green-600 text-white" 
+                      ? "bg-green-600 text-white hover:bg-green-700" 
                       : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
@@ -1674,7 +1674,7 @@ const AccountLinkingConfirmation = ({ 
                       onClick={() => setState(prev => ({ ...prev, currentPage: pageNum }))}
                       className={`px-3 py-1 text-sm border rounded-md ${
                         state.currentPage === pageNum
-                          ? 'bg-green-600 text-white border-green-600'
+                          ? 'bg-green-600 text-white border-green-600 hover:bg-green-700'
                           : 'border-gray-300 hover:bg-gray-100'
                       }`}
                     >
