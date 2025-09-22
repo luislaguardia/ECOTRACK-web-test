@@ -151,7 +151,7 @@ const updatePreview = async () => {
               el.style.display = "none";
             });
           },
-          ignoreElements: (el) => el.closest('.export-modal-container') !== null,
+          ignoreElements: (el) => el.closest('.export-modal-container') !== null || el.closest('.custom-devices-table') !== null,
         });
         
         // Create a new canvas with border
@@ -834,6 +834,58 @@ const addAISummary = (doc, contentWidth, pageHeight) => {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
+              
+              {/* Custom Devices Table - Hidden from PDF exports */}
+              {otherDevicesList && otherDevicesList.length > 0 && (
+                <div className="mt-6 custom-devices-table">
+                  <h5 className="text-sm font-semibold text-gray-600 mb-3 font-inter">Custom Devices Breakdown</h5>
+                  <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg shadow-sm">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 sticky top-0 z-10">
+                        <tr>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                            Device Name
+                          </th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                            Count
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {fullDeviceList
+                          .filter(device => 
+                            device.name && 
+                            device.name.toLowerCase() !== "unknown" &&
+                            !deviceData.slice(0, 5).some(topDevice => 
+                              topDevice.name === device.name || 
+                              (topDevice.name === "Others" && device.name.toLowerCase() === "unknown")
+                            )
+                          )
+                          .map((device, index) => (
+                            <tr key={device.name} className={index % 2 === 0 ? "bg-white hover:bg-gray-50" : "bg-gray-50 hover:bg-gray-100"}>
+                              <td className="px-3 py-2 text-sm text-gray-900">
+                                {device.name}
+                              </td>
+                              <td className="px-3 py-2 text-sm text-gray-900 font-medium">
+                                {device.value}
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Showing {fullDeviceList.filter(device => 
+                      device.name && 
+                      device.name.toLowerCase() !== "unknown" &&
+                      !deviceData.slice(0, 5).some(topDevice => 
+                        topDevice.name === device.name || 
+                        (topDevice.name === "Others" && device.name.toLowerCase() === "unknown")
+                      )
+                    ).length} custom devices
+                  </p>
+                </div>
+              )}
             </div>
           </div>
           
