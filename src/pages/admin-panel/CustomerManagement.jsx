@@ -518,7 +518,7 @@ const CustomerManagement = () => {
                   <div className="mt-3 space-y-1">
                     <p className="font-medium">Required fields:</p>
                     <ul className="list-disc list-inside space-y-1 text-xs">
-                      <li><strong>accountNumber:</strong> BATELEC account number</li>
+                      <li><strong>accountNumber:</strong> BATELEC account number (must be exactly 10 digits)</li>
                       <li><strong>customerName:</strong> Name of the customer</li>
                       <li><strong>barangay:</strong> Barangay location of the customer</li>
                       <li><strong>contactNumber:</strong> Customer's contact number</li>
@@ -596,7 +596,7 @@ const CustomerManagement = () => {
               <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <p className="text-sm text-yellow-800">
                   <strong>Tip:</strong> Make sure your CSV file includes all required fields: 
-                  accountNumber, barangay (or address), previousReading, currentReading, readingDate, trackingPeriod.
+                  accountNumber (must be exactly 10 digits), barangay (or address), previousReading, currentReading, readingDate, trackingPeriod.
                   Barangay must be one of the valid Nasugbu barangays.
                 </p>
               </div>
