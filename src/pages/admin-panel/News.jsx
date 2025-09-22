@@ -147,6 +147,13 @@ const News = () => {
     }
   };
 
+  // Function to refresh the news list after operations
+  const refreshNewsList = async () => {
+    setCurrentPage(1);
+    setHasMore(true);
+    await fetchNews(1);
+  };
+
   // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
@@ -215,17 +222,15 @@ const News = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         
-        // Update the item in the list
-        setNewsList(prev => prev.map(news => 
-          news._id === editingNewsId ? response.data : news
-        ));
+        // Refresh the news list to get updated data
+        await refreshNewsList();
       } else {
         const response = await axios.post(`${BASE_URL}/api/news`, data, {
           headers: { Authorization: `Bearer ${token}` },
         });
         
-        // Add new item to the beginning of the list
-        setNewsList(prev => [response.data, ...prev]);
+        // Refresh the news list to get updated data
+        await refreshNewsList();
       }
 
       setFormData({
@@ -285,10 +290,8 @@ const News = () => {
         }
       );
       
-      // Update the item in the list
-      setNewsList(prev => prev.map(news => 
-        news._id === newsId ? response.data : news
-      ));
+      // Refresh the news list to get updated data
+      await refreshNewsList();
     } catch (err) {
       console.error("Publish failed:", err);
       setError("Failed to publish news. Please try again.");
@@ -311,18 +314,8 @@ const News = () => {
       
       console.log("Archive response:", response.data); // Debug log
       
-      // Update the item in the list
-      setNewsList(prev => prev.map(news => {
-        if (news._id === newsId) {
-          const updatedNews = response.data.data;
-          // When unarchiving, set status to draft
-          if (!shouldArchive && updatedNews.isArchived === false) {
-            return { ...updatedNews, status: 'draft' };
-          }
-          return updatedNews;
-        }
-        return news;
-      }));
+      // Refresh the news list to get updated data
+      await refreshNewsList();
       
       setError(null); // Clear any previous errors
     } catch (err) {
