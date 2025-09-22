@@ -24,11 +24,37 @@ const AboutUs = () => {
   }, []);
 
   return (
-    <div className="bg-gradient-to-br from-white via-gray-50 to-green-50/30">
-      <HomePageNavBar />
+   <div className="bg-gradient-to-br from-white via-gray-50 to-green-50/30">
+  <HomePageNavBar />
+  <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-5 relative">
+    {/* Logo Image - Now with animation */}
+    <div className="animate-on-scroll opacity-0 transition-all duration-700 delay-[200ms] flex justify-center mb-5">
+      <img
+        src="/images/BatelecLogo1.jpg"
+        alt="BATELEC I Logo"
+        className="w-40 h-40 object-contain transform transition-all duration-500 hover:scale-105"
+      />
+    </div>
+        
+        {/* Our Story */}
+        <div className="animate-on-scroll opacity-0 transition-all duration-700 delay-[600ms] relative z-10">
+          <div className="bg-gradient-to-br from-[#E6F7E9] via-emerald-50 to-green-100 p-10 sm:p-12 rounded-3xl w-full max-w-5xl shadow-xl mx-auto border border-green-200/50 relative overflow-hidden hover:shadow-2xl transition-all duration-500">
+            {/* Decorative elements */}
+            <div className="absolute top-0 right-0 w-25 h-25 bg-gradient-to-br from-[#28A12E]/10 to-transparent rounded-full -translate-y-16 translate-x-16"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-emerald-200/40 to-transparent rounded-full translate-y-12 -translate-x-12"></div>
+            
+            <div className="relative z-10">
+              <h2 className="text-[#28A12E] text-3xl sm:text-4xl font-proxima font-semibold text-center mb-6 drop-shadow-sm">
+                Our Story
+              </h2>
+              <p className="text-gray-700 font-proxima text-center text-sm sm:text-base max-w-4xl mx-auto leading-relaxed">
+                Since its registration with the National Electrification Administration in 1977, BATELEC I has been a cornerstone of development in Batangas. Governed by a board representing each municipality, the cooperative exists to serve its member-consumer-owners. With a commitment to energy reliability and innovation, BATELEC I continues to bridge the gap between communities and progress through improved electrification and modern services.
+              </p>
+            </div>
+          </div>
+        </div>
 
-      <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-16">
-        <div className="flex flex-col md:flex-row justify-center items-stretch gap-8 mb-12">
+        <div className="flex flex-col mt-10 md:flex-row justify-center items-stretch gap-8 mb-12 relative z-10">
           {/* Mission */}
           <div className="animate-on-scroll opacity-0 transition-all duration-700 delay-[0ms] flex-1">
             <div className="flex flex-col items-center text-center h-full group">
@@ -37,7 +63,7 @@ const AboutUs = () => {
                   Mission
                 </h2>
               </div>
-              <div className="mt-2 bg-gradient-to-br from-[#F3EBFF] to-purple-100 px-6 py-8 rounded-2xl w-full max-w-[380px] h-[200px] shadow-md hover:shadow-lg transition-all duration-300 border border-purple-200/50 flex items-center">
+              <div className="mt-0 bg-gradient-to-br from-[#F3EBFF] to-purple-100 px-6 py-8 rounded-2xl w-full max-w-[380px] h-[200px] shadow-md hover:shadow-lg transition-all duration-300 border border-purple-200/50 flex items-center">
                 <p className="text-gray-700 font-proxima text-sm sm:text-base leading-relaxed">
                   Delivering reliable, safe,and quality electric service to the member-consumer-owners 
                   of Batangas through responsible, community-centered operations.
@@ -54,7 +80,7 @@ const AboutUs = () => {
                   Who We Are
                 </h2>
               </div>
-              <div className="mt-2 bg-gradient-to-br from-[#F3EBFF] to-blue-100 px-6 py-8 rounded-2xl w-full max-w-[380px] h-[240px] shadow-md hover:shadow-lg transition-all duration-300 border border-blue-200/50 flex items-center">
+              <div className="mt-0 bg-gradient-to-br from-[#F3EBFF] to-blue-100 px-6 py-8 rounded-2xl w-full max-w-[380px] h-[240px] shadow-md hover:shadow-lg transition-all duration-300 border border-blue-200/50 flex items-center">
                 <p className="text-gray-700 font-proxima text-sm sm:text-base leading-relaxed">
                   Batangas I Electric Cooperative, Inc. (BATELEC I) is a member-owned electric cooperative 
                   established in 1977, serving 12 municipalities across Batangas with dedication and transparency.
@@ -71,7 +97,7 @@ const AboutUs = () => {
                   Vision
                 </h2>
               </div>
-              <div className="mt-2 bg-gradient-to-br from-[#F3EBFF] to-green-100 px-6 py-8 rounded-2xl w-full max-w-[380px] h-[200px] shadow-md hover:shadow-lg transition-all duration-300 border border-green-200/50 flex items-center">
+              <div className="mt-0 bg-gradient-to-br from-[#F3EBFF] to-green-100 px-6 py-8 rounded-2xl w-full max-w-[380px] h-[200px] shadow-md hover:shadow-lg transition-all duration-300 border border-green-200/50 flex items-center">
                 <p className="text-gray-700 font-proxima text-sm sm:text-base leading-relaxed">
                   To be a premier electric cooperative empowering every Batangueño household
                    with sustainable, accessible, and efficient electricity.
@@ -80,26 +106,8 @@ const AboutUs = () => {
             </div>
           </div>
         </div>
-
-        {/* Our Story */}
-        <div className="mt-16 animate-on-scroll opacity-0 transition-all duration-700 delay-[600ms]">
-          <div className="bg-gradient-to-br from-[#E6F7E9] via-emerald-50 to-green-100 p-10 sm:p-12 rounded-3xl w-full max-w-5xl shadow-xl mx-auto border border-green-200/50 relative overflow-hidden hover:shadow-2xl transition-all duration-500">
-            {/* Decorative elements */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#28A12E]/10 to-transparent rounded-full -translate-y-16 translate-x-16"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-emerald-200/40 to-transparent rounded-full translate-y-12 -translate-x-12"></div>
-            
-            <div className="relative z-10">
-              <h2 className="text-[#28A12E] text-3xl sm:text-4xl font-proxima font-semibold text-center mb-6 drop-shadow-sm">
-                Our Story
-              </h2>
-              <p className="text-gray-700 font-proxima text-center text-sm sm:text-base max-w-4xl mx-auto leading-relaxed">
-                Since its registration with the National Electrification Administration in 1977, BATELEC I has been a cornerstone of development in Batangas. Governed by a board representing each municipality, the cooperative exists to serve its member-consumer-owners. With a commitment to energy reliability and innovation, BATELEC I continues to bridge the gap between communities and progress through improved electrification and modern services.
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
-        <Footer />
+      <Footer />
 
       {/* Enhanced Animation styles */}
       <style jsx>{`
