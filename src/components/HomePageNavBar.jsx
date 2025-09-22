@@ -17,23 +17,23 @@ const HomePageNavBar = () => {
       {/* Customer/Admin Tab Navigation */}
       <div className="border-b border-gray-200">
         <div className="flex">
-          <button
+          {/* <button
             className={`px-4 lg:px-8 py-3 lg:py-4 ${
               !isAdmin ? "text-black" : "text-gray-400"
             } font-bold text-sm lg:text-base`}
             onClick={() => navigate("/")}
           >
             For Customers
-          </button>
+          </button> */}
           
-          <button
+          {/* <button
             className={`px-4 lg:px-8 py-3 lg:py-4 ${
               isAdmin ? "text-black" : "text-gray-400"
             } font-bold border-l border-gray-200 text-sm lg:text-base`}
             onClick={() => navigate("/login")}
           >
             For Admins
-          </button>
+          </button> */}
         </div>
       </div>
 
