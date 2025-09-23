@@ -191,10 +191,10 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, setShowLogoutModa
         </div>
 
         {/* Logout Button - Now properly positioned at bottom */}
-        <div className="border-t border-[#0A7F24] mt-auto">
+        <div className="border-t border-[#0A7F24] mt-20">
           <div
             onClick={() => setShowLogoutModal(true)}
-            className="flex items-center px-9 py-4 cursor-pointer hover:bg-[#0A7F24]"
+            className="flex items-center px-9 py-4 mt-10 cursor-pointer hover:bg-[#0A7F24]"
           >
             <img src={logout} alt="Logout" className="w-6 h-6 mr-4 opacity-80" />
             <span className="text-lg font-inter">Log Out</span>
