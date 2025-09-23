@@ -540,14 +540,14 @@ const News = () => {
 
                 <div className="flex justify-center items-center md:w-[300px] h-auto p-4">
                   <div className="w-full h-[220px] bg-gray-100 border-l border-gray-300 rounded-lg overflow-hidden shadow-md">
-                    <img
-                      src={news.image}
-                      alt={news.title}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/300x220?text=No+Image";
-                      }}
-                    />
+                      <img
+                        src={news.image?.startsWith('http') ? news.image : `${BASE_URL}${news.image}`}
+                        alt={news.title}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          e.target.src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIyMCIgZmlsbD0iI2Y3ZjdmNyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4=";
+                        }}
+                      />
                   </div>
                 </div>
               </div>
@@ -706,15 +706,14 @@ const News = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Image Preview
                   </label>
-                  <img
-                    src={formData.image}
-                    alt="Preview"
-                    className="max-h-40 mx-auto rounded object-contain"
-                    onError={(e) => {
-                      e.target.src =
-                        "https://via.placeholder.com/400x200?text=Image+not+found";
-                    }}
-                  />
+                    <img
+                      src={formData.image?.startsWith('http') ? formData.image : `${BASE_URL}${formData.image}`}
+                      alt="Preview"
+                      className="max-h-40 mx-auto rounded object-contain"
+                      onError={(e) => {
+                        e.target.src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y3ZjdmNyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBub3QgZm91bmQ8L3RleHQ+PC9zdmc+";
+                      }}
+                    />
                 </div>
               )}
 
