@@ -150,6 +150,27 @@ const updatePreview = async () => {
             clonedDoc.querySelectorAll(".dashboard-header-for-pdf").forEach(el => {
               el.style.display = "none";
             });
+
+            // Simple fix: Force charts to have consistent height
+            const chartContainers = clonedDoc.querySelectorAll('.chart-container-for-pdf');
+            chartContainers.forEach(container => {
+              // Find all chart divs and force them to have consistent height
+              const chartDivs = container.querySelectorAll('div');
+              chartDivs.forEach(div => {
+                const classList = div.className || '';
+                if (classList.includes('h-[400px]') || classList.includes('h-[300px]')) {
+                  div.style.height = '350px';
+                  div.style.minHeight = '350px';
+                }
+              });
+
+              // Force ResponsiveContainer to have consistent height
+              const responsiveContainers = container.querySelectorAll('.recharts-responsive-container');
+              responsiveContainers.forEach(respContainer => {
+                respContainer.style.height = '350px';
+                respContainer.style.minHeight = '350px';
+              });
+            });
           },
           ignoreElements: (el) => el.closest('.export-modal-container') !== null || el.closest('.custom-devices-table') !== null,
         });
@@ -769,7 +790,7 @@ const addAISummary = (doc, contentWidth, pageHeight) => {
           </div>
 
           {/* Charts */}
-          <div className="flex flex-col md:flex-row gap-6">
+          <div className="flex flex-col md:flex-row gap-6 chart-container-for-pdf">
             <div className="bg-white p-6 rounded-lg border flex-1 border-gray-200">
               <h4 className="text-xl font-semibold text-gray-700 mb-4 font-inter">
                 Energy Usage Trends
@@ -1192,7 +1213,6 @@ const addAISummary = (doc, contentWidth, pageHeight) => {
                                   <img 
                                     src={dashboardScreenshot} 
                                     alt="Dashboard Preview" 
-                                    className="w-full h-auto"
                                     style={{ objectFit: 'contain' }}
                                   />
                                 </div>

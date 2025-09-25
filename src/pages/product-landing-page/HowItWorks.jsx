@@ -145,7 +145,6 @@ const HowItWorks = () => {
                 src="/images/how-it-works/Dashboard.png"
                 alt="App Screenshot"
                 style={{ width: "100%", borderRadius: "20px" }}
-                className="hover:brightness-110 transition-all duration-300"
               />
             </div>
           </div>

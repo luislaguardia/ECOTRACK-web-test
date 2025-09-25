@@ -39,7 +39,6 @@ const DownloadApp = () => {
     <img
       src={phoneImage}
       alt="Ecotrack app preview"
-      className="w-full h-full object-cover object-top"
       style={{ marginTop: '1rem' }} // You can adjust the value to `-5rem` or more if needed
     />
   </div>
