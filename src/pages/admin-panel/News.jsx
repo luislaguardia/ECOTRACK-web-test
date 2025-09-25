@@ -541,7 +541,7 @@ const News = () => {
                 <div className="flex justify-center items-center md:w-[300px] h-auto p-4">
                   <div className="w-full h-[220px] bg-gray-100 border-l border-gray-300 rounded-lg overflow-hidden shadow-md">
                       <img
-                        src={news.image?.startsWith('http') ? news.image : `${BASE_URL}${news.image}`}
+                        src={news.image?.startsWith('data:') ? news.image : news.image?.startsWith('http') ? news.image : news.image?.startsWith('/') ? `${BASE_URL}${news.image}` : `${BASE_URL}/uploads/news/${news.image}`}
                         alt={news.title}
                         className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
@@ -707,7 +707,7 @@ const News = () => {
                     Image Preview
                   </label>
                     <img
-                      src={formData.image?.startsWith('http') ? formData.image : `${BASE_URL}${formData.image}`}
+                      src={formData.image?.startsWith('data:') ? formData.image : formData.image?.startsWith('http') ? formData.image : formData.image?.startsWith('/') ? `${BASE_URL}${formData.image}` : `${BASE_URL}/uploads/news/${formData.image}`}
                       alt="Preview"
                       className="max-h-40 mx-auto rounded object-contain"
                       onError={(e) => {
