@@ -17,12 +17,7 @@
         {
           "key": "Content-Security-Policy",
           "value": "default-src 'self'; script-src 'self' 'sha256-sv7hbimefIgr5H+bCTJv/Ot/c4+D5HEUsa+XdoCrgmU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://ecotrack-iq4x.onrender.com https://ecotrack.online https://ecotrack-kcab.onrender.com https://upload.wikimedia.org https://encrypted-tbn0.gstatic.com https://encrypted-tbn1.gstatic.com https://encrypted-tbn2.gstatic.com https://encrypted-tbn3.gstatic.com https://imgs.search.brave.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://ecotrack-iq4x.onrender.com https://ecotrack.online https://ecotrack-kcab.onrender.com data:; object-src 'none'; frame-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'; media-src 'self'; worker-src 'self'; child-src 'none';"
-        }
-      ]
-    },
-    {
-      "source": "/images/(.*)",
-      "headers": [
+        },
         {
           "key": "Access-Control-Allow-Origin",
           "value": "https://ecotrack.online"
