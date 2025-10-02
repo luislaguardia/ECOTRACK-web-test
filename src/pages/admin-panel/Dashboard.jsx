@@ -33,10 +33,16 @@ const Dashboard = () => {
     unverified: 0,
     rejected: 0,
     verifiedUsers: 0,
-    basicUsers: 0
+    basicUsers: 0,
+    archivedUsers: 0
   });
 
   const [totalNews, setTotalNews] = useState(0);
+  const [newsBreakdown, setNewsBreakdown] = useState({
+    maintenance: 0,
+    brownout: 0,
+    general: 0
+  });
   const [usageData, setUsageData] = useState([]);
   const [deviceData, setDeviceData] = useState([]);
   const [otherDevicesList, setOtherDevicesList] = useState([]);
@@ -243,10 +249,24 @@ const updatePreview = async () => {
 
   const fetchNewsCount = async () => {
     try {
+      // Fetch all news to get total count
       const res = await axios.get(`${BASE_URL}/api/news`);
       const total = res?.data?.pagination?.total ?? (Array.isArray(res?.data?.news) ? res.data.news.length : 0);
       setTotalNews(total);
       setPrevTotalNews(Math.max(total - Math.floor(total * 0.15), 1));
+
+      // Fetch news by category for breakdown
+      const [maintenanceRes, brownoutRes, generalRes] = await Promise.all([
+        axios.get(`${BASE_URL}/api/news?category=maintenance`),
+        axios.get(`${BASE_URL}/api/news?category=brownout`),
+        axios.get(`${BASE_URL}/api/news?category=general`)
+      ]);
+
+      setNewsBreakdown({
+        maintenance: maintenanceRes?.data?.pagination?.total ?? (Array.isArray(maintenanceRes?.data?.news) ? maintenanceRes.data.news.length : 0),
+        brownout: brownoutRes?.data?.pagination?.total ?? (Array.isArray(brownoutRes?.data?.news) ? brownoutRes.data.news.length : 0),
+        general: generalRes?.data?.pagination?.total ?? (Array.isArray(generalRes?.data?.news) ? generalRes.data.news.length : 0)
+      });
     } catch (err) {
       console.error("Error fetching news counts:", err);
       setExportError("Failed to load news data.");
@@ -745,8 +765,8 @@ const addAISummary = (doc, contentWidth, pageHeight) => {
                 </span>
               </div>
               <div className="mt-2 text-sm text-gray-600">
-                <div>Basic: {userStats.basicUsers}</div>
-                <div>Verified: {userStats.verifiedUsers}</div>
+                <div>Active: {userStats.totalUsers - (userStats.archivedUsers || 0)}</div>
+                <div>Inactive: {userStats.archivedUsers || 0}</div>
               </div>
             </div>
 
@@ -773,7 +793,7 @@ const addAISummary = (doc, contentWidth, pageHeight) => {
                 </span>
               </div>
               <div className="mt-2 text-sm text-gray-600">
-                <div>Unverified: {userStats.unverified}</div>
+                <div>Pending Requests: {userStats.pendingManual + userStats.unverified}</div>
                 <div>Rejected: {userStats.rejected}</div>
               </div>
             </div>
@@ -785,6 +805,16 @@ const addAISummary = (doc, contentWidth, pageHeight) => {
                 <span className="text-green-600 font-semibold text-sm bg-green-100 px-2 py-1 rounded-full">
                   {getGrowth(totalNews, prevTotalNews)}
                 </span>
+              </div>
+              <div className="mt-2 text-sm text-gray-600">
+                <div className="flex items-center">
+                  <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                  Maintenance: {newsBreakdown.maintenance}
+                </div>
+                <div className="flex items-center">
+                  <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                  Brownout: {newsBreakdown.brownout}
+                </div>
               </div>
             </div>
           </div>
