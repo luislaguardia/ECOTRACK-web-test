@@ -1399,8 +1399,7 @@ const AccountLinkingConfirmation = ({ 
     { value: "manually_verified", label: "Manually Verified" },
     { value: "pending_manual", label: "Pending Review" },
     { value: "rejected_review", label: "Rejected/Review" },
-    { value: "rejected_final", label: "Rejected/Final" },
-    { value: "rejected", label: "Rejected" } // Legacy support
+    { value: "rejected_final", label: "Rejected/Final" }
   ];
 
   const typeOptions = [
@@ -1556,14 +1555,16 @@ const AccountLinkingConfirmation = ({ 
             )}
           </div>
 
-          {/* Right side: Barangay filter */}
-          <FilterSelect
-            value={state.selectedBarangay}
-            onChange={(value) => setState(prev => ({ ...prev, selectedBarangay: value, currentPage: 1 }))}
-            options={barangayOptions}
-            placeholder="All Barangays"
-            className="min-w-[180px]"
-          />
+          {/* Right side: Barangay filter - Hidden for rejected tab */}
+          {state.activeTab !== 'rejected' && (
+            <FilterSelect
+              value={state.selectedBarangay}
+              onChange={(value) => setState(prev => ({ ...prev, selectedBarangay: value, currentPage: 1 }))}
+              options={barangayOptions}
+              placeholder="All Barangays"
+              className="min-w-[180px]"
+            />
+          )}
         </div>
       </div>
 
