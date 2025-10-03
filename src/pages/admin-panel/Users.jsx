@@ -48,7 +48,11 @@ const Users = () => {
     
     // Error modal state
     showErrorModal: false,
-    errorMessage: ''
+    errorMessage: '',
+    
+    // Success notification state
+    showSuccessMessage: false,
+    successMessage: ''
   });
 
   const usersPerPage = 20;
@@ -138,7 +142,6 @@ const Users = () => {
       const res = await axios.get(`${BASE_URL}/api/batelec/accounts?unlinkedOnly=true`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
       
       setState(prev => ({
         ...prev,
@@ -319,22 +322,36 @@ To resolve this issue:
       const { user } = state.verificationAction;
       const token = localStorage.getItem("token");
       
-      // Call new API endpoint that handles account linking + approval
-      await axios.post(`${BASE_URL}/api/users/link-account-and-approve/${user._id}`, {
-        accountNumber,
-        adminNotes
-      }, { headers: { Authorization: `Bearer ${token}` } });
-      
-      fetchUsers();
-      fetchUserStatistics();
-      
-      setState(prev => ({
-        ...prev,
-        showAccountLinkModal: false,
-        verificationAction: null,
-        adminNotes: "",
-        isUpdating: false
-      }));
+      // Call new API endpoint that handles account linking + approval
+      await axios.post(`${BASE_URL}/api/users/link-account-and-approve/${user._id}`, {
+        accountNumber,
+        adminNotes
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      
+      // Close modal immediately and show success message
+      setState(prev => ({
+        ...prev,
+        showAccountLinkModal: false,
+        verificationAction: null,
+        adminNotes: "",
+        isUpdating: false,
+        showSuccessMessage: true,
+        successMessage: `Account ${accountNumber} has been successfully linked and user approved!`
+      }));
+      
+      // Refresh data in background
+      fetchUsers();
+      fetchUserStatistics();
+      
+      // Add a small delay to ensure backend updates are complete, then refresh Batelec accounts
+      setTimeout(() => {
+        fetchBatelecAccounts();
+      }, 500);
+      
+      // Auto-hide success message after 3 seconds
+      setTimeout(() => {
+        setState(prev => ({ ...prev, showSuccessMessage: false, successMessage: '' }));
+      }, 3000);
     } catch (err) {
       console.error("Account linking failed:", err);
       setState(prev => ({ 
@@ -943,20 +960,29 @@ const AccountLinkingModal = ({ 
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   useEffect(() => {
-    // Filter for unregistered accounts only, then apply search and barangay filters
-    const unregisteredAccounts = batelecAccounts.filter(account => !account.isRegistered);
-    
-    const filtered = unregisteredAccounts.filter(account => 
+    // Apply search and barangay filters (backend already filters for unlinked accounts)
+    // Additional frontend filtering as a safety net
+    const filtered = batelecAccounts.filter(account => {
+      // Double-check that account is not registered (safety net)
+      if (account.isRegistered || (account.registeredUserId && account.registeredUserId !== null)) {
+        return false;
+      }
+      
       // Apply search filters
-      (
+      const matchesSearch = (
         account.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         account.accountNumber?.includes(searchQuery) ||
         account.meterNumber?.includes(searchQuery)
-      ) && (
+      );
+      
+      // Apply barangay filter
+      const matchesBarangay = (
         !selectedBarangay || 
         (account.barangay && account.barangay.toLowerCase() === selectedBarangay.toLowerCase())
-      )
-    );
+      );
+      
+      return matchesSearch && matchesBarangay;
+    });
     
     setFilteredAccounts(filtered);
   }, [searchQuery, selectedBarangay, batelecAccounts]);
@@ -2185,6 +2211,18 @@ const AccountLinkingConfirmation = ({ 
           </div>
         </div>
       </Modal>
+
+      {/* Success Message */}
+      {state.showSuccessMessage && (
+        <div className="fixed top-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md shadow-lg">
+          <div className="flex items-center">
+            <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="font-medium">{state.successMessage}</span>
+          </div>
+        </div>
+      )}
 
     </div>
   );
