@@ -2,7 +2,7 @@ import React from 'react';
 import { MdAndroid } from 'react-icons/md';
 import HomePageNavBar from '../../components/HomePageNavBar';
 import Footer from '../../components/Footer';
-import phoneImage from '../../assets/mobile_app_mockup_1.png'; // Or replace with Get Ecotrack.jpeg if preferred
+import phoneImage from '../../assets/mobile_app_mockup_1.jpg'; // Or replace with Get Ecotrack.jpeg if preferred
 
 const DownloadApp = () => {
   return (
