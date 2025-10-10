@@ -351,13 +351,21 @@ export default function Settings() {
           )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-          <input
-            type="text"
-            disabled
-            value={admin.role === "superadmin" ? "Super Administrator" : "Administrator"}
-            className="w-full px-4 py-2 border bg-gray-100 border-gray-300 rounded-md shadow-sm"
-          />
+          <label
+              htmlFor="userRole"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Role
+            </label>
+            <input
+              id="userRole"
+              type="text"
+              disabled
+              aria-label="User Role"
+              value={admin.role === "superadmin" ? "Super Administrator" : "Administrator"}
+              className="w-full px-4 py-2 border bg-gray-100 border-gray-300 rounded-md shadow-sm"
+            />
+
         </div>
         <button
           type="submit"

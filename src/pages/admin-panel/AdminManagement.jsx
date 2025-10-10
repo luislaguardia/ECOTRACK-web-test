@@ -510,9 +510,11 @@ const saveEdit = async (id) => {
                         <button
                           onClick={() => startEdit(admin)}
                           className="bg-yellow-100 text-yellow-800 rounded-md hover:bg-yellow-200 p-2"
+                          aria-label={`Edit admin ${admin.name}`}
                         >
-                          <FiEdit className="w-4 h-4" />
+                          <FiEdit className="w-4 h-4" aria-hidden="true" />
                         </button>
+
 
                         {/* Toggle Switch */}
                         <label className="relative inline-flex items-center cursor-pointer">

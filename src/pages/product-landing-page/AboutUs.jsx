@@ -30,7 +30,7 @@ const AboutUs = () => {
     {/* Logo Image - Now with animation */}
     <div className="animate-on-scroll opacity-0 transition-all duration-700 delay-[200ms] flex justify-center mb-5">
       <img
-        src="/images/BatelecLogo1.jpg"
+        src="/images/BatelecLogo1.png"
         alt="BATELEC I Logo"
         className="w-40 h-40 object-contain transform transition-all duration-500 hover:scale-105"
       />

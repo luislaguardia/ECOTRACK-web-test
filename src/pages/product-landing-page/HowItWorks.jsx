@@ -38,9 +38,9 @@ const HowItWorks = () => {
       <div className="flex-1 flex flex-col-reverse lg:flex-row items-center justify-center gap-y-20 lg:gap-x-35 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto py-20">
         {/* Left side - Steps */}
         <div className="w-full lg:w-[460px] space-y-20 pb-8">          
-          <h1 className="text-3xl sm:text-4xl font-bold text-center text-[#109717] mt-12 mb-8 font-proxima animate-on-scroll opacity-0">
-            How It Works
-          </h1>
+         <h1 className="text-3xl sm:text-4xl font-bold text-center text-[#109717] mt-12 mb-8 font-proxima animate-on-scroll opacity-0">
+          How It Works
+        </h1>
   
           {/* Step 1 */}
           <div className="flex items-start space-x-4 sm:space-x-6 animate-on-scroll opacity-0" style={{ animationDelay: "100ms" }}>
@@ -64,9 +64,9 @@ const HowItWorks = () => {
             </div>
   
             <div className="pt-2 transform transition-all duration-300 hover:translate-x-2">
-              <h3 className="text-xl sm:text-2xl font-bold font-proxima text-black mb-2">
+              <h2 className="text-xl sm:text-2xl font-bold font-proxima text-black mb-2">
                 Connect Smart Plugs
-              </h3>
+              </h2>
               <p className="text-gray-600 font-proxima text-base sm:text-lg">
                 Purchase and connect Tasmota smart plugs to your appliances
               </p>
@@ -95,9 +95,9 @@ const HowItWorks = () => {
             </div>
   
             <div className="pt-2 transform transition-all duration-300 hover:translate-x-2">
-              <h3 className="text-xl sm:text-2xl font-bold text-black font-proxima mb-2">
+              <h2 className="text-xl sm:text-2xl font-bold font-proxima text-black mb-2">
                 Monitor in Real-Time
-              </h3>
+              </h2>
               <p className="text-gray-500 font-proxima text-base sm:text-lg">
                 Track energy usage per device with detailed dashboards
               </p>
@@ -112,9 +112,9 @@ const HowItWorks = () => {
               </div>
             </div>
             <div className="pt-2 transform transition-all duration-300 hover:translate-x-2">
-              <h3 className="text-xl sm:text-2xl font-bold font-proxima text-black mb-2">
+              <h2 className="text-xl sm:text-2xl font-bold font-proxima text-black mb-2">
                 Get AI Recommendations
-              </h3>
+              </h2>
               <p className="text-gray-500 font-proxima text-base sm:text-lg">
                 Receive personalized tips to optimize energy consumption
               </p>

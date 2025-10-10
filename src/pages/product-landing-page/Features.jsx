@@ -121,7 +121,7 @@ const Features = () => {
     <div>
       <HomePageNavBar />
       <div
-        className="min-h-85 py-8 px-4"
+        className="min-h-190 py-8 px-4"
         style={{
           backgroundImage: "url('/images/FeaturesBG.jpeg')",
           backgroundSize: "cover",

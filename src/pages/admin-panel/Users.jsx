@@ -5,6 +5,7 @@ import { FaChevronDown } from 'react-icons/fa';
 import { useEffect, useState } from "react";
 import { BASE_URL } from "../../config";
 import barangaysInNasugbu from "../../data/barangays";
+import { useRef } from "react";
 
 const Users = () => {
   // State management
@@ -195,24 +196,24 @@ To resolve this issue:
         category: 'retry',
         message: `Your Ecotrack account creation request has been rejected because some information needs to be corrected.
 
-To resolve this issue:
-1. Double-check your name spelling matches your utility bill exactly
-2. Remove any special characters or numbers from name fields
-3. Ensure your middle name is entered correctly (leave blank if none)
-4. Verify all required fields are properly filled
-5. Once corrected, you may submit a new account creation request`
+            To resolve this issue:
+            1. Double-check your name spelling matches your utility bill exactly
+            2. Remove any special characters or numbers from name fields
+            3. Ensure your middle name is entered correctly (leave blank if none)
+            4. Verify all required fields are properly filled
+            5. Once corrected, you may submit a new account creation request`
       },
       'address_format_issue': {
         title: 'Address Format Issue',
         category: 'retry',
         message: `Your Ecotrack account creation request has been rejected because your address information could not be verified.
 
-To resolve this issue:
-1. Verify you selected the correct barangay from the dropdown
-2. Ensure you are selecting the barangay where your utility service is located
-3. Check your utility bill for the exact barangay listed
-4. Contact BATELEC customer service if you're unsure of your service barangay
-5. Once verified, you may submit a new account creation request`
+            To resolve this issue:
+            1. Verify you selected the correct barangay from the dropdown
+            2. Ensure you are selecting the barangay where your utility service is located
+            3. Check your utility bill for the exact barangay listed
+            4. Contact BATELEC customer service if you're unsure of your service barangay
+            5. Once verified, you may submit a new account creation request`
       },
       // CATEGORY 2: PERMANENT REJECTION (BLOCK) - Account/Security Issues
       'no_customer_record': {
@@ -448,24 +449,42 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const FilterSelect = ({ value, onChange, options, placeholder, className = "" }) => (
-<div className={`relative ${className}`}>
-<select
-className="p-2 border bg-white border-gray-300 rounded-md font-inter shadow-sm appearance-none pr-8 focus:outline-none focus:ring-2 focus:ring-green-500 w-full"
-value={value}
-onChange={(e) => onChange(e.target.value)}
->
-<option value="">{placeholder}</option>
-{options.map(opt => (
-<option key={opt.value} value={opt.value}>{opt.label}</option>
-))}
-</select>
-<div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
-<FaChevronDown className="text-gray-500" />
-</div>
-</div>
-);
+const FilterSelect = ({ value, onChange, options, placeholder, className = "" }) => {
+  // If you want to use a unique id for accessibility, you can use useRef here
+  // But if not needed, you can remove idRef and selectId entirely
+  const idRef = useRef(
+     `filter-select-${Math.random().toString(36).substring(2, 8)}`
+   );
+   const selectId = idRef.current;
 
+  return (
+    <div className={`relative ${className}`}>
+      {/* Hidden accessible label */}
+      <label htmlFor={selectId} className="sr-only">
+        {placeholder || "Filter selection"}
+      </label>
+
+      <select
+        id={selectId}
+        aria-label={placeholder || "Filter selection"}
+        className="p-2 border bg-white border-gray-300 rounded-md font-inter shadow-sm appearance-none pr-8 focus:outline-none focus:ring-2 focus:ring-green-500 w-full"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">{placeholder}</option>
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+
+      <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
+        <FaChevronDown className="text-gray-500" />
+      </div>
+    </div>
+  );
+};
 const Modal = ({ show, onClose, title, children, actions, loading = false }) => {
   if (!show) return null;
   
@@ -1646,33 +1665,44 @@ const AccountLinkingConfirmation = ({ 
                       <StatusBadge status={user.verificationStatus} />
                     </td>
                     <td className="px-3 py-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => handleView(user)}
-                          className="text-blue-600 hover:text-blue-800 p-1 rounded"
-                          title="View Details"
-                        >
-                          <FiEye className="w-4 h-4" />
-                        </button>
-                        {/* Only show archive toggle for active and inactive tabs, not for all/pending/rejected */}
-                        {state.activeTab !== 'all' && state.activeTab !== 'pending' && state.activeTab !== 'rejected' && (
-                          <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={!user.isArchived}
-                              onChange={() => setState(prev => ({ 
-                                ...prev, 
-                                showDeleteModal: true, 
-                                userToDelete: user 
-                              }))}
-                              className="sr-only peer"
-                            />
-                            <div className="w-9 h-5 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-500 rounded-full peer peer-checked:bg-green-600 transition-all"></div>
-                            <div className="absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-all peer-checked:translate-x-4"></div>
-                          </label>
-                        )}
-                      </div>
-                    </td>
+  <div className="flex items-center justify-center gap-2">
+    <button
+      onClick={() => handleView(user)}
+      className="text-blue-600 hover:text-blue-800 p-1 rounded"
+      title="View Details"
+    >
+      <FiEye className="w-4 h-4" />
+    </button>
+
+    {/* Only show archive toggle for active and inactive tabs */}
+    {state.activeTab !== 'all' && state.activeTab !== 'pending' && state.activeTab !== 'rejected' && (
+      <label className="relative inline-flex items-center cursor-pointer">
+        {/* Hidden input with accessible name */}
+        <input
+          type="checkbox"
+          checked={!user.isArchived}
+          onChange={() =>
+            setState(prev => ({
+              ...prev,
+              showDeleteModal: true,
+              userToDelete: user
+            }))
+          }
+          className="sr-only peer"
+        />
+        {/* Hidden but accessible text for screen readers */}
+        <span className="sr-only">
+          {user.isArchived ? "Unarchive user" : "Archive user"}
+        </span>
+
+        {/* Toggle design */}
+        <div className="w-9 h-5 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-500 rounded-full peer-checked:bg-green-600 transition-all"></div>
+        <div className="absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-all peer-checked:translate-x-4"></div>
+      </label>
+    )}
+  </div>
+</td>
+
                   </tr>
                 )) : (
                   <td colSpan="8" className="px-4 py-8 text-center text-gray-500">

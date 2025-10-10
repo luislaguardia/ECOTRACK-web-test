@@ -237,55 +237,91 @@ const AuditLogs = () => {
           <StatCard title="Events in Last 24 Hours" value={stats.logsLast24h} icon={<Clock className="w-6 h-6 text-yellow-500"/>} color="bg-yellow-100"/>
       </div>
 
-      {/* Updated Filter Section with Users component style */}
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
-            <input
-              type="text" 
-              placeholder="Search details, user, action..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-          </div>
-          
-          {/* Action Filter with Users component style */}
-          <FilterSelect
-            value={selectedAction}
-            onChange={setSelectedAction}
-            options={actionOptions}
-            placeholder="All Actions"
-            className="min-w-[180px]"
-          />
-          
-          {/* User Filter with Users component style */}
-          <FilterSelect
-            value={selectedUser}
-            onChange={setSelectedUser}
-            options={userOptions}
-            placeholder="All Users"
-            className="min-w-[180px]"
-          />
-          
-          {/* Date Range Filter */}
-          <div className="flex flex-col sm:flex-row gap-2 items-center min-w-0">
-            <input 
-              type="date" 
-              value={dateRange.from} 
-              onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))} 
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 min-w-0"
-            />
-                        <span className="text-slate-500">-</span>
-                        <input 
-              type="date" 
-              value={dateRange.to} 
-              onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))} 
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 min-w-0"
-/>
-          </div>
-        </div>
+     {/* Updated Filter Section with Accessibility Fixes */}
+<div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 mb-6">
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    
+    {/* Search Input */}
+    <div className="relative">
+      <label htmlFor="searchInput" className="sr-only">
+        Search details, user, action
+      </label>
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+      <input
+        id="searchInput"
+        type="text"
+        placeholder="Search details, user, action..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+      />
+    </div>
+
+    {/* Action Filter */}
+    <div>
+      <label htmlFor="actionFilter" className="sr-only">
+        Filter by action
+      </label>
+      <FilterSelect
+        value={selectedAction}
+        onChange={setSelectedAction}
+        options={actionOptions}
+        placeholder="All Actions"
+        className="min-w-[180px]"
+        aria-label="Filter by action"
+        id="actionFilter"
+      />
+    </div>
+
+    {/* User Filter */}
+    <div>
+      <label htmlFor="userFilter" className="sr-only">
+        Filter by user
+      </label>
+      <FilterSelect
+        value={selectedUser}
+        onChange={setSelectedUser}
+        options={userOptions}
+        placeholder="All Users"
+        className="min-w-[180px]"
+        aria-label="Filter by user"
+        id="userFilter"
+      />
+    </div>
+
+    {/* Date Range Filter */}
+    <div className="flex flex-col sm:flex-row gap-2 items-center min-w-0">
+      <div className="flex flex-col w-full">
+        <label htmlFor="fromDate" className="sr-only">
+          From date
+        </label>
+        <input
+          id="fromDate"
+          type="date"
+          value={dateRange.from}
+          onChange={(e) => setDateRange((prev) => ({ ...prev, from: e.target.value }))}
+          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 min-w-0"
+          aria-label="From date"
+        />
+      </div>
+
+      <span className="text-slate-500">-</span>
+
+      <div className="flex flex-col w-full">
+        <label htmlFor="toDate" className="sr-only">
+          To date
+        </label>
+        <input
+          id="toDate"
+          type="date"
+          value={dateRange.to}
+          onChange={(e) => setDateRange((prev) => ({ ...prev, to: e.target.value }))}
+          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 min-w-0"
+          aria-label="To date"
+        />
+      </div>
+    </div>
+  </div>
       </div>
       
         <div className="bg-white rounded-lg shadow border border-gray-200">
