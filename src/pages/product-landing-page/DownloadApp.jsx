@@ -24,7 +24,7 @@ const DownloadApp = () => {
             </p>
 
             <a
-              href=" https://www.facebook.com/Batangas1ElectricCooperativeInc" // LINK TO OUR ANDROID APP
+              href=" https://drive.google.com/drive/folders/1-rF7ZP83vRcN0xSlHEMFywwWlMUi1gKN?usp=sharing" // LINK TO OUR ANDROID APP
               target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center justify-center bg-[#001A33] hover:bg-[#00264d] transition text-white font-semibold py-3 px-7 rounded-full shadow-lg"
             >
