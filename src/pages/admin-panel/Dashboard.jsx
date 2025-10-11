@@ -307,7 +307,7 @@ const updatePreview = async () => {
       );
 
       if (othersTotal > 0 || rawData.some((item) => item.name.toLowerCase() === "unknown")) {
-        finalTopFive.push({ name: "Custom Devices", value: othersTotal }); 
+        finalTopFive.push({ name: "Other Devices", value: othersTotal }); 
       }
       
       setDeviceData(finalTopFive);
@@ -889,7 +889,7 @@ const addAISummary = (doc, contentWidth, pageHeight) => {
               {/* Custom Devices Table - Hidden from PDF exports */}
               {otherDevicesList && otherDevicesList.length > 0 && (
                 <div className="mt-6 custom-devices-table">
-                  <h5 className="text-sm font-semibold text-gray-600 mb-3 font-inter">Custom Devices Breakdown</h5>
+                  <h5 className="text-sm font-semibold text-gray-600 mb-3 font-inter">Other Devices Breakdown</h5>
                   <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg shadow-sm">
                     <table className="w-full text-sm">
                       <thead className="bg-gray-50 sticky top-0 z-10">
