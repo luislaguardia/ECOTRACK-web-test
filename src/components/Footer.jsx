@@ -35,10 +35,15 @@ const Footer = () => {
       title: "Privacy Policy",
       content: (
         <div className="space-y-4 text-sm leading-relaxed">
-          <p>Welcome to the EcoTrack Privacy Policy.</p>
+          <p>Welcome to the EcoTrack.</p>
           <p>This Privacy Policy explains how We collect, use, store, and protect Your personal data when You access or use EcoTrack.</p>
           
           <div className="space-y-4">
+            <div>
+              <h4 className="font-semibold text-blue-300 mb-2">DATA PRIVACY</h4>
+              <p>Data Privacy Act Compliance: EcoTrack is committed to compliance with Republic Act No. 10173, also known as the Data Privacy Act of 2012 (DPA), and its implementing rules and regulations. We adhere to the principles of transparency, legitimate purpose, and proportionality in processing Your personal data. As a registered user, You are entitled to rights under the DPA, including the right to be informed, right to access, right to object, right to erasure or blocking, right to damages, and right to data portability. For concerns regarding Your data privacy rights, You may contact Our Data Protection Officer or file a complaint with the National Privacy Commission.</p>
+            </div>
+
             <div>
               <h4 className="font-semibold text-blue-300 mb-2">I. DEFINITION OF TERMS</h4>
               <p>1.1 "Personal Data" refers to any information that can be used to identify a BATELEC I customer, such as name, email address, phone number, BATELEC I account number, and billing consumption history.</p>
@@ -116,11 +121,16 @@ const Footer = () => {
       title: "Terms of Service",
       content: (
         <div className="space-y-4 text-sm leading-relaxed">
-          <p>Welcome to the EcoTrack Mobile App.</p>
+          <p>Welcome to the EcoTrack.</p>
           <p>If You continue to access and use the EcoTrack Mobile App, and subscribe to receive and access information, services, and notifications from EcoTrack, You are expressly agreeing to be bound by all the terms and conditions provided herein (hereinafter referred to as these "Terms of Service") which, together with Our Privacy Policy, govern Our relationship with You in all matters relating to the EcoTrack Mobile App.</p>
           <p>You must be at least 18 years of age and a registered BATELEC I customer to access and use the EcoTrack Mobile App.</p>
 
           <div className="space-y-4">
+            <div>
+              <h4 className="font-semibold text-blue-300 mb-2">DATA PRIVACY</h4>
+              <p>Data Privacy Act Compliance: EcoTrack is committed to compliance with Republic Act No. 10173, also known as the Data Privacy Act of 2012 (DPA), and its implementing rules and regulations. We adhere to the principles of transparency, legitimate purpose, and proportionality in processing Your personal data. As a registered user, You are entitled to rights under the DPA, including the right to be informed, right to access, right to object, right to erasure or blocking, right to damages, and right to data portability. For concerns regarding Your data privacy rights, You may contact Our Data Protection Officer or file a complaint with the National Privacy Commission.</p>
+            </div>
+
             <div>
               <h4 className="font-semibold text-blue-300 mb-2">I. DEFINITION OF TERMS</h4>
               <p>1.1 "Account Holder" refers to the registered user of the EcoTrack Mobile App who is a BATELEC I customer with a valid account number.</p>

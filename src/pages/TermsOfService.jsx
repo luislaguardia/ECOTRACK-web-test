@@ -11,6 +11,11 @@ const TermsOfService = () => {
         <p>You must be at least 18 years of age and a registered BATELEC I customer to access and use the EcoTrack Mobile App.</p>
 
         <div>
+          <h2 className="text-xl font-semibold mt-6 mb-3 text-blue-600">DATA PRIVACY</h2>
+          <p className="mb-4">Data Privacy Act Compliance: EcoTrack is committed to compliance with Republic Act No. 10173, also known as the Data Privacy Act of 2012 (DPA), and its implementing rules and regulations. We adhere to the principles of transparency, legitimate purpose, and proportionality in processing Your personal data. As a registered user, You are entitled to rights under the DPA, including the right to be informed, right to access, right to object, right to erasure or blocking, right to damages, and right to data portability. For concerns regarding Your data privacy rights, You may contact Our Data Protection Officer or file a complaint with the National Privacy Commission.</p>
+        </div>
+
+        <div>
           <h2 className="text-xl font-semibold mt-6 mb-3 text-blue-600">I. DEFINITION OF TERMS</h2>
           <p className="mb-2">1.1 "Account Holder" refers to the registered user of the EcoTrack Mobile App who is a BATELEC I customer with a valid account number.</p>
           <p className="mb-2">1.2 "Auto-Verified Customer" refers to an existing BATELEC I customer whose account number and registration details match an account in the BATELEC I system, granting immediate access to the EcoTrack Mobile App upon registration.</p>

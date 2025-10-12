@@ -6,8 +6,13 @@ const PrivacyPolicy = () => {
       <h1 className="text-3xl font-bold mb-6">Privacy Policy</h1>
       
       <div className="space-y-6">
-        <p>Welcome to the EcoTrack Privacy Policy.</p>
+        <p>Welcome to the EcoTrack.</p>
         <p>This Privacy Policy explains how We collect, use, store, and protect Your personal data when You access or use EcoTrack.</p>
+
+        <div>
+          <h2 className="text-xl font-semibold mt-6 mb-3 text-blue-600">DATA PRIVACY</h2>
+          <p className="mb-4">Data Privacy Act Compliance: EcoTrack is committed to compliance with Republic Act No. 10173, also known as the Data Privacy Act of 2012 (DPA), and its implementing rules and regulations. We adhere to the principles of transparency, legitimate purpose, and proportionality in processing Your personal data. As a registered user, You are entitled to rights under the DPA, including the right to be informed, right to access, right to object, right to erasure or blocking, right to damages, and right to data portability. For concerns regarding Your data privacy rights, You may contact Our Data Protection Officer or file a complaint with the National Privacy Commission.</p>
+        </div>
 
         <div>
           <h2 className="text-xl font-semibold mt-6 mb-3 text-blue-600">I. DEFINITION OF TERMS</h2>
