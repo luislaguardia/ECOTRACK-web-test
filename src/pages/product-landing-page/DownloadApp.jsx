@@ -1,10 +1,29 @@
-import React from 'react';
-import { MdAndroid } from 'react-icons/md';
+import React, { useState } from 'react';
+import { MdAndroid, MdDownload } from 'react-icons/md';
 import HomePageNavBar from '../../components/HomePageNavBar';
 import Footer from '../../components/Footer';
 import phoneImage from '../../assets/mobile_app_mockup_1.jpg'; // Or replace with Get Ecotrack.jpeg if preferred
 
 const DownloadApp = () => {
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = () => {
+    setIsDownloading(true);
+    
+    // Create a temporary link element to trigger download
+    const link = document.createElement('a');
+    link.href = '/EcoTrack.apk'; // Replace with your actual APK file path
+    link.download = 'EcoTrack.apk';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Reset downloading state after a delay
+    setTimeout(() => {
+      setIsDownloading(false);
+    }, 2000);
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <HomePageNavBar />
@@ -23,14 +42,23 @@ const DownloadApp = () => {
               or if you recently purchased one.
             </p>
 
-            <a
-              href=" https://drive.google.com/drive/folders/1-rF7ZP83vRcN0xSlHEMFywwWlMUi1gKN?usp=sharing" // LINK TO OUR ANDROID APP
-              target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center justify-center bg-[#001A33] hover:bg-[#00264d] transition text-white font-semibold py-3 px-7 rounded-full shadow-lg"
+            <button
+              onClick={handleDownload}
+              disabled={isDownloading}
+              className="inline-flex items-center justify-center bg-[#001A33] hover:bg-[#00264d] disabled:bg-gray-500 transition text-white font-semibold py-3 px-7 rounded-full shadow-lg"
             >
-              <MdAndroid size={22} className="mr-2" />
-              Download Android App
-            </a>
+              {isDownloading ? (
+                <>
+                  <MdDownload size={22} className="mr-2 animate-pulse" />
+                  Downloading...
+                </>
+              ) : (
+                <>
+                  <MdAndroid size={22} className="mr-2" />
+                  Download Android App
+                </>
+              )}
+            </button>
           </div>
 
           {/* Right Image */}
