@@ -212,29 +212,13 @@ const Footer = () => {
           
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h4 className="font-semibold text-blue-300  mb-3">Technical Support</h4>
+              <h4 className="font-semibold text-blue-300  mb-3">Customer Service</h4>
               <div className="space-y-2">
-                <p><span className="font-medium">Email:</span> support@ecotrack.ph</p>
-                <p><span className="font-medium">Phone:</span> +63 (2) 8123-4567</p>
-                <p><span className="font-medium">Hours:</span> Monday - Friday, 8:00 AM - 6:00 PM (PHT)</p>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-blue-300  mb-3">General Inquiries</h4>
-              <div className="space-y-2">
-                <p><span className="font-medium">Email:</span> info@ecotrack.ph</p>
-                <p><span className="font-medium">Phone:</span> +63 (2) 8765-4321</p>
-                <p><span className="font-medium">Address:</span> BATELEC I Building, Balanga City, Bataan, Philippines</p>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-blue-300 mb-3">Billing Support</h4>
-              <div className="space-y-2">
-                <p><span className="font-medium">Email:</span> billing@batelec1.com</p>
-                <p><span className="font-medium">Phone:</span> +63 (47) 791-1234</p>
-                <p><span className="font-medium">Hours:</span> Monday - Friday, 7:30 AM - 4:30 PM (PHT)</p>
+                <p><span className="font-medium">Hotline:</span> (043) 233-2238</p>
+                <p><span className="font-medium">Mobile:</span> 0908 814 2144 / 0917 627 7847</p>
+                <p><span className="font-medium">Email:</span> nasugbu@batelec1.com</p>
+                <p><span className="font-medium">Hours:</span> Monday - Friday, 8:00 AM - 5:00 PM</p>
+                <p><span className="font-medium">Office:</span> 407 J.P. Laurel Street, Nasugbu, Batangas, Philippines</p>
               </div>
             </div>
 
@@ -251,7 +235,7 @@ const Footer = () => {
           <div className="border-t border-blue-700 pt-4 mt-6">
             <h4 className="font-semibold text-blue-300 mb-3">Feedback & Suggestions</h4>
             <p>We value your feedback to improve EcoTrack services. Send your suggestions to:</p>
-            <p className="font-medium text-yellow-200">feedback@ecotrack.ph</p>
+            <p className="font-medium text-yellow-200">projectsmiski@gmail.com</p>
           </div>
         </div>
       )
