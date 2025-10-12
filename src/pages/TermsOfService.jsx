@@ -6,7 +6,7 @@ const TermsOfService = () => {
       <h1 className="text-3xl font-bold mb-6">Terms of Service</h1>
       
       <div className="space-y-6">
-        <p>Welcome to the EcoTrack Mobile App.</p>
+        <p>Welcome to the EcoTrack.</p>
         <p>If You continue to access and use the EcoTrack Mobile App, and subscribe to receive and access information, services, and notifications from EcoTrack, You are expressly agreeing to be bound by all the terms and conditions provided herein (hereinafter referred to as these "Terms of Service") which, together with Our Privacy Policy, govern Our relationship with You in all matters relating to the EcoTrack Mobile App.</p>
         <p>You must be at least 18 years of age and a registered BATELEC I customer to access and use the EcoTrack Mobile App.</p>
 
