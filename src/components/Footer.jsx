@@ -35,7 +35,7 @@ const Footer = () => {
       title: "Privacy Policy",
       content: (
         <div className="space-y-4 text-sm leading-relaxed">
-          <p>Welcome to the EcoTrack Mobile App Privacy Policy.</p>
+          <p>Welcome to the EcoTrack Privacy Policy.</p>
           <p>This Privacy Policy explains how We collect, use, store, and protect Your personal data when You access or use EcoTrack.</p>
           
           <div className="space-y-4">

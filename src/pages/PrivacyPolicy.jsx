@@ -6,7 +6,7 @@ const PrivacyPolicy = () => {
       <h1 className="text-3xl font-bold mb-6">Privacy Policy</h1>
       
       <div className="space-y-6">
-        <p>Welcome to the EcoTrack Mobile App Privacy Policy.</p>
+        <p>Welcome to the EcoTrack Privacy Policy.</p>
         <p>This Privacy Policy explains how We collect, use, store, and protect Your personal data when You access or use EcoTrack.</p>
 
         <div>
