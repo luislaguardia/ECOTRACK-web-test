@@ -688,7 +688,7 @@ const RejectionModal = ({ show, onClose, user, onContinue }) => {
           disabled={state.isUpdating}
             className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium"
         >
-          Cancel
+          Back
         </button>,
         <button
           key="continue"
@@ -865,7 +865,7 @@ const ConfirmRejectionModal = ({ 
       }
       actions={[
           <button
-            key="cancel"
+            key="Back"
             onClick={() => setState(prev => ({ 
               ...prev, 
             showConfirmRejectionModal: false,
@@ -873,7 +873,7 @@ const ConfirmRejectionModal = ({ 
             }))}
             className="px-4 py-2 border border-gray-400 text-gray-700 rounded-md hover:bg-gray-100"
           >
-            Cancel
+            Back
           </button>,
         <button
           key="confirm"
@@ -1039,7 +1039,7 @@ const AccountLinkingModal = ({ 
         actions={[
           ////
          <button
-            key="cancel"
+            key="Back"
             onClick={() => setState(prev => ({ 
               ...prev, 
             showAccountLinkModal: false,
@@ -1047,7 +1047,7 @@ const AccountLinkingModal = ({ 
             }))}
             className="px-4 py-2 border border-gray-400 text-gray-700 rounded-md hover:bg-gray-100"
           >
-            Cancel
+            Back
           </button>,
           <button
             key="approve"
@@ -1290,11 +1290,11 @@ const AccountLinkingConfirmation = ({ 
       title="Link Account Confirmation"
       actions={[
         <button
-          key="cancel"
+          key="Back"
           onClick={onClose}
           className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium"
         >
-          Cancel
+          Back
         </button>,
         <button
           key="confirm"
