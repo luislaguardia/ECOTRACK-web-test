@@ -10,9 +10,8 @@ const DownloadApp = () => {
   const handleDownload = () => {
     setIsDownloading(true);
     
-    // Create a temporary link element to trigger download
     const link = document.createElement('a');
-    link.href = '/EcoTrack.apk'; // Replace with your actual APK file path
+    link.href = '/EcoTrack.apk';
     link.download = 'EcoTrack.apk';
     document.body.appendChild(link);
     link.click();
