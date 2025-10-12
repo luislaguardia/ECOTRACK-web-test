@@ -567,7 +567,7 @@ const saveEdit = async (id) => {
                   </p> */}
                 </div>
               </div>
-              <div className="flex justify-end gap-4 mt-6">
+              <div className="flex justify-center gap-4 mt-15">
                 <button
                   onClick={() => setShowConfirmToggle(false)}
                   className="px-6 py-2 border rounded text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2  focus:ring-green-500"
