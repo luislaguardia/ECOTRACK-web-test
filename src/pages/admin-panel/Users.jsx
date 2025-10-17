@@ -1496,7 +1496,7 @@ const AccountLinkingConfirmation = ({ 
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
             {/* All/Active/Inactive/Pending/Rejected Button */}
             <div className="flex border border-gray-300 rounded-md overflow-hidden bg-white shadow-sm">
-              {['all', 'active', 'inactive', 'pending', 'rejected'].map((tab, index) => (
+              {['all', 'active', 'inactive', 'pending'].map((tab, index) => (
                 <>
                   <button
                     key={tab}
@@ -1526,9 +1526,9 @@ const AccountLinkingConfirmation = ({ 
                })
                   </button>
                   {/* Add separator line between buttons (except after the last one) */}
-                  {index < ['all', 'active', 'inactive', 'pending', 'rejected'].length - 1 && (
+                  {index < ['all', 'active', 'inactive', 'pending'].length - 1 && (
                     <div key={`separator-${index}`} className={`w-px ${
-                      state.activeTab === tab || state.activeTab === ['all', 'active', 'inactive', 'pending', 'rejected'][index + 1]
+                      state.activeTab === tab || state.activeTab === ['all', 'active', 'inactive', 'pending'][index + 1]
                         ? 'bg-green-200' 
                         : 'bg-gray-200'
                     }`}></div>
