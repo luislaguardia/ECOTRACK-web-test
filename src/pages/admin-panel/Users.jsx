@@ -91,9 +91,15 @@ const Users = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
+      // Exclude rejected users from "All" tab on the client side
+      const incomingUsers = res.data.users || [];
+      const filteredUsers = state.activeTab === 'all'
+        ? incomingUsers.filter(u => u.verificationStatus !== 'rejected_review' && u.verificationStatus !== 'rejected_final')
+        : incomingUsers;
+
       setState(prev => ({
         ...prev,
-        users: res.data.users || [],
+        users: filteredUsers,
         totalPages: res.data.totalPages || 1,
         isLoading: false
       }));
@@ -1474,8 +1480,8 @@ const AccountLinkingConfirmation = ({ 
         <StatCard title="Auto Verified" value={state.statistics.autoVerified} color="text-green-600" />
         <StatCard title="Manually Verified" value={state.statistics.manuallyVerified} color="text-blue-600" />
         <StatCard title="Pending Review" value={state.statistics.pendingManual} color="text-yellow-600" />
-        <StatCard title="Rejected/Review" value={state.statistics.rejectedReview || 0} color="text-orange-600" />
-        <StatCard title="Rejected/Final" value={state.statistics.rejectedFinal || 0} color="text-red-600" />
+        {/* <StatCard title="Rejected/Review" value={state.statistics.rejectedReview || 0} color="text-orange-600" /> */}
+        {/* <StatCard title="Rejected/Final" value={state.statistics.rejectedFinal || 0} color="text-red-600" /> */}
       </div>
 
       {/* Search and Filters */}
@@ -1543,7 +1549,9 @@ const AccountLinkingConfirmation = ({ 
                 <FilterSelect
                   value={state.verificationFilter}
                   onChange={(value) => setState(prev => ({ ...prev, verificationFilter: value, currentPage: 1 }))}
-                  options={verificationOptions}
+                  options={state.activeTab === 'all' 
+                    ? verificationOptions.filter(opt => opt.value !== 'rejected_review' && opt.value !== 'rejected_final') 
+                    : verificationOptions}
                   placeholder="All Verification Status"
                   className="min-w-[180px]"
                 />
